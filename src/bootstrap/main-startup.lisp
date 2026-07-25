@@ -63,7 +63,13 @@
    Each entry in *startup-modes* is a plist (handler-symbol &key :raw-args-p).
    :raw-args-p T modes receive the full argv tail; all others receive a single
    session name (defaulting to \"0\").
-   Unrecognized or absent modes fall through to run-standalone."
+   Unrecognized or absent modes fall through to run-standalone.
+   Any ERROR signaled by mode dispatch (e.g. an unsupported per-mode flag like
+   new-session's %parse-new-session-flags rejecting an unknown argument) is
+   caught here and reported the same way %parse-global-cli-argv already
+   reports a malformed global flag: a one-line message on *error-output* and
+   exit 1 — never the raw SBCL debugger, which the saved core would otherwise
+   drop a real user into for any unhandled condition."
   (let ((invocation (%parse-global-cli-argv (%application-argv))))
     (if (null invocation)
         (sb-ext:exit :code 1)
@@ -72,7 +78,11 @@
             (let* ((mode  (first mode-args))
                    (rest  (rest mode-args))
                    (entry (cdr (assoc mode *startup-modes* :test #'equal))))
-              (%dispatch-startup-mode-entry entry mode rest)))))))
+              (handler-case
+                  (%dispatch-startup-mode-entry entry mode rest)
+                (error (c)
+                  (format *error-output* "~&cl-tmux: ~A~%" c)
+                  (sb-ext:exit :code 1)))))))))
 
 (defun %dispatch-unknown-mode (mode rest)
   "Handle an argv whose first item is not a known startup mode.

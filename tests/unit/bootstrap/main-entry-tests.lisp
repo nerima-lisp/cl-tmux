@@ -268,3 +268,21 @@
       ;; starts at position 0 -- it just needs to be present.
       (expect (search "usage: cl-tmux" errout) :to-be-truthy)
       (expect standalone-called :to-be-falsy))))
+
+  ;; A mode-specific flag-parser ERROR (e.g. new-session rejecting an
+  ;; unsupported flag via %parse-new-session-flags) must be caught at main's
+  ;; top level and reported as a clean stderr message + exit 1 -- never left
+  ;; to propagate into the raw SBCL debugger the saved core would otherwise
+  ;; drop a real user into. Found via a manual smoke test of the built
+  ;; binary (`cl-tmux new-session -x 80` hit the debugger), see main's
+  ;; handler-case.
+  (it "unhandled-mode-error-prints-message-and-exits-one"
+    (let (exit-code errout)
+      (setf errout
+            (with-output-to-string (*error-output*)
+              (with-stubbed-exit exit-code
+                (let ((sb-ext:*posix-argv* (list "cl-tmux" "new-session" "-x" "80")))
+                  (cl-tmux::main)))))
+      (expect (eql 1 exit-code))
+      (expect (search "cl-tmux:" errout) :to-be-truthy)
+      (expect (search "-x" errout) :to-be-truthy)))
