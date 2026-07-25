@@ -58,7 +58,7 @@
   (ignore-errors
     (process-kit:run "/bin/sh" (list "-c" command)
                      :input text
-                     :timeout-seconds +copy-command-timeout+
+                     :timeout +copy-command-timeout+
                      :on-timeout :return)))
 
 (defun %run-copy-command (text)

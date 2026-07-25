@@ -2,244 +2,448 @@
   description = "cl-tmux — a tmux-compatible terminal multiplexer in Common Lisp";
 
   inputs = {
-    nixpkgs.url     = "github:NixOS/nixpkgs/nixos-unstable";
-    flake-utils.url = "github:numtide/flake-utils";
+    # nixos-unstable, not nixpkgs-unstable: it advances only after the NixOS
+    # release tests pass, so it is less likely to land a broken build.
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
-    # Dogfooded sibling libraries, all dependency-free (or cl-prolog-only)
-    # ASDF systems.  They are consumed purely as source: their .asd files are
-    # placed on ASDF's central registry, so no nixpkgs Lisp-package plumbing
-    # is required.
-    cl-weave.url       = "github:nerima-lisp/cl-weave";
-    cl-prolog.url      = "github:nerima-lisp/cl-prolog";
-    # cl-weave's own flake still declares its paredit-cli dev input under the
-    # pre-migration owner; pin it to the org so no takeokunn/* rev survives in
-    # our lock (paredit-cli is only a transitive dev tool, never linked in).
-    cl-weave.inputs.paredit-cli.url = "github:nerima-lisp/paredit-cli";
-    # flake = false: consumed as a plain source checkout (pushed onto ASDF's
-    # central registry below), not through each repo's own flake outputs —
-    # keeps this working regardless of whether a given sibling repo ships its
-    # own flake.nix.
-    cl-cli.url          = "github:nerima-lisp/cl-cli";
-    cl-cli.flake        = false;
-    cl-boundary-kit.url   = "github:nerima-lisp/cl-boundary-kit";
-    cl-boundary-kit.flake = false;
-    cl-dataflow.url      = "github:nerima-lisp/cl-dataflow";
-    cl-dataflow.flake    = false;
-    cl-parser-kit.url    = "github:nerima-lisp/cl-parser-kit";
-    cl-parser-kit.flake  = false;
-    cl-tty-kit.url       = "github:nerima-lisp/cl-tty-kit";
-    cl-tty-kit.flake     = false;
-    cl-process-kit.url   = "github:nerima-lisp/cl-process-kit";
-    cl-process-kit.flake = false;
+    # Sibling packages are ALWAYS pinned to a release tag. A bare
+    # `github:nerima-lisp/cl-weave` follows that repo's default branch, so an
+    # upstream push to main would break this repo's CI without warning.
+    #
+    # cl-weave and cl-prolog are consumed as flakes, so they take
+    # `inputs.nixpkgs.follows`: without it each drags in its own nixpkgs,
+    # inflating flake.lock and rebuilding the same derivations twice.
+    cl-weave = {
+      url = "github:nerima-lisp/cl-weave/v1.0.0";
+      inputs.nixpkgs.follows = "nixpkgs";
+      # cl-weave's own flake still declares its paredit-cli dev input under the
+      # pre-migration owner; pin it to the org (and to a tag) so no takeokunn/*
+      # rev survives in our lock. paredit-cli is a transitive dev tool only and
+      # is never linked into cl-tmux.
+      inputs.paredit-cli.url = "github:nerima-lisp/paredit-cli/v1.0.0";
+    };
+
+    cl-prolog = {
+      url = "github:nerima-lisp/cl-prolog/v1.0.1";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    # `flake = false`: consumed as a plain source checkout, pushed onto ASDF's
+    # central registry below rather than through each repo's own flake outputs.
+    # This is the form DEPENDENCY_POLICY.md prescribes for sibling packages and
+    # it keeps working regardless of whether a given sibling ships a flake.nix.
+    #
+    # A `flake = false` input has no inputs of its own, so it takes no
+    # `follows` — there is no nested nixpkgs for it to duplicate. That is the
+    # same goal `follows` serves for the two flake inputs above, reached a
+    # different way, not an omission.
+    cl-cli = {
+      url = "github:nerima-lisp/cl-cli/v1.0.1";
+      flake = false;
+    };
+    cl-boundary-kit = {
+      # v0.6.0 is cl-boundary-kit's newest tag. Its .asd already reads 1.0.0,
+      # but the v1.0.0 tag does not exist yet; pinning to a tag that is not
+      # published would break `nix flake lock` here. Bump when it is cut.
+      url = "github:nerima-lisp/cl-boundary-kit/v0.6.0";
+      flake = false;
+    };
+    # Transitive only: cl-boundary-kit depends on cl-log-kit, and siblings are
+    # consumed as source, so the source has to be on the registry even though
+    # nothing in cl-tmux.asd names it. Not a direct dependency of cl-tmux.
+    cl-log-kit = {
+      url = "github:nerima-lisp/cl-log-kit/v1.0.0";
+      flake = false;
+    };
+    cl-dataflow = {
+      url = "github:nerima-lisp/cl-dataflow/v1.0.0";
+      flake = false;
+    };
+    cl-parser-kit = {
+      url = "github:nerima-lisp/cl-parser-kit/v1.0.0";
+      flake = false;
+    };
+    cl-tty-kit = {
+      url = "github:nerima-lisp/cl-tty-kit/v1.0.0";
+      flake = false;
+    };
+    cl-process-kit = {
+      url = "github:nerima-lisp/cl-process-kit/v1.0.0";
+      flake = false;
+    };
+
+    treefmt-nix = {
+      url = "github:numtide/treefmt-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = { self, nixpkgs, flake-utils, cl-weave, cl-prolog
-            , cl-cli, cl-boundary-kit, cl-dataflow, cl-parser-kit, cl-tty-kit
-            , cl-process-kit }:
-    flake-utils.lib.eachDefaultSystem (system:
-      let
-        pkgs = import nixpkgs { inherit system; config.allowBroken = true; };
+  outputs =
+    {
+      self,
+      nixpkgs,
+      cl-weave,
+      cl-prolog,
+      cl-cli,
+      cl-boundary-kit,
+      cl-log-kit,
+      cl-dataflow,
+      cl-parser-kit,
+      cl-tty-kit,
+      cl-process-kit,
+      treefmt-nix,
+      ...
+    }:
+    let
+      # Both of these platforms are actually verified: x86_64-linux by the CI
+      # runner, aarch64-darwin by `nix flake check` on the development machine.
+      # aarch64-linux and x86_64-darwin are deliberately NOT declared — nothing
+      # runs them, and a flake should not advertise a platform it never builds.
+      # See ADR-0078.
+      #
+      # Plain nixpkgs.lib.genAttrs, not flake-utils' eachDefaultSystem: the
+      # latter derives the system list from a hardcoded default set, which is
+      # exactly the "declared but unverified" situation above.
+      systems = [
+        "x86_64-linux"
+        "aarch64-darwin"
+      ];
+      forAllSystems = nixpkgs.lib.genAttrs systems;
 
-        # SBCL with every Quicklisp-packaged library the code depends on.
-        # PTY/termios bindings use sb-posix + CFFI against libc — no C files.
-        runtimeDeps = ps: with ps; [
-          cffi             # C FFI
-          bordeaux-threads # portable threads + locks
-          babel            # string↔octet encoding
-          cl-ppcre         # Perl-compatible regular expressions (#{m/r:...})
+      # allowBroken is required for the Quicklisp-packaged Lisp libraries below:
+      # nixpkgs marks several sbcl-* packages broken on darwin even though they
+      # are pure Lisp and load fine. Scoped to this flake's own instantiation.
+      pkgsFor =
+        system:
+        import nixpkgs {
+          inherit system;
+          config.allowBroken = true;
+        };
+
+      # Single source of truth for the version: the `:version` form in
+      # cl-tmux.asd. A release only ever edits the .asd, and every Nix package
+      # follows automatically; release.yml refuses a tag that disagrees.
+      #
+      # Nix regexes are whole-string anchored and `.` never spans newlines, so
+      # the version is extracted line-by-line rather than with one multi-line
+      # match. The first match wins, which is the `cl-tmux` system — the test
+      # systems repeat the same field further down the file.
+      version =
+        let
+          lines = nixpkgs.lib.splitString "\n" (builtins.readFile ./cl-tmux.asd);
+          versionLine = builtins.head (
+            builtins.filter (line: builtins.match "[[:space:]]*:version \"[^\"]*\"" line != null) lines
+          );
+        in
+        builtins.head (builtins.match "[[:space:]]*:version \"([^\"]*)\"" versionLine);
+
+      # Every dogfooded sibling library is dependency-free (or depends only on
+      # other siblings here), so each is consumed purely as source: its checkout
+      # goes on ASDF's central registry rather than through nixpkgs Lisp
+      # packaging. This one list drives every sbcl invocation below.
+      siblingRepos = [
+        cl-prolog
+        cl-weave
+        cl-cli
+        cl-boundary-kit
+        cl-log-kit
+        cl-dataflow
+        cl-parser-kit
+        cl-tty-kit
+        cl-process-kit
+      ];
+
+      # Colon-separated source roots, read by run-tests.lisp. Keeping the list
+      # in one variable means the checks, the app and the devShell cannot drift
+      # apart on which siblings they can see.
+      siblingRegistry = nixpkgs.lib.concatStringsSep ":" (map toString siblingRepos);
+
+      siblingRegistryPushEvals = nixpkgs.lib.concatMapStringsSep " " (
+        repo: ''--eval "(push (truename \"${repo}/\") asdf:*central-registry*)"''
+      ) siblingRepos;
+
+      # SBCL with every Quicklisp-packaged library the code depends on.
+      #
+      # These four are the org's only sanctioned external (non-org) runtime
+      # dependencies; DEPENDENCY_POLICY.md records why each is required and
+      # cl-tmux.asd carries the same rationale per line. They are grandfathered
+      # in because cl-tmux is the sole L4 application package — nothing in the
+      # org depends on it, so an upstream break cannot propagate. Do not remove
+      # one to "reduce dependencies"; each covers a gap SBCL does not.
+      runtimeDeps =
+        ps: with ps; [
+          cffi # select(2)/ioctl(2), the libc calls sb-posix does not expose
+          bordeaux-threads # portable threads + locks for per-pane PTY readers
+          babel # string<->octet encoding for UTF-8 PTY and socket traffic
+          cl-ppcre # regex engine behind the #{m/r:...} and #{s///:} format modifiers
         ];
-        sbclWithDeps     = pkgs.sbcl.withPackages runtimeDeps;
-        # The test suite runs on cl-weave (and cl-prolog for the reasoning
-        # specs), both loaded from source via the central registry in the
-        # check derivations below — so no extra nixpkgs Lisp packages are
-        # needed beyond the runtime deps.  FiveAM is gone.
-        sbclWithTestDeps = sbclWithDeps;
 
-        # Every dogfooded sibling library is dependency-free (or depends only
-        # on other siblings here), so each is consumed purely as source: push
-        # its checkout onto ASDF's central registry rather than packaging it
-        # through nixpkgs.  This one list drives every sbcl invocation below.
-        siblingRepos = [ cl-prolog cl-weave cl-cli cl-boundary-kit cl-dataflow cl-parser-kit cl-tty-kit cl-process-kit ];
-        siblingRegistryPushEvals =
-          pkgs.lib.concatMapStringsSep " " (repo: ''--eval "(push (truename \"${repo}/\") asdf:*central-registry*)"'')
-            siblingRepos;
+      # treefmt drives `nix fmt` and the `checks.<system>.formatting` gate.
+      # Scope is Nix only: nixfmt is a low-diff formatter, whereas YAML
+      # formatters mangle the GitHub Actions `on:` key and Markdown
+      # reformatting would churn the whole docs tree.
+      treefmtEval = forAllSystems (
+        system:
+        treefmt-nix.lib.evalModule (pkgsFor system) {
+          projectRootFile = "flake.nix";
+          programs.nixfmt.enable = true;
+        }
+      );
 
-        cl-tmux = pkgs.stdenv.mkDerivation {
-          pname   = "cl-tmux";
-          version = "0.1.0";
-          src     = ./.;
-
-          nativeBuildInputs = [ pkgs.makeWrapper ];
-          buildInputs       = [ sbclWithDeps ];
-
-          buildPhase = ''
-            export HOME=$TMPDIR
-
-            # Compile all Lisp sources and save the image as a core file.
-            # Using save-lisp-and-die without :executable avoids the
-            # macOS-specific issue where embedded-core binaries fail to
-            # find sbcl.core at runtime.
-            ${sbclWithDeps}/bin/sbcl \
-              --no-sysinit \
-              --no-userinit \
-              --eval "(require :asdf)" \
-              --eval "(push (truename \".\") asdf:*central-registry*)" \
-              ${siblingRegistryPushEvals} \
-              --eval "(asdf:load-system :cl-tmux)" \
-              --eval "(sb-ext:save-lisp-and-die \"cl-tmux.core\"
-                         :toplevel #'cl-tmux:main
-                         :executable nil
-                         :compression t)" \
-              --quit
-          '';
-
-          installPhase = ''
-            mkdir -p $out/lib/cl-tmux $out/bin
-
-            # Install the compressed Lisp core.
-            cp cl-tmux.core $out/lib/cl-tmux/
-
-            # Wrap sbcl so users just call "cl-tmux".
-            # --noinform is a C-runtime option; it must precede --core.
-            # --no-sysinit/userinit are Lisp options; they follow --core.
-            makeWrapper ${sbclWithDeps}/bin/sbcl $out/bin/cl-tmux \
-              --add-flags "--noinform --core $out/lib/cl-tmux/cl-tmux.core --no-sysinit --no-userinit"
-          '';
-        };
-        # Run the full suite headlessly on cl-weave (via the FiveAM-surface
-        # shim); non-zero exit fails the check.  cl-weave loads from source off
-        # the central registry.  PTY tests self-skip when /dev/ptmx is
-        # unavailable (sandbox).
-        cl-tmux-tests = pkgs.runCommand "cl-tmux-tests"
+      # One test derivation per suite. They differ only in which ASDF system
+      # run-tests.lisp is pointed at, so the shape lives here once.
+      #
+      # The tree is copied and made writable because the suite compiles in
+      # place; ${self} in the store is read-only.
+      mkTestCheck =
+        system: name: testSystem:
+        let
+          pkgs = pkgsFor system;
+          sbclWithDeps = pkgs.sbcl.withPackages runtimeDeps;
+        in
+        pkgs.runCommand name
           {
-            nativeBuildInputs = [ sbclWithTestDeps pkgs.tmux cl-tmux ];
-            CL_TMUX_COMPAT_BINARY = "${cl-tmux}/bin/cl-tmux";
+            nativeBuildInputs = [
+              sbclWithDeps
+              pkgs.coreutils
+            ];
+            CL_TMUX_SIBLING_REGISTRY = siblingRegistry;
+            CL_TMUX_TEST_SYSTEM = testSystem;
           }
           ''
-            export HOME=$TMPDIR
-            cp -r ${./.} ./src-tree
+            export HOME="$TMPDIR/home"
+            mkdir -p "$HOME"
+            cp -r ${self} ./src-tree
             chmod -R u+w ./src-tree
             cd ./src-tree
-            sbcl --no-sysinit --no-userinit \
-                 --eval "(require :asdf)" \
-                 --eval "(push (truename \".\") asdf:*central-registry*)" \
-                 ${siblingRegistryPushEvals} \
-                 --eval "(handler-case (asdf:test-system :cl-tmux)
-                           (error (e)
-                             (format *error-output* \"~&TESTS FAILED: ~A~%\" e)
-                             (sb-ext:exit :code 1)))" \
-                 --eval "(sb-ext:exit :code 0)"
-            touch $out
+            sbcl --script run-tests.lisp
+            touch "$out"
           '';
-        # Run the cl-weave suite for the cl-prolog-backed reasoning read-model.
-        # cl-weave and cl-prolog are dependency-free, so they load from source
-        # by putting their checkouts on ASDF's central registry alongside the
-        # tree.  This is where both dogfooded libraries are exercised together.
-        cl-tmux-weave-tests = pkgs.runCommand "cl-tmux-weave-tests"
-          {
-            nativeBuildInputs = [ sbclWithTestDeps ];
-          }
-          ''
-            export HOME=$TMPDIR
-            cp -r ${./.} ./src-tree
-            chmod -R u+w ./src-tree
-            cd ./src-tree
-            sbcl --no-sysinit --no-userinit \
-                 --eval "(require :asdf)" \
-                 --eval "(push (truename \".\") asdf:*central-registry*)" \
-                 ${siblingRegistryPushEvals} \
-                 --eval "(handler-case (asdf:test-system :cl-tmux/weave)
-                           (error (e)
-                             (format *error-output* \"~&WEAVE TESTS FAILED: ~A~%\" e)
-                             (sb-ext:exit :code 1)))" \
-                 --eval "(sb-ext:exit :code 0)"
-            touch $out
-          '';
-        # Run the cl-weave suite for the cl-dataflow-backed copy-mode
-        # lifecycle read-model (src/dataflow/), mirroring cl-tmux-weave-tests.
-        cl-tmux-dataflow-tests = pkgs.runCommand "cl-tmux-dataflow-tests"
-          {
-            nativeBuildInputs = [ sbclWithTestDeps ];
-          }
-          ''
-            export HOME=$TMPDIR
-            cp -r ${./.} ./src-tree
-            chmod -R u+w ./src-tree
-            cd ./src-tree
-            sbcl --no-sysinit --no-userinit \
-                 --eval "(require :asdf)" \
-                 --eval "(push (truename \".\") asdf:*central-registry*)" \
-                 ${siblingRegistryPushEvals} \
-                 --eval "(handler-case (asdf:test-system :cl-tmux/dataflow)
-                           (error (e)
-                             (format *error-output* \"~&DATAFLOW TESTS FAILED: ~A~%\" e)
-                             (sb-ext:exit :code 1)))" \
-                 --eval "(sb-ext:exit :code 0)"
-            touch $out
-          '';
-      in
-      {
-        packages = {
-          default  = cl-tmux;
-          inherit cl-tmux;
-        };
+    in
+    {
+      packages = forAllSystems (
+        system:
+        let
+          pkgs = pkgsFor system;
+          sbclWithDeps = pkgs.sbcl.withPackages runtimeDeps;
+        in
+        rec {
+          cl-tmux = pkgs.stdenv.mkDerivation {
+            pname = "cl-tmux";
+            inherit version;
+            src = self;
 
-        checks = {
-          default  = cl-tmux-tests;
-          weave    = cl-tmux-weave-tests;
-          dataflow = cl-tmux-dataflow-tests;
-        };
+            nativeBuildInputs = [ pkgs.makeWrapper ];
+            buildInputs = [ sbclWithDeps ];
 
-        devShells.default = pkgs.mkShell {
-          buildInputs = [ sbclWithTestDeps ];
-          shellHook = ''
-            # Registers the central-registry entries the check derivations above use,
-            # so an interactive `sbcl` session can find cl-tmux and every dogfooded
-            # sibling library without repeating those --eval flags by hand.  A plain
-            # `sbcl --load cl-tmux.asd` fails: .asd files read `defsystem` in whatever
-            # package ASDF put the reader in, which is only set up correctly once
-            # `(require :asdf)` and the registry pushes below have run.
-            cl-tmux-sbcl() {
-              sbcl --eval "(require :asdf)" \
-                   --eval "(push (truename \".\") asdf:*central-registry*)" \
-                   ${siblingRegistryPushEvals} \
-                   "$@"
-            }
-            export -f cl-tmux-sbcl
+            buildPhase = ''
+              runHook preBuild
+              export HOME=$TMPDIR
 
-            # cl-weave's :coverage support (SBCL sb-cover underneath) only instruments
-            # code compiled AFTER sb-cover:store-coverage-data is declared, so the
-            # policy restriction must run before cl-tmux is loaded at all — running
-            # cl-weave:run-all with :coverage t against an already-loaded (or fasl-
-            # cached) image silently instruments nothing and reports a misleading
-            # 100% (coverage-percentage treats a 0/0 total as 100.0).  This wraps the
-            # correct order: require sb-cover, restrict the policy, THEN load and run.
-            cl-tmux-coverage() {
-              local report_dir="''${1:-./coverage-report}/"
-              cl-tmux-sbcl --non-interactive \
-                --eval "(require :sb-cover)" \
-                --eval "(sb-ext:restrict-compiler-policy 'sb-cover:store-coverage-data 3)" \
-                --eval "(asdf:load-system :cl-tmux/test)" \
-                --eval "(cl-weave:run-all :reporter :spec :max-workers 1 :coverage t :coverage-reset t :coverage-report-directory \"$report_dir\")" \
-                --eval "(sb-ext:exit :code 0)"
-              echo "Coverage report: $report_dir" "cover-index.html"
-            }
-            export -f cl-tmux-coverage
+              # Compile all Lisp sources and save the image as a core file.
+              # save-lisp-and-die without :executable avoids the macOS-specific
+              # issue where embedded-core binaries fail to find sbcl.core at
+              # runtime.
+              ${sbclWithDeps}/bin/sbcl \
+                --no-sysinit \
+                --no-userinit \
+                --eval "(require :asdf)" \
+                --eval "(push (truename \".\") asdf:*central-registry*)" \
+                ${siblingRegistryPushEvals} \
+                --eval "(asdf:load-system \"cl-tmux\")" \
+                --eval "(sb-ext:save-lisp-and-die \"cl-tmux.core\"
+                           :toplevel #'cl-tmux:main
+                           :executable nil
+                           :compression t)" \
+                --quit
+              runHook postBuild
+            '';
 
-            echo "cl-tmux dev shell"
-            echo "  cl-tmux-sbcl --eval '(asdf:load-system :cl-tmux)'"
-            echo "  coverage report: cl-tmux-coverage [output-dir]"
-            echo "  run tests: cl-tmux-sbcl --eval '(asdf:test-system :cl-tmux)' --quit"
-          '';
-        };
+            installPhase = ''
+              runHook preInstall
+              mkdir -p $out/lib/cl-tmux $out/bin
 
-        apps.default = {
-          type    = "app";
-          program = "${cl-tmux}/bin/cl-tmux";
-          meta = {
-            description = "cl-tmux — a tmux-compatible terminal multiplexer in Common Lisp";
-            mainProgram  = "cl-tmux";
+              cp cl-tmux.core $out/lib/cl-tmux/
+
+              # Wrap sbcl so users just call "cl-tmux".
+              # --noinform is a C-runtime option; it must precede --core.
+              # --no-sysinit/userinit are Lisp options; they follow --core.
+              makeWrapper ${sbclWithDeps}/bin/sbcl $out/bin/cl-tmux \
+                --add-flags "--noinform --core $out/lib/cl-tmux/cl-tmux.core --no-sysinit --no-userinit"
+              runHook postInstall
+            '';
+
+            meta = {
+              description = "A tmux-compatible terminal multiplexer in Common Lisp";
+              homepage = "https://github.com/nerima-lisp/cl-tmux";
+              license = pkgs.lib.licenses.mit;
+              mainProgram = "cl-tmux";
+            };
           };
-        };
+
+          default = cl-tmux;
+
+          # Rendered documentation site (Material for MkDocs). Builds fully
+          # offline: Material bundles all of its assets, so no network access is
+          # required inside the Nix sandbox. --strict promotes broken links and
+          # pages missing from the nav to build failures.
+          #
+          # The fileset covers docs/mkdocs.yml and docs/src only, so docs/notes/
+          # (working records, deliberately unpublished) never reaches the site.
+          docs = pkgs.stdenvNoCC.mkDerivation {
+            pname = "cl-tmux-docs";
+            inherit version;
+            src = pkgs.lib.fileset.toSource {
+              root = ./docs;
+              fileset = pkgs.lib.fileset.unions [
+                ./docs/mkdocs.yml
+                ./docs/src
+              ];
+            };
+            nativeBuildInputs = [ pkgs.python3Packages.mkdocs-material ];
+            buildPhase = ''
+              runHook preBuild
+              mkdocs build --strict --config-file mkdocs.yml --site-dir "$out"
+              runHook postBuild
+            '';
+            dontInstall = true;
+            meta = {
+              description = "Rendered MkDocs (Material) documentation for cl-tmux";
+              homepage = "https://github.com/nerima-lisp/cl-tmux";
+              license = pkgs.lib.licenses.mit;
+            };
+          };
+        }
+      );
+
+      # `nix fmt` entry point.
+      formatter = forAllSystems (system: treefmtEval.${system}.config.build.wrapper);
+
+      # Granularity lives here, NOT in extra GitHub Actions jobs: `nix flake
+      # check` evaluates each attribute as its own derivation, in parallel, with
+      # build caching. Add a check here rather than a job in ci.yml.
+      checks = forAllSystems (system: {
+        # The full unit + integration suite. PTY tests self-skip when
+        # /dev/ptmx is unavailable, so a sandboxed run stays meaningful.
+        default = mkTestCheck system "cl-tmux-tests" "cl-tmux/test";
+
+        # The cl-prolog-backed reasoning read-model (src/reasoning/).
+        weave = mkTestCheck system "cl-tmux-weave-tests" "cl-tmux/weave";
+
+        # The cl-dataflow-backed copy-mode lifecycle read-model (src/dataflow/).
+        dataflow = mkTestCheck system "cl-tmux-dataflow-tests" "cl-tmux/dataflow";
+
+        # Fails `nix flake check` when any tracked file is unformatted,
+        # turning the formatter into an enforced CI gate.
+        formatting = treefmtEval.${system}.config.build.check self;
+
+        # The docs package builds with `mkdocs --strict`, so a broken link or
+        # a page missing from the nav fails here. Without this check the docs
+        # are only ever built by the publish workflow, which runs after a
+        # merge to main — so a break would surface as a failed deploy rather
+        # than as a failed pull request.
+        docs = self.packages.${system}.docs;
       });
+
+      apps = forAllSystems (
+        system:
+        let
+          pkgs = pkgsFor system;
+          sbclWithDeps = pkgs.sbcl.withPackages runtimeDeps;
+
+          test = pkgs.writeShellApplication {
+            name = "cl-tmux-test";
+            runtimeInputs = [
+              sbclWithDeps
+              pkgs.coreutils
+            ];
+            text = ''
+              export CL_TMUX_SIBLING_REGISTRY="${siblingRegistry}"
+              export CL_TMUX_TEST_SYSTEM="''${CL_TMUX_TEST_SYSTEM:-cl-tmux/test}"
+              # Run against a writable copy for the same reason the checks do:
+              # the suite compiles in place and ${self} is read-only.
+              work="$(mktemp -d)"
+              trap 'rm -rf "$work"' EXIT
+              cp -r ${self} "$work/src-tree"
+              chmod -R u+w "$work/src-tree"
+              cd "$work/src-tree"
+              exec sbcl --script run-tests.lisp
+            '';
+          };
+        in
+        {
+          # `nix run .` starts the multiplexer, which is what the README
+          # advertises; the test runner is reachable as `nix run .#test`.
+          default = {
+            type = "app";
+            program = "${self.packages.${system}.cl-tmux}/bin/cl-tmux";
+            meta = {
+              description = "cl-tmux — a tmux-compatible terminal multiplexer in Common Lisp";
+              mainProgram = "cl-tmux";
+            };
+          };
+
+          test = {
+            type = "app";
+            program = "${test}/bin/cl-tmux-test";
+          };
+        }
+      );
+
+      devShells = forAllSystems (
+        system:
+        let
+          pkgs = pkgsFor system;
+          sbclWithDeps = pkgs.sbcl.withPackages runtimeDeps;
+        in
+        {
+          default = pkgs.mkShell {
+            packages = [ sbclWithDeps ];
+            CL_TMUX_SIBLING_REGISTRY = siblingRegistry;
+            shellHook = ''
+              # Registers the central-registry entries the checks use, so an
+              # interactive `sbcl` session finds cl-tmux and every sibling
+              # library without repeating those --eval flags by hand. A plain
+              # `sbcl --load cl-tmux.asd` fails: .asd files read `defsystem` in
+              # whatever package ASDF put the reader in, which is only set up
+              # correctly once `(require :asdf)` and the registry pushes below
+              # have run.
+              cl-tmux-sbcl() {
+                sbcl --eval "(require :asdf)" \
+                     --eval "(push (truename \".\") asdf:*central-registry*)" \
+                     ${siblingRegistryPushEvals} \
+                     "$@"
+              }
+              export -f cl-tmux-sbcl
+
+              # cl-weave's :coverage support (SBCL sb-cover underneath) only
+              # instruments code compiled AFTER sb-cover:store-coverage-data is
+              # declared, so the policy restriction must run before cl-tmux is
+              # loaded at all — running cl-weave:run-all with :coverage t
+              # against an already-loaded (or fasl-cached) image silently
+              # instruments nothing and reports a misleading 100%
+              # (coverage-percentage treats a 0/0 total as 100.0). This wraps
+              # the correct order: require sb-cover, restrict the policy, THEN
+              # load and run.
+              cl-tmux-coverage() {
+                local report_dir="''${1:-./coverage-report}/"
+                cl-tmux-sbcl --non-interactive \
+                  --eval "(require :sb-cover)" \
+                  --eval "(sb-ext:restrict-compiler-policy 'sb-cover:store-coverage-data 3)" \
+                  --eval "(asdf:load-system \"cl-tmux/test\")" \
+                  --eval "(cl-weave:run-all :reporter :spec :max-workers 1 :coverage t :coverage-reset t :coverage-report-directory \"$report_dir\")" \
+                  --eval "(sb-ext:exit :code 0)"
+                echo "Coverage report: $report_dir" "cover-index.html"
+              }
+              export -f cl-tmux-coverage
+
+              echo "cl-tmux dev shell"
+              echo "  run tests:       sbcl --script run-tests.lisp"
+              echo "  load in a REPL:  cl-tmux-sbcl --eval '(asdf:load-system \"cl-tmux\")'"
+              echo "  coverage report: cl-tmux-coverage [output-dir]"
+            '';
+          };
+        }
+      );
+    };
 }

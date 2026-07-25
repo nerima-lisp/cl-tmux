@@ -28,6 +28,6 @@
        (process-kit:process-result-stdout
         (process-kit:run "/bin/sh"
                          (list "-c" (%format-shell-capture-command command))
-                         :timeout-seconds +format-shell-command-timeout+
+                         :timeout +format-shell-command-timeout+
                          :on-timeout :return)))
     (error () "")))

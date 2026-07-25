@@ -35,13 +35,16 @@
 
 (defun %run-format-probe (args timeout)
   "Run a short OS probe (ARGS is a full argv list) and return trimmed stdout, or
-   the empty string on failure.  process-kit:run resolves the binary on PATH
-   (:search t) and kills the probe's process group if it overruns TIMEOUT."
+   the empty string on failure.  :search t makes process-kit:run resolve the
+   binary on PATH — it must be passed explicitly, because cl-process-kit's
+   default flipped to NIL in v1.0.0 — and process-kit kills the probe's process
+   group if it overruns TIMEOUT."
   (handler-case
       (string-trim " \t\n\r"
                    (process-kit:process-result-stdout
                     (process-kit:run (first args) (rest args)
-                                     :timeout-seconds timeout
+                                     :search t
+                                     :timeout timeout
                                      :on-timeout :return)))
     (error () "")))
 
