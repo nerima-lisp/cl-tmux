@@ -206,8 +206,29 @@
                    "$@"
             }
             export -f cl-tmux-sbcl
+
+            # cl-weave's :coverage support (SBCL sb-cover underneath) only instruments
+            # code compiled AFTER sb-cover:store-coverage-data is declared, so the
+            # policy restriction must run before cl-tmux is loaded at all — running
+            # cl-weave:run-all with :coverage t against an already-loaded (or fasl-
+            # cached) image silently instruments nothing and reports a misleading
+            # 100% (coverage-percentage treats a 0/0 total as 100.0).  This wraps the
+            # correct order: require sb-cover, restrict the policy, THEN load and run.
+            cl-tmux-coverage() {
+              local report_dir="''${1:-./coverage-report}/"
+              cl-tmux-sbcl --non-interactive \
+                --eval "(require :sb-cover)" \
+                --eval "(sb-ext:restrict-compiler-policy 'sb-cover:store-coverage-data 3)" \
+                --eval "(asdf:load-system :cl-tmux/test)" \
+                --eval "(cl-weave:run-all :reporter :spec :max-workers 1 :coverage t :coverage-reset t :coverage-report-directory \"$report_dir\")" \
+                --eval "(sb-ext:exit :code 0)"
+              echo "Coverage report: $report_dir" "cover-index.html"
+            }
+            export -f cl-tmux-coverage
+
             echo "cl-tmux dev shell"
             echo "  cl-tmux-sbcl --eval '(asdf:load-system :cl-tmux)'"
+            echo "  coverage report: cl-tmux-coverage [output-dir]"
             echo "  run tests: cl-tmux-sbcl --eval '(asdf:test-system :cl-tmux)' --quit"
           '';
         };
