@@ -1,13 +1,64 @@
-# SBCL compiled binary (name matches :build-pathname in cl-tmux.asd)
+# nerima-lisp standard .gitignore
+# Copy to <repo>/.gitignore and append repository-specific entries below the
+# marked section. Everything above the marker must stay identical across repos
+# so that "is this artifact ignored?" has the same answer everywhere.
+
+# --- Common Lisp build output ---
+*.fasl
+*.fas
+*.lib
+*.dfsl
+*.ufsl
+*.fsl
+
+# --- Nix ---
+/result
+/result-*
+/.direnv/
+
+# --- Test and coverage output ---
+/coverage/
+/coverage-report/
+/*-coverage-report/
+*.coverage
+coverage.dat
+/__snapshots__/
+/*-snapshots/
+
+# --- Local caches and scratch space ---
+/.cache/
+/.deps/
+/tmp/
+/.worktrees/
+/.paredit.cleanup/
+
+# --- Credentials ---
+# Not because anyone plans to put a key here, but because the cost of the one
+# time it happens by accident is a rotation across the whole org. See
+# SUPPLY_CHAIN.md for what to do if one is committed anyway.
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+/secrets/
+
+# --- Editor and OS noise ---
+.DS_Store
+*~
+\#*\#
+.\#*
+
+# --- Repository-specific entries below this line ---
+
+# SBCL image and standalone binary. The names match :build-pathname and the
+# save-lisp-and-die target in cl-tmux.asd / flake.nix, so a local
+# `asdf:make` or a hand-run build never lands in a commit.
 /cl-tmux
 /cl-tmux.core
 
-# Nix build output symlink
-/result
-
-# Claude Code harness internals
+# Agent/editor harness state kept in-tree by local tooling only.
 /.claude/
-
-# ASDF fasls normally go to ~/.cache, but ad-hoc compile-file runs can leave
-# .fasl objects in the tree — never track them.
-*.fasl
+/.serena/
