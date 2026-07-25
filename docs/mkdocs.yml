@@ -1,0 +1,62 @@
+site_name: cl-tmux
+site_description: A tmux-compatible terminal multiplexer in Common Lisp
+site_url: https://nerima-lisp.github.io/cl-tmux/
+repo_url: https://github.com/nerima-lisp/cl-tmux
+repo_name: nerima-lisp/cl-tmux
+edit_uri: edit/main/docs/src/
+
+docs_dir: src
+
+theme:
+  name: material
+  features:
+    - navigation.sections
+    - navigation.top
+    - content.code.copy
+    - content.action.edit
+    - search.highlight
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: teal
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: teal
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+
+markdown_extensions:
+  - admonition
+  - toc:
+      permalink: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.superfences
+  - pymdownx.details
+  - pymdownx.tabbed:
+      alternate_style: true
+
+# Every page under docs/src/ must appear here: --strict fails the build on an
+# unlisted page. That is deliberate, so the nav cannot silently fall behind.
+nav:
+  - Home: index.md
+  - Getting started: getting-started.md
+  - Guide:
+      - Configuration: guide/configuration.md
+      - Dogfooded sibling libraries: guide/sibling-libraries.md
+      - Development rules: guide/development-rules.md
+  - Reference:
+      - Architecture: reference/architecture.md
+      - Compatibility: reference/compatibility.md
+      - Security model: reference/security-model.md
+  - Benchmarks: benchmarks.md
+
+# Working records (coverage audits and similar) live in docs/notes/, which is
+# outside docs_dir and therefore never published. This entry keeps the
+# exclusion explicit for anyone who moves the directory under src/ later.
+not_in_nav: |
+  notes/

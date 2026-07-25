@@ -1,7 +1,7 @@
 # tmux compatibility statement
 
 cl-tmux targets **behavioral parity with tmux**, validated by a large
-regression suite (11,000+ FiveAM checks) that pins each verified behavior.
+regression suite (11,000+ cl-weave checks) that pins each verified behavior.
 This document states what that means in practice: what is implemented, what
 is deliberately different, and where the remaining risk lives.
 

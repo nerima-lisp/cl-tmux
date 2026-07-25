@@ -1,0 +1,40 @@
+# Security model
+
+How to report a vulnerability is covered by the organization-wide
+[security policy](https://github.com/nerima-lisp/.github/blob/main/SECURITY.md).
+Report suspected vulnerabilities privately through
+[GitHub Security Advisories](https://github.com/nerima-lisp/cl-tmux/security/advisories/new)
+rather than opening a public issue, and include reproduction steps and the
+platform (OS, SBCL version, terminal).
+
+This page records the part that is specific to cl-tmux: what the threat model
+actually is, so that a reporter can tell a bug from intended behavior.
+
+## The socket directory is the security boundary
+
+The server socket is created in a per-user directory with mode `0700` — under
+`$TMUX_TMPDIR`, falling back to the system temp directory — mirroring tmux's
+socket model. Anyone who can write to that socket can run commands as the
+owning user. The directory permissions, not the protocol, are what confines
+this.
+
+## Escape-sequence input from panes is untrusted
+
+Programs running inside panes emit bytes that the VT100/ANSI parser consumes.
+That input is untrusted and the parser is exercised heavily by the test suite.
+
+Memory-unsafety bugs are not expected, because SBCL is memory-safe. What
+remains in scope, and is worth reporting, is state confusion and spoofing — for
+example a crafted OSC or DCS sequence that desynchronizes the parser, forges a
+prompt mark, or leaks clipboard contents through OSC 52.
+
+## Config files are executed as commands
+
+Loading an untrusted `.tmux.conf`-style file is equivalent to running untrusted
+commands: `run-shell`, `if-shell` and `source-file` all execute. This is
+intended behavior inherited from tmux, not a vulnerability. Treat a config file
+from an untrusted source the way you would treat a shell script from one.
+
+## Supported versions
+
+Only the latest release and the `main` branch receive security fixes.
