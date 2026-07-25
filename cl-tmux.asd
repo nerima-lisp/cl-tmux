@@ -4,16 +4,26 @@
 
 (defsystem "cl-tmux"
   :description "A tmux-compatible terminal multiplexer in Common Lisp"
-  :version "0.1.0"
   :author "takeokunn <bararararatty@gmail.com>"
+  :maintainer "takeokunn <bararararatty@gmail.com>"
   :license "MIT"
+  ;; Single source of truth for the version: flake.nix reads this form and
+  ;; release.yml refuses to publish a tag that disagrees with it.
+  :version "0.1.0"
   :homepage "https://github.com/nerima-lisp/cl-tmux"
-  :source-control (:git "https://github.com/nerima-lisp/cl-tmux.git")
   :bug-tracker "https://github.com/nerima-lisp/cl-tmux/issues"
-  :depends-on (:cffi           ; C foreign-function interface
-               :bordeaux-threads ; portable threads + locks
-               :babel            ; string↔octet encoding
-               :cl-ppcre         ; Perl-compatible regular expressions
+  :source-control (:git "https://github.com/nerima-lisp/cl-tmux.git")
+  ;; The four names below are the org's ONLY sanctioned external (non-org)
+  ;; dependencies, recorded here as DEPENDENCY_POLICY.md requires. They pre-date
+  ;; the policy and are grandfathered in on the strength of cl-tmux being the
+  ;; sole L4 application package (nothing in the org depends on it, so an
+  ;; upstream break cannot propagate). Each line states what it is needed for;
+  ;; do not add a fifth without the four-condition review, and do not drop one
+  ;; of these to "reduce dependencies" — each covers a gap SBCL does not.
+  :depends-on (:cffi             ; select(2)/ioctl(2): the libc calls sb-posix does not expose
+               :bordeaux-threads ; portable threads + locks for the per-pane PTY reader threads
+               :babel            ; string<->octet encoding for UTF-8 PTY and socket traffic
+               :cl-ppcre         ; regex engine behind the format #{m/r:...} and #{s///:} modifiers
                :cl-prolog        ; dependency-free Prolog engine (cold-path reasoning)
                :cl-cli           ; startup argv/flag parsing (main-startup-flags)
                :cl-boundary-kit  ; process boundary for run-shell/if-shell
@@ -390,9 +400,19 @@
 
 (defsystem "cl-tmux/test"
   :description "Test suite for cl-tmux, authored natively in cl-weave"
-  :depends-on (:cl-tmux :cl-weave)
+  :author "takeokunn <bararararatty@gmail.com>"
+  :maintainer "takeokunn <bararararatty@gmail.com>"
+  :license "MIT"
+  :version "0.1.0"
+  :homepage "https://github.com/nerima-lisp/cl-tmux"
+  :bug-tracker "https://github.com/nerima-lisp/cl-tmux/issues"
+  :source-control (:git "https://github.com/nerima-lisp/cl-tmux.git")
+  :depends-on ("cl-tmux" "cl-weave")
+  ;; The component tree is ~295 files, so it lives in system/ and is spliced in
+  ;; at read time by the #. form at the top of this file. The list itself is a
+  ;; single (:module "t" ...) rooted at the standard test directory.
   :components #.(symbol-value (find-symbol "*CL-TMUX-TEST-COMPONENTS*" :cl-user))
-  ;; Run with: (asdf:test-system :cl-tmux)
+  ;; Run with: (asdf:test-system "cl-tmux")
   :perform (test-op (op c)
              (symbol-call :cl-tmux/test :run-tests)))
 
@@ -407,9 +427,14 @@
 (defsystem "cl-tmux/weave"
   :description "cl-weave suite for the cl-tmux Prolog reasoning read-model."
   :author "takeokunn <bararararatty@gmail.com>"
+  :maintainer "takeokunn <bararararatty@gmail.com>"
   :license "MIT"
-  :depends-on (:cl-tmux :cl-weave :cl-prolog :cl-prolog/weave)
-  :pathname "tests/weave"
+  :version "0.1.0"
+  :homepage "https://github.com/nerima-lisp/cl-tmux"
+  :bug-tracker "https://github.com/nerima-lisp/cl-tmux/issues"
+  :source-control (:git "https://github.com/nerima-lisp/cl-tmux.git")
+  :depends-on ("cl-tmux" "cl-weave" "cl-prolog" "cl-prolog/weave")
+  :pathname "t/weave"
   :serial t
   :components ((:file "package")
                (:file "support")
@@ -427,9 +452,14 @@
 (defsystem "cl-tmux/dataflow"
   :description "cl-weave suite for the cl-tmux cl-dataflow copy-mode lifecycle read-model."
   :author "takeokunn <bararararatty@gmail.com>"
+  :maintainer "takeokunn <bararararatty@gmail.com>"
   :license "MIT"
-  :depends-on (:cl-tmux :cl-weave :cl-dataflow)
-  :pathname "tests/dataflow"
+  :version "0.1.0"
+  :homepage "https://github.com/nerima-lisp/cl-tmux"
+  :bug-tracker "https://github.com/nerima-lisp/cl-tmux/issues"
+  :source-control (:git "https://github.com/nerima-lisp/cl-tmux.git")
+  :depends-on ("cl-tmux" "cl-weave" "cl-dataflow")
+  :pathname "t/dataflow"
   :serial t
   :components ((:file "package")
                (:file "copy-mode-lifecycle-tests")
