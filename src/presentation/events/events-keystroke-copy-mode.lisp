@@ -3,31 +3,28 @@
 ;;;; Copy-mode ground-state dispatch.
 
 ;;; Extracted from %ground-input-state so the top-level CPS state stays a flat
-;;; ordered list of clauses.  %copy-mode-accumulate-digit is itself a small CPS
-;;; state function: it accepts the pending BYTE and returns (values COUNT-OR-NIL)
-;;; — NIL means "byte consumed into *copy-mode-prefix*, wait for the next byte";
-;;; a non-NIL COUNT means "prefix accumulation is complete, dispatch with COUNT".
-;;; This expresses the digit accumulator as data flowing through the same
-;;; (byte) → outcome protocol as the rest of the keystroke pipeline, rather than
-;;; as an ad hoc mutation buried inside the ground-state cond.
+;;; ordered list of clauses.  %make-copy-mode-digit-k builds the small CPS
+;;; continuation *copy-mode-prefix-k* threads across calls (mirroring
+;;; events-core.lisp's MAKE-PROMPT-UTF8-K): a digit byte closes over the count
+;;; accumulated so far and returns a further continuation to keep waiting, or
+;;; the resolved repeat COUNT (>= 1) once a non-digit byte arrives — a
+;;; FUNCTIONP/non-FUNCTIONP return distinguishes "still accumulating" from
+;;; "done" at the call site, %dispatch-copy-mode-ground-byte.
 
-(defun %copy-mode-accumulate-digit (byte)
-  "Fold BYTE into *copy-mode-prefix* when it continues a numeric prefix.
-   Returns NIL when BYTE was consumed as a prefix digit (caller should wait for
-   the next byte).  Returns the resolved repeat COUNT (>= 1) and resets
-   *copy-mode-prefix* to 0 when BYTE is not a prefix digit — i.e. when the
-   accumulated count is ready to be applied to a navigation command.
-   '0' with prefix=0 is NOT accumulated (vi convention: bare 0 = beginning of
-   line, only 1-9 or a non-zero prefix followed by 0 continue the prefix)."
-  (if (and (>= byte +byte-digit-0+) (<= byte +byte-digit-9+)
-           (or (> byte +byte-digit-0+) (plusp *copy-mode-prefix*)))
-      (progn
-        (setf *copy-mode-prefix*
-              (+ (* *copy-mode-prefix* 10) (- byte +byte-digit-0+)))
-        nil)
-      (let ((count (max 1 *copy-mode-prefix*)))
-        (setf *copy-mode-prefix* 0)
-        count)))
+(defun %make-copy-mode-digit-k (accumulator)
+  "Return a continuation that folds the next digit BYTE into ACCUMULATOR when
+   it continues a numeric copy-mode prefix.  The continuation returns a fresh
+   continuation (via %MAKE-COPY-MODE-DIGIT-K) while BYTE extends the prefix, or
+   the resolved repeat COUNT (>= 1, ACCUMULATOR clamped to a minimum of 1) once
+   BYTE is not a prefix digit — i.e. once the accumulated count is ready to be
+   applied to a navigation command.  '0' with ACCUMULATOR=0 is NOT accumulated
+   (vi convention: bare 0 = beginning of line, only 1-9 or a non-zero prefix
+   followed by 0 continue the prefix)."
+  (lambda (byte)
+    (if (and (>= byte +byte-digit-0+) (<= byte +byte-digit-9+)
+             (or (> byte +byte-digit-0+) (plusp accumulator)))
+        (%make-copy-mode-digit-k (+ (* accumulator 10) (- byte +byte-digit-0+)))
+        (max 1 accumulator))))
 
 (defparameter +copy-mode-char-argument-handlers+
   '((:copy-mode-jump-forward . copy-mode-jump-forward)
@@ -80,18 +77,22 @@
 (defun %dispatch-copy-mode-ground-byte (session byte)
   "Handle one BYTE of unprefixed copy-mode navigation from ground state.
    Copy mode has its own active table, so ordinary bytes are resolved there.
-   Numeric prefix digits accumulate via
-   %copy-mode-accumulate-digit; once a non-digit byte resolves the count, the
+   Numeric prefix digits accumulate via *copy-mode-prefix-k*
+   (%make-copy-mode-digit-k); once a non-digit byte resolves the count, the
    byte is resolved via %run-copy-mode-key-table-entry.  Returns
    (%GROUND-VALUES) when no new state is entered."
   (let ((screen (%active-screen session)))
     (when screen
-      (let ((count (%copy-mode-accumulate-digit byte)))
-        (when count
-          (let ((new-state (%run-copy-mode-key-table-entry session byte count)))
-            (when new-state
-              (setf *dirty* t)
-              (return-from %dispatch-copy-mode-ground-byte
-                (values nil new-state))))))))
+      (let ((result (funcall (or *copy-mode-prefix-k* (%make-copy-mode-digit-k 0))
+                             byte)))
+        (if (functionp result)
+            (setf *copy-mode-prefix-k* result)
+            (progn
+              (setf *copy-mode-prefix-k* nil)
+              (let ((new-state (%run-copy-mode-key-table-entry session byte result)))
+                (when new-state
+                  (setf *dirty* t)
+                  (return-from %dispatch-copy-mode-ground-byte
+                    (values nil new-state)))))))))
   (setf *dirty* t)
   (%ground-values))

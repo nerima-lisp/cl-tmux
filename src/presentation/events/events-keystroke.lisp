@@ -77,8 +77,9 @@
   ;; Copy mode has its own active table, so ordinary bytes are resolved there
   ;; before root/prefix bindings.  ESC is left to the escape accumulator below:
   ;; it may be a lone Escape, an arrow key, mouse input, or an extended key.
-  ;; Numeric prefix: digit bytes 0-9 accumulate *copy-mode-prefix*.  '0' with a
-  ;; zero prefix goes to line-start instead (vi convention: 0 = BOL when no count).
+  ;; Numeric prefix: digit bytes 0-9 accumulate via *copy-mode-prefix-k*.  '0'
+  ;; with a zero prefix goes to line-start instead (vi convention: 0 = BOL
+  ;; when no count).
   ((and (%copy-mode-active-p session) (/= byte +byte-esc+))
    (%dispatch-copy-mode-ground-byte session byte))
   ;; ── assume-paste-time: rapid consecutive keys are a paste ──────────────────

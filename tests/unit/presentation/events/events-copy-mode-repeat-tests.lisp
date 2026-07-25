@@ -6,12 +6,17 @@
 
   ;;; ── Copy-mode numeric-prefix repeat counts ───────────────────────────────────
   ;;;
-  ;;; %copy-mode-accumulate-digit folds digit bytes 1-9 (and 0 once a non-zero
-  ;;; prefix has started) into *copy-mode-prefix*; the next non-digit byte
-  ;;; applies the accumulated count (clamped to a minimum of 1) and resets the
-  ;;; prefix to 0.  These end-to-end tests drive the accumulator entirely
-  ;;; through process-byte, one byte at a time, matching how real keystrokes
-  ;;; arrive.
+  ;;; %make-copy-mode-digit-k folds digit bytes 1-9 (and 0 once a non-zero
+  ;;; prefix has started) into the *copy-mode-prefix-k* continuation; the next
+  ;;; non-digit byte resolves the accumulated count (clamped to a minimum of 1)
+  ;;; and resets *copy-mode-prefix-k* to NIL.  These end-to-end tests drive the
+  ;;; accumulator entirely through process-byte, one byte at a time, matching
+  ;;; how real keystrokes arrive.  Mid-sequence, only whether accumulation is
+  ;;; still in progress (*copy-mode-prefix-k* non-NIL) is observable from
+  ;;; outside the continuation — the accumulated value itself is closed over,
+  ;;; not stored anywhere inspectable, so correctness is verified by the final
+  ;;; dispatched effect (cursor moves by the right count) rather than by
+  ;;; reading an intermediate integer.
   ;;;
   ;;; Every test here pins mode-keys to "vi" via WITH-ISOLATED-CONFIG because
   ;;; numeric prefixes are applied to repeatable entries in the active copy-mode
@@ -35,7 +40,7 @@
                   do (cl-tmux::process-byte s (char-code ch) input-state))
             (expect (= expected-row
                    (car (cl-tmux/terminal/types:screen-copy-cursor screen))))
-            (expect (zerop cl-tmux::*copy-mode-prefix*)))))))
+            (expect (null cl-tmux::*copy-mode-prefix-k*)))))))
 
   ;; "12j" accumulates a two-digit prefix (1 then 2 -> 12) before dispatching.
   (it "copy-mode-numeric-prefix-multi-digit-accumulates"
@@ -45,12 +50,12 @@
         (seed-scrollback screen 20)
         (setf (cl-tmux/terminal/types:screen-copy-cursor screen) (cons 0 0))
         (cl-tmux::process-byte s (char-code #\1) input-state)
-        (expect (= 1 cl-tmux::*copy-mode-prefix*))
+        (expect (functionp cl-tmux::*copy-mode-prefix-k*))
         (cl-tmux::process-byte s (char-code #\2) input-state)
-        (expect (= 12 cl-tmux::*copy-mode-prefix*))
+        (expect (functionp cl-tmux::*copy-mode-prefix-k*))
         (cl-tmux::process-byte s (char-code #\j) input-state)
         (expect (= 4 (car (cl-tmux/terminal/types:screen-copy-cursor screen))))
-        (expect (zerop cl-tmux::*copy-mode-prefix*)))))
+        (expect (null cl-tmux::*copy-mode-prefix-k*)))))
 
   ;; A bare '0' (no prior non-zero prefix digit) is the vi 'beginning of line'
   ;; command, not the start of a numeric prefix — matching tmux's vi convention.
@@ -59,9 +64,9 @@
       (cl-tmux/options:set-option "mode-keys" "vi")
       (with-copy-mode-state (s screen input-state)
         (seed-scrollback screen 10)
-        (expect (zerop cl-tmux::*copy-mode-prefix*))
+        (expect (null cl-tmux::*copy-mode-prefix-k*))
         (cl-tmux::process-byte s (char-code #\0) input-state)
-        (expect (zerop cl-tmux::*copy-mode-prefix*)))))
+        (expect (null cl-tmux::*copy-mode-prefix-k*)))))
 
   ;; Once a non-zero digit has started a prefix, a following '0' DOES continue
   ;; the accumulation (vi convention: "10j" means repeat count 10).
@@ -72,8 +77,8 @@
         (seed-scrollback screen 20)
         (setf (cl-tmux/terminal/types:screen-copy-cursor screen) (cons 0 0))
         (cl-tmux::process-byte s (char-code #\1) input-state)
-        (expect (= 1 cl-tmux::*copy-mode-prefix*))
+        (expect (functionp cl-tmux::*copy-mode-prefix-k*))
         (cl-tmux::process-byte s (char-code #\0) input-state)
-        (expect (= 10 cl-tmux::*copy-mode-prefix*))
+        (expect (functionp cl-tmux::*copy-mode-prefix-k*))
         (cl-tmux::process-byte s (char-code #\j) input-state)
         (expect (= 4 (car (cl-tmux/terminal/types:screen-copy-cursor screen))))))))

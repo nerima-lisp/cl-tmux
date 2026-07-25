@@ -4,14 +4,17 @@
 
 ;;; ── Copy-mode numeric prefix ─────────────────────────────────────────────────
 ;;;
-;;; *copy-mode-prefix* accumulates digit bytes (0-9) pressed while copy mode
-;;; is active.  When a non-digit navigation key is pressed, the accumulated
-;;; count (clamped to min 1) is applied and the prefix is reset to 0.
-;;; The variable lives on the main event-loop thread; no locking is needed.
+;;; *copy-mode-prefix-k* accumulates digit bytes (0-9) pressed while copy mode
+;;; is active, CPS style: each digit closes over the count collected so far and
+;;; returns either a further continuation (still accumulating) or the resolved
+;;; repeat count (clamped to min 1), mirroring events-core.lisp's
+;;; *PROMPT-UTF8-CONTINUATION* / MAKE-PROMPT-UTF8-K.  The variable lives on the
+;;; main event-loop thread; no locking is needed.
 
-(defvar *copy-mode-prefix* 0
-  "Accumulated numeric prefix for copy-mode repeat counts.
-   Set to 0 between commands.  Updated exclusively on the event-loop thread.")
+(defvar *copy-mode-prefix-k* nil
+  "NIL at ground state (no numeric prefix in progress), or a (LAMBDA (BYTE) ...)
+   continuation returned by %MAKE-COPY-MODE-DIGIT-K that folds the next digit
+   byte into the in-progress repeat-count accumulation.")
 
 ;;; ── assume-paste-time (tmux server_client_assume_paste) ─────────────────────
 ;;;
