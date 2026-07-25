@@ -17,22 +17,22 @@
   ;;; ── Octet encoding/decoding helpers ─────────────────────────────────────────
 
   ;; u16-octets encodes a 16-bit value as two big-endian bytes.
-  (it "u16-octets-big-endian"
-    (dolist (c '((0     #(0 0))
-                 (1     #(0 1))
-                 (256   #(1 0))
-                 (65535 #(255 255))))
-      (destructuring-bind (n expected) c
-        (expect (equalp expected (cl-tmux/protocol:u16-octets n))))))
+  (it-each ((0     #(0 0))
+            (1     #(0 1))
+            (256   #(1 0))
+            (65535 #(255 255)))
+      "u16-octets-big-endian ~A"
+      (n expected)
+    (expect (equalp expected (cl-tmux/protocol:u16-octets n))))
 
   ;; u32-octets encodes a 32-bit value as four big-endian bytes.
-  (it "u32-octets-big-endian"
-    (dolist (c '((0          #(0 0 0 0))
-                 (1          #(0 0 0 1))
-                 (65536      #(0 1 0 0))
-                 (#xFFFFFFFF #(255 255 255 255))))
-      (destructuring-bind (n expected) c
-        (expect (equalp expected (cl-tmux/protocol:u32-octets n))))))
+  (it-each ((0          #(0 0 0 0))
+            (1          #(0 0 0 1))
+            (65536      #(0 1 0 0))
+            (#xFFFFFFFF #(255 255 255 255)))
+      "u32-octets-big-endian ~A"
+      (n expected)
+    (expect (equalp expected (cl-tmux/protocol:u32-octets n))))
 
   ;; u16-octets-pair concatenates two u16 values as 4 big-endian bytes.
   (it "u16-octets-pair-concatenates-two-u16s"
@@ -40,15 +40,15 @@
     (expect (equalp #(0 0 0 0)   (cl-tmux/protocol:u16-octets-pair 0 0))))
 
   ;; read-u16 reads two bytes at START as a big-endian u16.
-  (it "read-u16-decodes-big-endian"
+  (it-each ((0 0  "offset 0 → 0")
+            (2 24 "offset 2 → 24")
+            (4 80 "offset 4 → 80"))
+      "read-u16-decodes-big-endian: ~*~A"
+      (offset expected desc)
+    (declare (ignore desc))
     (let ((buffer (make-array 6 :element-type '(unsigned-byte 8)
                                 :initial-contents '(0 0 0 24 0 80))))
-      (dolist (c '((0 0  "offset 0 → 0")
-                   (2 24 "offset 2 → 24")
-                   (4 80 "offset 4 → 80")))
-        (destructuring-bind (offset expected desc) c
-          (declare (ignore desc))
-          (expect (= expected (cl-tmux/protocol:read-u16 buffer offset)))))))
+      (expect (= expected (cl-tmux/protocol:read-u16 buffer offset)))))
 
   ;;; ── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -192,21 +192,22 @@
   ;; Frames whose payloads span the upper u32 length bytes encode/decode cleanly.
   ;; For 256, 1000 and 65536-byte payloads the u32-be length field (read-u32 at
   ;; offset 1) must equal the payload length, and the payload round-trips equalp.
-  (it "frame-codec-large-payload-roundtrip"
-    (dolist (n (list 256 1000 65536))
-      (let* ((payload (make-array n :element-type '(unsigned-byte 8))))
-        ;; Fill with a recognizable, position-dependent pattern.
-        (dotimes (i n)
-          (setf (aref payload i) (logand i #xFF)))
-        (let ((frame (encode-frame +msg-frame+ payload)))
-          (expect (= (+ +header-size+ n) (length frame)))
-          ;; Length field stored big-endian at offset 1.
-          (expect (= n (cl-tmux/protocol:read-u32 frame 1)))
-          (multiple-value-bind (type decoded next) (decode-frame frame)
-            (expect (= +msg-frame+ type))
-            (expect (= n (length decoded)))
-            (expect (equalp payload decoded))
-            (expect (= (length frame) next)))))))
+  (it-each ((256) (1000) (65536))
+      "frame-codec-large-payload-roundtrip ~A"
+      (n)
+    (let* ((payload (make-array n :element-type '(unsigned-byte 8))))
+      ;; Fill with a recognizable, position-dependent pattern.
+      (dotimes (i n)
+        (setf (aref payload i) (logand i #xFF)))
+      (let ((frame (encode-frame +msg-frame+ payload)))
+        (expect (= (+ +header-size+ n) (length frame)))
+        ;; Length field stored big-endian at offset 1.
+        (expect (= n (cl-tmux/protocol:read-u32 frame 1)))
+        (multiple-value-bind (type decoded next) (decode-frame frame)
+          (expect (= +msg-frame+ type))
+          (expect (= n (length decoded)))
+          (expect (equalp payload decoded))
+          (expect (= (length frame) next))))))
 
   ;; Two large frames packed back-to-back decode sequentially with the right
   ;; next-index offsets, exercising u32 lengths > 255.
@@ -245,11 +246,15 @@
         (expect (= (length frame) next)))))
 
   ;; Integer encoders and decoders are symmetric: encode → decode recovers the original value.
-  (it "u16-u32-encoders-and-decoders-are-symmetric"
-    (dolist (n '(0 1 255 256 65535))
-      (expect (= n (cl-tmux/protocol:read-u16 (cl-tmux/protocol:u16-octets n) 0))))
-    (dolist (n '(0 1 65536 #xFFFFFF #xFFFFFFFF))
-      (expect (= n (cl-tmux/protocol:read-u32 (cl-tmux/protocol:u32-octets n) 0)))))
+  (it-each ((0) (1) (255) (256) (65535))
+      "u16-encode-decode-symmetric ~A"
+      (n)
+    (expect (= n (cl-tmux/protocol:read-u16 (cl-tmux/protocol:u16-octets n) 0))))
+
+  (it-each ((0) (1) (65536) (#xFFFFFF) (#xFFFFFFFF))
+      "u32-encode-decode-symmetric ~A"
+      (n)
+    (expect (= n (cl-tmux/protocol:read-u32 (cl-tmux/protocol:u32-octets n) 0))))
 
   ;; Property test: u16-octets/read-u16 and u32-octets/read-u32 are symmetric
   ;; across their FULL value range, generalizing the hand-picked boundary
@@ -311,19 +316,19 @@
   ;;; ── encode-command-payload / decode-command-payload round-trips ─────────────
 
   ;; encode-command-payload round-trips command, target, and args in all combinations.
-  (it "encode-decode-command-payload-table"
-    (dolist (row '(((:new-window)                               :new-window  nil       nil           "no target/args")
-                   ((:select-pane :target "$1:0.0")             :select-pane "$1:0.0"  nil           "with target")
-                   ((:send-keys :args ("C-c" ""))               :send-keys   nil       ("C-c" "")    "with args")
-                   ((:resize-pane :target "2:0" :args ("-U" "5")) :resize-pane "2:0"  ("-U" "5")    "target+args")
-                   (("new-session" :target "$2")                :new-session "$2"      nil           "string command-name")))
-      (destructuring-bind (encode-args expected-cmd expected-target expected-args desc) row
-        (declare (ignore desc))
-        (multiple-value-bind (command target args)
-            (decode-command-payload (apply #'encode-command-payload encode-args))
-          (expect (eq expected-cmd command))
-          (expect (equal expected-target target))
-          (expect (equal expected-args args))))))
+  (it-each (((:new-window)                               :new-window  nil       nil           "no target/args")
+            ((:select-pane :target "$1:0.0")             :select-pane "$1:0.0"  nil           "with target")
+            ((:send-keys :args ("C-c" ""))               :send-keys   nil       ("C-c" "")    "with args")
+            ((:resize-pane :target "2:0" :args ("-U" "5")) :resize-pane "2:0"  ("-U" "5")    "target+args")
+            (("new-session" :target "$2")                :new-session "$2"      nil           "string command-name"))
+      "encode-decode-command-payload: ~*~*~*~*~A"
+      (encode-args expected-cmd expected-target expected-args desc)
+    (declare (ignore desc))
+    (multiple-value-bind (command target args)
+        (decode-command-payload (apply #'encode-command-payload encode-args))
+      (expect (eq expected-cmd command))
+      (expect (equal expected-target target))
+      (expect (equal expected-args args))))
 
   ;; A command name containing ':' is not misidentified as a target when only
   ;; one field is present (no ambiguity — target detection requires >= 2 fields).
