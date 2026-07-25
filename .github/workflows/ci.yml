@@ -4,45 +4,48 @@ on:
   push:
     branches: [main]
   pull_request:
-  workflow_call:
-
-# Cancel superseded runs on the same ref to save CI minutes.
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  workflow_dispatch:
 
 permissions:
   contents: read
 
+# Supersede in-flight runs for the same PR; never cancel a push to the default
+# branch.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
-  # Everything runs through Nix: `nix flake check` builds cl-tmux and runs
-  # the FiveAM suite (checks.default in flake.nix). The matrix covers the two
-  # platforms users actually run: x86_64-linux and aarch64-darwin.
-  nix:
-    name: nix flake check (${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, macos-latest]
-    # Hoisted to job level so the step-level `if` below can read it. Secrets
-    # cannot be referenced directly in an `if`, and a step cannot read its own
-    # `env`, so this indirection is required.
-    env:
-      CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
+  # One job on purpose. Granularity belongs in the flake's `checks.*`
+  # attributes, which `nix flake check` evaluates in parallel with build
+  # caching. Splitting these into separate GitHub jobs would duplicate that
+  # scheduling and lose cache sharing between them.
+  #
+  # Add a second job ONLY for work the Nix sandbox cannot do: network access,
+  # a real PTY/TTY, artifact upload, or a different runner OS.
+  check:
+    name: nix flake check
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v7
-      - uses: cachix/install-nix-action@v31
+      # persist-credentials: false — this job runs untrusted PR code via
+      # `nix flake check`, and never needs the token, so don't leave it in
+      # .git/config for that code to read.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          nix_path: nixpkgs=channel:nixos-unstable
-          extra_nix_config: |
-            experimental-features = nix-command flakes
-      # Only configure the binary cache when the auth token is available
-      # (it is not exposed to pull requests from forks).
-      - uses: cachix/cachix-action@v17
-        if: ${{ env.CACHIX_AUTH_TOKEN != '' }}
+          persist-credentials: false
+
+      - uses: ./.github/actions/nix-setup
         with:
-          name: nerima-lisp-cl-tmux
-          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
-      - run: nix flake check --print-build-logs
-      - run: nix build --print-build-logs
+          cachix-cache: ${{ vars.CACHIX_CACHE }}
+          cachix-auth-token: ${{ secrets.CACHIX_AUTH_TOKEN }}
+
+      # Runs the SBCL test suite (checks.default), the treefmt formatting gate
+      # (checks.formatting), and the mkdocs --strict build (checks.docs).
+      # Add `--all-systems` only when the flake declares more than one system.
+      - name: Check flake
+        run: nix flake check --print-build-logs
+
+      # Catches stray conflict markers and whitespace errors that compile fine.
+      - name: Check diff hygiene
+        run: git diff --check
