@@ -114,6 +114,30 @@ Initial public development. Highlights of what the tree contains today:
   (single-worker sequential); per-test thread cleanup runs through a root
   `after-each` hook.
 
+- **Duplicated option-table registration folded into one macro.**
+  `define-tmux-options` and `define-server-options` each hand-rolled an
+  identical "populate the immutable known-registry fallback" step after
+  delegating their other two phases to `define-option-table`; that third
+  phase now lives in `define-option-table` itself (a `known-registry-var`
+  parameter), so both wrappers are a one-line delegating call.
+
+- **Copy-mode's numeric-prefix accumulator converted to CPS.** Instead of
+  mutating the raw `*copy-mode-prefix*` integer across calls,
+  `%copy-mode-accumulate-digit` is now `%make-copy-mode-digit-k`, a
+  self-recursive continuation constructor
+  mirroring `make-prompt-utf8-k`/`*prompt-utf8-continuation*` — the shape its
+  own docstring had described as the target since before the prompt-UTF8
+  helper adopted it.
+
+- **Ongoing `cl-weave:it-each` conversion of `dolist`-driven test tables.**
+  26 more parameterized-case tables (across `events-tests-f.lisp`,
+  `renderer-format-tests-b.lisp`, `protocol-tests.lisp`) now expand into
+  independently named/reported cases instead of one aggregate `it` per
+  table, continuing the sweep noted in the FiveAM-migration entry above.
+  Tables built from computed values (row elements that are function calls,
+  not literal data) are left as manual `dolist`s — `it-each`'s row-list is
+  literal/unevaluated, so a computed row cannot convert.
+
 ### Fixed
 
 - `main-startup-flags.lisp`: wrap the `%flag-parser-clause` helper in
