@@ -52,17 +52,17 @@
   ;;; ── Prefix arrow keys select pane ────────────────────────────────────────────
 
   ;; C-b Up (ESC [ A) and C-b Down (ESC [ B) each return NIL (no quit/detach).
-  (it "prefix-arrow-up-down-returns-nil-table"
-    (dolist (row '((65 "C-b Up arrow must return NIL (no quit/detach)")
-                   (66 "C-b Down arrow must return NIL (no quit/detach)")))
-      (destructuring-bind (final desc) row
-        (declare (ignore desc))
-        (with-fake-session (s)
-          (let ((state (cl-tmux::make-input-state)))
-            (cl-tmux::process-byte s 2   state)
-            (cl-tmux::process-byte s 27  state)
-            (cl-tmux::process-byte s 91  state)
-            (expect (null (cl-tmux::process-byte s final state))))))))
+  (it-each ((65 "C-b Up arrow must return NIL (no quit/detach)")
+            (66 "C-b Down arrow must return NIL (no quit/detach)"))
+      "prefix-arrow-up-down-returns-nil: ~*~A"
+      (final desc)
+    (declare (ignore desc))
+    (with-fake-session (s)
+      (let ((state (cl-tmux::make-input-state)))
+        (cl-tmux::process-byte s 2   state)
+        (cl-tmux::process-byte s 27  state)
+        (cl-tmux::process-byte s 91  state)
+        (expect (null (cl-tmux::process-byte s final state))))))
 
   ;;; ── C-b C-b send-prefix ──────────────────────────────────────────────────────
 
@@ -88,60 +88,60 @@
   ;;; ── Modifier+arrow key-name helpers ────────────────────────────────────────
 
   ;; %arrow-final-name returns the tmux base name for arrow finals and NIL for others.
-  (it "arrow-final-name-table"
-    (dolist (row '((65 "Up"    "A → Up")
-                   (66 "Down"  "B → Down")
-                   (67 "Right" "C → Right")
-                   (68 "Left"  "D → Left")
-                   (72 nil     "H (Home) → NIL")
-                   (109 nil    "m (SGR final) → NIL")))
-      (destructuring-bind (byte expected desc) row
-        (declare (ignore desc))
-        (expect (equal expected (cl-tmux::%arrow-final-name byte))))))
+  (it-each ((65 "Up"    "A → Up")
+            (66 "Down"  "B → Down")
+            (67 "Right" "C → Right")
+            (68 "Left"  "D → Left")
+            (72 nil     "H (Home) → NIL")
+            (109 nil    "m (SGR final) → NIL"))
+      "arrow-final-name: ~*~*~A"
+      (byte expected desc)
+    (declare (ignore desc))
+    (expect (equal expected (cl-tmux::%arrow-final-name byte))))
 
   ;; %modifier-arrow-key-name builds C-/M-/S- prefixed arrow names; NIL for non-arrow or no-modifier.
-  (it "modifier-arrow-key-name-table"
-    (dolist (row '((53 65 "C-Up"    "5=Ctrl + A → C-Up")
-                   (51 68 "M-Left"  "3=Meta + D → M-Left")
-                   (50 66 "S-Down"  "2=Shift + B → S-Down")
-                   (53 67 "C-Right" "5=Ctrl + C → C-Right")
-                   (54 65 "C-S-Up"   "6=Ctrl+Shift + A → C-S-Up")
-                   (55 65 "C-M-Up"   "7=Ctrl+Meta + A → C-M-Up")
-                   (56 65 "C-M-S-Up" "8=Ctrl+Meta+Shift + A → C-M-S-Up")
-                   (52 65 "M-S-Up"   "4=Meta+Shift + A → M-S-Up")
-                   (53 72 nil        "Ctrl+H (Home final) → NIL")
-                   (49 65 nil        "1=no-modifier → NIL")))
-      (destructuring-bind (mod arrow expected desc) row
-        (declare (ignore desc))
-        (expect (equal expected (cl-tmux::%modifier-arrow-key-name mod arrow))))))
+  (it-each ((53 65 "C-Up"    "5=Ctrl + A → C-Up")
+            (51 68 "M-Left"  "3=Meta + D → M-Left")
+            (50 66 "S-Down"  "2=Shift + B → S-Down")
+            (53 67 "C-Right" "5=Ctrl + C → C-Right")
+            (54 65 "C-S-Up"   "6=Ctrl+Shift + A → C-S-Up")
+            (55 65 "C-M-Up"   "7=Ctrl+Meta + A → C-M-Up")
+            (56 65 "C-M-S-Up" "8=Ctrl+Meta+Shift + A → C-M-S-Up")
+            (52 65 "M-S-Up"   "4=Meta+Shift + A → M-S-Up")
+            (53 72 nil        "Ctrl+H (Home final) → NIL")
+            (49 65 nil        "1=no-modifier → NIL"))
+      "modifier-arrow-key-name: ~*~*~*~A"
+      (mod arrow expected desc)
+    (declare (ignore desc))
+    (expect (equal expected (cl-tmux::%modifier-arrow-key-name mod arrow))))
 
   ;;; ── Modifier+arrow binding override (bind C-Up / bind -n M-Left) ────────────
 
   ;; Binding C-Up/M-Up/Up to next-window makes C-b + sequence run next-window (not resize/select-pane).
-  (it "prefix-modifier-arrow-overrides-table"
-    (dolist (c '(("C-Up" (2 27 91 49 59 53 65) "C-b C-Up → next-window, not resize")
-                 ("M-Up" (2 27 91 49 59 51 65) "C-b M-Up → next-window, not resize")
-                 ("Up"   (2 27 91 65)           "C-b Up → next-window, not select-pane")))
-      (destructuring-bind (key-name bytes desc) c
-        (declare (ignore desc))
-        (with-isolated-config
-          (cl-tmux/config:apply-config-directive (list "bind" key-name "next-window"))
-          (with-fake-session (s :nwindows 2)
-            (let ((state (cl-tmux::make-input-state)))
-              (dolist (b bytes) (cl-tmux::process-byte s b state))
-              (expect (eq (second (session-windows s)) (session-active-window s)))))))))
+  (it-each (("C-Up" (2 27 91 49 59 53 65) "C-b C-Up → next-window, not resize")
+            ("M-Up" (2 27 91 49 59 51 65) "C-b M-Up → next-window, not resize")
+            ("Up"   (2 27 91 65)           "C-b Up → next-window, not select-pane"))
+      "prefix-modifier-arrow-override ~A: ~*~A"
+      (key-name bytes desc)
+    (declare (ignore desc))
+    (with-isolated-config
+      (cl-tmux/config:apply-config-directive (list "bind" key-name "next-window"))
+      (with-fake-session (s :nwindows 2)
+        (let ((state (cl-tmux::make-input-state)))
+          (dolist (b bytes) (cl-tmux::process-byte s b state))
+          (expect (eq (second (session-windows s)) (session-active-window s)))))))
 
   ;; Without a binding, C-b + modifier+arrow sequences leave the first window active.
-  (it "unbound-prefix-modifier-arrow-leaves-window-table"
-    (dolist (c '(((2 27 91 49 59 53 65) "C-b C-Up unbound: first window stays")
-                 ((27 91 49 59 53 65)    "bare C-Up unbound: first window stays")))
-      (destructuring-bind (bytes desc) c
-        (declare (ignore desc))
-        (with-isolated-config
-          (with-fake-session (s :nwindows 2)
-            (let ((state (cl-tmux::make-input-state)))
-              (dolist (b bytes) (cl-tmux::process-byte s b state))
-              (expect (eq (first (session-windows s)) (session-active-window s)))))))))
+  (it-each (((2 27 91 49 59 53 65) "C-b C-Up unbound: first window stays")
+            ((27 91 49 59 53 65)    "bare C-Up unbound: first window stays"))
+      "unbound-prefix-modifier-arrow: ~*~A"
+      (bytes desc)
+    (declare (ignore desc))
+    (with-isolated-config
+      (with-fake-session (s :nwindows 2)
+        (let ((state (cl-tmux::make-input-state)))
+          (dolist (b bytes) (cl-tmux::process-byte s b state))
+          (expect (eq (first (session-windows s)) (session-active-window s)))))))
 
   ;; Unbound C-b S-Up is consumed by the prefix table and must not leak to the pane.
   (it "unbound-prefix-shift-arrow-does-not-forward"
@@ -217,33 +217,33 @@
           (expect (= 15 (pane-width right)))))))
 
   ;; Bindings with -n fire modifier+arrow sequences at root without prefix.
-  (it "root-modifier-arrow-binding-table"
-    (dolist (c '(("M-Left" (27 91 49 59 51 68) "M-Left bare → next-window")
-                 ("C-Up"   (27 91 49 59 53 65) "C-Up bare → next-window")))
-      (destructuring-bind (key-name bytes desc) c
-        (declare (ignore desc))
-        (with-isolated-config
-          (cl-tmux/config:apply-config-directive (list "bind" "-n" key-name "next-window"))
-          (with-fake-session (s :nwindows 2)
-            (let ((state (cl-tmux::make-input-state)))
-              (dolist (b bytes) (cl-tmux::process-byte s b state))
-              (expect (eq (second (session-windows s)) (session-active-window s)))))))))
+  (it-each (("M-Left" (27 91 49 59 51 68) "M-Left bare → next-window")
+            ("C-Up"   (27 91 49 59 53 65) "C-Up bare → next-window"))
+      "root-modifier-arrow-binding ~A: ~*~A"
+      (key-name bytes desc)
+    (declare (ignore desc))
+    (with-isolated-config
+      (cl-tmux/config:apply-config-directive (list "bind" "-n" key-name "next-window"))
+      (with-fake-session (s :nwindows 2)
+        (let ((state (cl-tmux::make-input-state)))
+          (dolist (b bytes) (cl-tmux::process-byte s b state))
+          (expect (eq (second (session-windows s)) (session-active-window s)))))))
 
   ;;; ── Meta/Alt key-name helper and bind override (bind -n M-h / bind M-j) ─────
 
   ;; %meta-key-name returns M-<char> for printable bytes and NIL for control bytes and DEL.
-  (it "meta-key-name-table"
-    (dolist (row '((97  "M-a"     "a → M-a")
-                   (49  "M-1"     "1 → M-1")
-                   (47  "M-/"     "/ → M-/")
-                   (72  "M-H"     "H (Alt+Shift+h) → M-H")
-                   (32  "M-Space" "space → M-Space")
-                   (8   nil       "^H (backspace) → NIL")
-                   (27  nil       "ESC → NIL")
-                   (127 nil       "DEL → NIL")))
-      (destructuring-bind (byte expected desc) row
-        (declare (ignore desc))
-        (expect (equal expected (cl-tmux::%meta-key-name byte))))))
+  (it-each ((97  "M-a"     "a → M-a")
+            (49  "M-1"     "1 → M-1")
+            (47  "M-/"     "/ → M-/")
+            (72  "M-H"     "H (Alt+Shift+h) → M-H")
+            (32  "M-Space" "space → M-Space")
+            (8   nil       "^H (backspace) → NIL")
+            (27  nil       "ESC → NIL")
+            (127 nil       "DEL → NIL"))
+      "meta-key-name: ~*~*~A"
+      (byte expected desc)
+    (declare (ignore desc))
+    (expect (equal expected (cl-tmux::%meta-key-name byte))))
 
   ;; bind -n M-h next-window makes a bare Alt+h (ESC h) run next-window with no
   ;; prefix — the root-table meta path overrides forwarding to the pane.
