@@ -1,7 +1,7 @@
 (in-package #:cl-user)
 
 (defparameter *cl-tmux-test-components*
-  '((:module "tests"
+  '((:module "t"
      :serial t
      :components
       ((:file "package")
