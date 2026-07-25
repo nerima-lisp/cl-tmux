@@ -15,6 +15,14 @@
       (cl-tmux/buffer:get-named-buffer name)
       (cl-tmux/buffer:get-paste-buffer 0)))
 
+(defun %delete-named-or-latest-paste-buffer (name)
+  "Delete NAME's paste buffer when NAME is non-NIL, otherwise the most recent
+   paste buffer.  Mirrors %NAMED-OR-LATEST-PASTE-BUFFER's dispatch for the
+   delete side."
+  (if name
+      (cl-tmux/buffer:delete-buffer-by-name name)
+      (cl-tmux/buffer:delete-paste-buffer 0)))
+
 (defun %buffer-positionals-text (positionals)
   "Join POSITIONALS with spaces using cl-tmux command-line token semantics."
   (format nil "~{~A~^ ~}" positionals))
@@ -123,9 +131,7 @@
       (when text
         (%paste-to-pane target-pane text (%flag-present-p flags #\p))
         (when delete-p
-          (if name
-              (cl-tmux/buffer:delete-buffer-by-name name)
-              (cl-tmux/buffer:delete-paste-buffer 0)))))))
+          (%delete-named-or-latest-paste-buffer name))))))
 
 (define-command-input-handler %cmd-delete-buffer-arg (session args)
   "delete-buffer [-b name]: delete the named buffer (or the most recent)."
@@ -134,9 +140,7 @@
          :max-positionals 0
          :message "delete-buffer: unsupported argument")
   (let ((name (%buffer-name-from-flags flags)))
-    (if name
-        (cl-tmux/buffer:delete-buffer-by-name name)
-        (cl-tmux/buffer:delete-paste-buffer 0))))
+    (%delete-named-or-latest-paste-buffer name)))
 
 (define-command-input-handler %cmd-show-buffer-arg (session args)
   "show-buffer [-b name]: show the named buffer's contents (or the most recent)."
