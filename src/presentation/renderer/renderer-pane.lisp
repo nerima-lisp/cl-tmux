@@ -55,18 +55,28 @@
     (write-string (format nil "~C]8;;~@[~A~]~C\\" #\Escape hyperlink #\Escape) stream)
     (setf (sgr-reg-hyperlink sgr-reg) hyperlink)))
 
+(defstruct (selection-bounds (:conc-name sel-bounds-))
+  "Normalised copy-mode selection boundary for one rendered frame, bundled so the
+   per-cell renderers take a single value instead of eight positional arguments.
+   Built once per frame from %compute-selection-bounds's eight return values
+   (which its direct unit tests still consume positionally)."
+  active start-row end-row start-col end-col rect-p mark-row mark-col)
+
 (defun %render-cell (stream cell row col sgr-reg rev-screen
                      def-fg def-bg selection-style-fg selection-style-bg
-                     mark-style-fg mark-style-bg
-                     sel-active sel-start-row sel-end-row sel-start-col sel-end-col
-                     sel-rect-p sel-mark-row sel-mark-col)
+                     mark-style-fg mark-style-bg sel)
   "Resolve CELL's colours through the base → mark → selection → attrs pipeline
-   and render it to STREAM, threading the last-emitted SGR state through SGR-REG."
-  (let* ((in-sel (%pane-cell-in-selection-p row col sel-active sel-start-row sel-end-row
-                                            sel-start-col sel-end-col sel-rect-p)))
+   and render it to STREAM, threading the last-emitted SGR state through SGR-REG.
+   SEL is the frame's SELECTION-BOUNDS."
+  (let* ((in-sel (%pane-cell-in-selection-p row col
+                                            (sel-bounds-active sel)
+                                            (sel-bounds-start-row sel) (sel-bounds-end-row sel)
+                                            (sel-bounds-start-col sel) (sel-bounds-end-col sel)
+                                            (sel-bounds-rect-p sel))))
     (multiple-value-bind (base-fg base-bg) (%pane-cell-base-colors cell def-fg def-bg)
       (multiple-value-bind (mark-col-p mark-fg mark-bg)
-          (%pane-cell-mark-colors row col sel-mark-row sel-mark-col
+          (%pane-cell-mark-colors row col
+                                  (sel-bounds-mark-row sel) (sel-bounds-mark-col sel)
                                   mark-style-fg mark-style-bg base-fg base-bg)
         (multiple-value-bind (sel-fg sel-bg selection-style-colour)
             (%pane-cell-selection-colors in-sel selection-style-fg selection-style-bg
@@ -89,13 +99,12 @@
               (write-char ch stream))))))))
 
 (defun %render-cell-row (stream screen pane-col-count row
-                         sel-active sel-start-row sel-end-row sel-start-col sel-end-col
-                         sel-rect-p
-                         sel-mark-row sel-mark-col
+                         sel
                          sgr-reg
                          def-fg def-bg selection-style-fg selection-style-bg
                          mark-style-fg mark-style-bg)
   "Render one row of cells to STREAM, highlighting selected cells.
+   SEL is the frame's SELECTION-BOUNDS, forwarded to each cell.
    SGR-REG is a sgr-register struct used as mutable state across rows (last-emitted
    fg/bg/attrs/ul-color/hyperlink); the caller initialises it once and threads it
    across all rows in the pane.
@@ -120,9 +129,7 @@
         unless (zerop (cell-width cell))
           do (%render-cell stream cell row col sgr-reg rev-screen
                            def-fg def-bg selection-style-fg selection-style-bg
-                           mark-style-fg mark-style-bg
-                           sel-active sel-start-row sel-end-row sel-start-col sel-end-col
-                           sel-rect-p sel-mark-row sel-mark-col)))
+                           mark-style-fg mark-style-bg sel)))
 
 (defun %pane-cell-base-colors (cell def-fg def-bg)
   "Substitute the pane's window-style default colours DEF-FG / DEF-BG only for
@@ -214,7 +221,12 @@
         (%compute-selection-bounds screen)
       ;; sgr-register bundles the mutable last-emitted SGR state so
       ;; %render-cell-row can detect and suppress redundant attribute sequences.
-      (let ((sgr-reg (make-sgr-register)))
+      (let ((sgr-reg (make-sgr-register))
+            (sel     (make-selection-bounds :active sel-active
+                                            :start-row sel-start-row :end-row sel-end-row
+                                            :start-col sel-start-col :end-col sel-end-col
+                                            :rect-p sel-rect-p
+                                            :mark-row sel-mark-row :mark-col sel-mark-col)))
         (loop for row below pane-height do
           (when (plusp line-number-gutter-width)
             (%render-copy-mode-line-number-row stream screen row origin-x origin-y
@@ -225,10 +237,7 @@
           (when (plusp content-width)
             (move-to stream (+ origin-y row) content-origin-x)
             (%render-cell-row stream screen content-width row
-                              sel-active sel-start-row sel-end-row
-                              sel-start-col sel-end-col
-                              sel-rect-p
-                              sel-mark-row sel-mark-col
+                              sel
                               sgr-reg
                               (pane-style-def-fg colours) (pane-style-def-bg colours)
                               (pane-style-selection-fg colours) (pane-style-selection-bg colours)

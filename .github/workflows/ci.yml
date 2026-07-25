@@ -42,7 +42,7 @@ jobs:
       - uses: cachix/cachix-action@v17
         if: ${{ env.CACHIX_AUTH_TOKEN != '' }}
         with:
-          name: takeokunn-cl-tmux
+          name: nerima-lisp-cl-tmux
           authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
       - run: nix flake check --print-build-logs
       - run: nix build --print-build-logs

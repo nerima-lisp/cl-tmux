@@ -26,9 +26,8 @@
       :encoding :utf-8)))
 
 ;;; Verify the helpers function correctly before relying on them in later tests.
-;;; FiveAM's *suite* is file-local under ASDF, so these tests need an explicit
-;;; suite here — before this file's first in-suite they would otherwise land
-;;; in the global suite, which the runner never runs.
+;;; These live in their own describe group so the helper checks are reported
+;;; distinctly from the parser behaviour tests that use them.
 
 (describe "terminal-suite/parser-helper-suite"
 
@@ -44,7 +43,30 @@
   (it "feed-osc-helper"
     (with-screen (s 20 5)
       (feed-osc s 0 "test-title")
-      (expect (string= "test-title" (cl-tmux/terminal/types:screen-title s))))))
+      (expect (string= "test-title" (cl-tmux/terminal/types:screen-title s)))))
+
+  ;; csi-final-byte-p: a byte in [0x40 '@' .. 0x7E '~'] terminates a CSI sequence.
+  (it-each ((#x40 t)      ; '@' — low boundary
+            (#x4D t)      ; 'M' — mid-range final byte
+            (#x7E t)      ; '~' — high boundary
+            (#x3F nil)    ; '?' — private marker, below range
+            (#x30 nil)    ; '0' — parameter byte
+            (#x7F nil))   ; DEL — above range
+      "csi-final-byte-p #x~X → ~A"
+      (byte expected)
+    (expect (eq expected (and (cl-tmux/terminal/parser:csi-final-byte-p byte) t))))
+
+  ;; csi-final-byte-before-p: T for any byte BELOW the final-byte range, i.e. the
+  ;; CSI is still incomplete (a parameter / intermediate / marker byte).
+  (it-each ((#x3F t)      ; '?' — private marker
+            (#x30 t)      ; '0' — parameter digit
+            (#x3B t)      ; ';' — parameter separator
+            (#x40 nil)    ; '@' — at the low boundary (already final)
+            (#x4D nil)    ; 'M' — in the final-byte range
+            (#x7E nil))   ; '~' — high boundary
+      "csi-final-byte-before-p #x~X → ~A"
+      (byte expected)
+    (expect (eq expected (and (cl-tmux/terminal/parser:csi-final-byte-before-p byte) t)))))
 
 ;;; ── Coverage gap: zero-length buffer in screen-process-bytes ─────────────────
 ;;;

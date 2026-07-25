@@ -7,6 +7,7 @@
   (:shadowing-import-from #:cl-weave #:describe)
   (:import-from #:cl-weave
                 #:it #:it-only #:it-concurrent #:it-sequential
+                #:it-each #:describe-each
                 #:describe-only #:describe-concurrent #:describe-sequential
                 #:expect #:expect-not
                 #:signals #:finishes #:fail #:skip

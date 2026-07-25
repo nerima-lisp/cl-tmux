@@ -35,12 +35,6 @@
 
 ;;; ── Status bar data formatters (pure) ─────────────────────────────────────
 
-(defun %status-current-time ()
-  "Return current time as a HH:MM string (5 characters)."
-  (multiple-value-bind (_ min hour) (get-decoded-time)
-    (declare (ignore _))
-    (format nil "~2,'0D:~2,'0D" hour min)))
-
 (defun %status-pane-indicator (active-pane)
   "Pane-number string for the status bar, or empty string when ACTIVE-PANE is NIL."
   (if active-pane (format nil " #~D" (pane-id active-pane)) ""))

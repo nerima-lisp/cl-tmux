@@ -34,13 +34,15 @@
   "Seconds to allow lsof cwd probes to run.")
 
 (defun %run-format-probe (args timeout)
-  "Run a short OS probe and return trimmed stdout, or the empty string on failure."
+  "Run a short OS probe (ARGS is a full argv list) and return trimmed stdout, or
+   the empty string on failure.  process-kit:run resolves the binary on PATH
+   (:search t) and kills the probe's process group if it overruns TIMEOUT."
   (handler-case
       (string-trim " \t\n\r"
-                   (uiop:run-program args
-                                     :output :string
-                                     :ignore-error-status t
-                                     :timeout timeout))
+                   (process-kit:process-result-stdout
+                    (process-kit:run (first args) (rest args)
+                                     :timeout-seconds timeout
+                                     :on-timeout :return)))
     (error () "")))
 
 (defun %fetch-pane-command (pid)

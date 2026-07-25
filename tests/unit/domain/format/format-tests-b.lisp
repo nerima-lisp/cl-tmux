@@ -7,42 +7,40 @@
   ;;; ── Path-modifier helpers (direct unit tests for edge cases) ──────────────────
 
   ;; %path-basename handles roots, trailing slashes, and bare names.
-  (it "path-basename-edge-cases"
-    (dolist (c '(("/a/b/c" "c") ("/a/b/" "b") ("foo" "foo") ("/" "/")))
-      (destructuring-bind (input expected) c
-        (expect (string= expected (cl-tmux/format::%path-basename input))))))
+  (it-each (("/a/b/c" "c") ("/a/b/" "b") ("foo" "foo") ("/" "/"))
+      "%path-basename ~S → ~S"
+      (input expected)
+    (expect (string= expected (cl-tmux/format::%path-basename input))))
 
   ;; %path-dirname handles roots, trailing slashes, and bare names.
-  (it "path-dirname-edge-cases"
-    (dolist (c '(("/a/b/c" "/a/b") ("/foo" "/") ("foo" ".")))
-      (destructuring-bind (input expected) c
-        (expect (string= expected (cl-tmux/format::%path-dirname input))))))
+  (it-each (("/a/b/c" "/a/b") ("/foo" "/") ("foo" "."))
+      "%path-dirname ~S → ~S"
+      (input expected)
+    (expect (string= expected (cl-tmux/format::%path-dirname input))))
 
   ;;; ── Substitute modifier: #{s/PAT/REP/[i]:var} ────────────────────────────────
 
   ;; #{s/PAT/REP/:var} replaces all matches; 'i' for case-insensitive; empty pattern is safe.
-  (it "format-modifier-substitute-table"
-    (dolist (c '(("#{s/foo/bar/:window_name}" :window-name "foofoo" "barbar" "replaces all occurrences")
-                 ("#{s/o/0/:p}"               :p           "moon"   "m00n"   "replaces every occurrence")
-                 ("#{s/xyz/Q/:p}"             :p           "abc"    "abc"    "no match → unchanged")
-                 ("#{s/abc/x/i:p}"            :p           "abcABC" "xx"     "case-insensitive flag")
-                 ("#{s/abc/x/:p}"             :p           "abcABC" "xABC"   "case-sensitive by default")
-                 ("#{s///:p}"                 :p           "abc"    "abc"    "empty pattern → unchanged")))
-      (destructuring-bind (spec key val expected desc) c
-        (declare (ignore desc))
-        (expect (string= expected (fmt spec key val))))))
+  (it-each (("#{s/foo/bar/:window_name}" :window-name "foofoo" "barbar")
+            ("#{s/o/0/:p}"               :p           "moon"   "m00n")
+            ("#{s/xyz/Q/:p}"             :p           "abc"    "abc")
+            ("#{s/abc/x/i:p}"            :p           "abcABC" "xx")
+            ("#{s/abc/x/:p}"             :p           "abcABC" "xABC")
+            ("#{s///:p}"                 :p           "abc"    "abc"))
+      "substitute ~A"
+      (spec key val expected)
+    (expect (string= expected (fmt spec key val))))
 
   ;; #{s/PAT/REP/:var} treats PAT as an extended regular expression (tmux regsub),
   ;; supporting character classes, anchors, quantifiers and \N backreferences.
-  (it "format-modifier-substitute-regex"
-    (dolist (c '(("#{s/[0-9]+/N/:p}"        :p "a12b345"   "aNbN"   "digit class + quantifier")
-                 ("#{s/a.c/X/:p}"          :p "abc-aXc"   "X-X"    ". matches any char")
-                 ("#{s/^foo/BAR/:p}"       :p "foofoo"    "BARfoo" "^ anchors to start only")
-                 ("#{s/(a)(b)/\\2\\1/:p}"   :p "ab"        "ba"     "\\N backreferences in REP")
-                 ("#{s/[A-Z]+/x/i:p}"      :p "abcABC"    "x"      "i flag folds case in the class")))
-      (destructuring-bind (spec key val expected desc) c
-        (declare (ignore desc))
-        (expect (string= expected (fmt spec key val))))))
+  (it-each (("#{s/[0-9]+/N/:p}"        :p "a12b345"   "aNbN")
+            ("#{s/a.c/X/:p}"           :p "abc-aXc"   "X-X")
+            ("#{s/^foo/BAR/:p}"        :p "foofoo"    "BARfoo")
+            ("#{s/(a)(b)/\\2\\1/:p}"   :p "ab"        "ba")
+            ("#{s/[A-Z]+/x/i:p}"       :p "abcABC"    "x"))
+      "substitute-regex ~A"
+      (spec key val expected)
+    (expect (string= expected (fmt spec key val))))
 
   ;; %regex-replace-all returns the input unchanged on a malformed regex and on an
   ;; empty pattern (never signals, never inserts per-position).
@@ -71,11 +69,11 @@
     (expect (string= "veryl" (fmt "#{=5:window_name}" :window-name "verylongname"))))
 
   ;; #{==:a,b} → 1 when equal else 0; #{!=:a,b} is its negation.
-  (it "format-comparison-equal-and-not-equal"
-    (dolist (c '(("#{==:foo,foo}" "1") ("#{==:foo,bar}" "0")
-                 ("#{!=:foo,bar}" "1") ("#{!=:foo,foo}" "0")))
-      (destructuring-bind (spec expected) c
-        (expect (string= expected (fmt spec))))))
+  (it-each (("#{==:foo,foo}" "1") ("#{==:foo,bar}" "0")
+            ("#{!=:foo,bar}" "1") ("#{!=:foo,foo}" "0"))
+      "comparison ~A → ~A"
+      (spec expected)
+    (expect (string= expected (fmt spec))))
 
   ;; #{==:#{var},literal} expands the nested side before comparing.
   (it "format-comparison-expands-nested-sides"
@@ -103,18 +101,17 @@
 
   ;; Bare </>/<=/>= use strcmp (lexicographic), matching tmux's bare operators:
   ;; multi-digit and non-numeric pairs compare by character order, not value.
-  (it "format-comparison-lexicographic-strcmp-semantics"
-    (dolist (c '(("#{<:10,9}"        "1" "\"10\" sorts before \"9\"")
-                 ("#{>:10,9}"        "0" "\"10\" does not sort after \"9\"")
-                 ("#{<:apple,banana}" "1" "\"apple\" < \"banana\"")
-                 ("#{>:apple,banana}" "0" "\"apple\" not > \"banana\"")
-                 ("#{<=:abc,abc}"    "1" "equal strings satisfy <=")
-                 ("#{>=:abc,abc}"    "1" "equal strings satisfy >=")
-                 ("#{<:abc,abc}"     "0" "equal strings are not <")
-                 ("#{>:abc,abc}"     "0" "equal strings are not >")))
-      (destructuring-bind (spec expected desc) c
-        (declare (ignore desc))
-        (expect (string= expected (fmt spec))))))
+  (it-each (("#{<:10,9}"         "1")
+            ("#{>:10,9}"         "0")
+            ("#{<:apple,banana}" "1")
+            ("#{>:apple,banana}" "0")
+            ("#{<=:abc,abc}"     "1")
+            ("#{>=:abc,abc}"     "1")
+            ("#{<:abc,abc}"      "0")
+            ("#{>:abc,abc}"      "0"))
+      "strcmp ~A → ~A"
+      (spec expected)
+    (expect (string= expected (fmt spec))))
 
   ;; #{?#{var},t,f} expands the nested condition before testing truthiness.
   (it "format-conditional-nested-condition"
@@ -156,9 +153,10 @@
 
   ;; #{t:...} is a timestamp-variable modifier only. Strftime syntax must not
   ;; route through the public format expander.
-  (it "format-t-modifier-rejects-current-time-strftime"
-    (dolist (spec '("#{t:%H:%M}" "#{t:%Y-%m-%d}" "#{t:}"))
-      (expect (string= "" (fmt spec)))))
+  (it-each (("#{t:%H:%M}") ("#{t:%Y-%m-%d}") ("#{t:}"))
+      "#{t:...} rejects strftime ~S"
+      (spec)
+    (expect (string= "" (fmt spec))))
 
   ;; %strftime-format-at decodes a CL universal-time and formats it (round-trips
   ;; through the local timezone, so encode then format returns the same wall clock).
@@ -168,32 +166,32 @@
                        (cl-tmux/format::%strftime-format-at "%Y-%m-%d %H:%M:%S" ts)))))
 
   ;; %strftime-format-at returns the empty string for NIL / zero / non-positive.
-  (it "strftime-format-at-empty-for-non-timestamp"
-    (dolist (ts '(nil 0 -1))
-      (expect (string= "" (cl-tmux/format::%strftime-format-at "%Y" ts)))))
+  (it-each ((nil) (0) (-1))
+      "%strftime-format-at empty for ~S"
+      (ts)
+    (expect (string= "" (cl-tmux/format::%strftime-format-at "%Y" ts))))
 
   ;; %days-in-month returns the correct day count for fixed-length months and
   ;; handles the Feb leap-year boundary (divisible-by-4, century, and
   ;; divisible-by-400 rules).
-  (it "days-in-month-table"
-    (dolist (c '((1  2023 31 "January is always 31")
-                 (3  2023 31 "March is always 31")
-                 (5  2023 31 "May is always 31")
-                 (7  2023 31 "July is always 31")
-                 (8  2023 31 "August is always 31")
-                 (10 2023 31 "October is always 31")
-                 (12 2023 31 "December is always 31")
-                 (4  2023 30 "April is always 30")
-                 (6  2023 30 "June is always 30")
-                 (9  2023 30 "September is always 30")
-                 (11 2023 30 "November is always 30")
-                 (2  2023 28 "2023 is not a leap year (not divisible by 4)")
-                 (2  2024 29 "2024 is a leap year (divisible by 4, not 100)")
-                 (2  1900 28 "1900 is divisible by 100 but not 400 → not a leap year")
-                 (2  2000 29 "2000 is divisible by 400 → a leap year")))
-      (destructuring-bind (month year expected desc) c
-        (declare (ignore desc))
-        (expect (= expected (cl-tmux/format::%days-in-month month year))))))
+  (it-each ((1  2023 31)
+            (3  2023 31)
+            (5  2023 31)
+            (7  2023 31)
+            (8  2023 31)
+            (10 2023 31)
+            (12 2023 31)
+            (4  2023 30)
+            (6  2023 30)
+            (9  2023 30)
+            (11 2023 30)
+            (2  2023 28)   ; not a leap year (not divisible by 4)
+            (2  2024 29)   ; leap year (divisible by 4, not 100)
+            (2  1900 28)   ; divisible by 100 but not 400 → not a leap year
+            (2  2000 29))  ; divisible by 400 → a leap year
+      "%days-in-month ~A/~A → ~A"
+      (month year expected)
+    (expect (= expected (cl-tmux/format::%days-in-month month year))))
 
   ;; #{t:VAR} (bare variable, no %) formats VAR's value as a timestamp via the
   ;; default format - tmux semantics, e.g. #{t:session_last_attached}.
@@ -211,35 +209,32 @@
     (expect (string= "" (fmt "#{t:%Y}"))))
 
   ;; #{p5:var} pads right; #{p-5:var} pads left; at-width values are unchanged; longer pass through.
-  (it "format-modifier-pad-table"
-    (dolist (c '(("#{p5:v}"  :v "ab"      "ab   "   "right pad: 2 chars to 5")
-                 ("#{p5:v}"  :v "hello"   "hello"   "right pad: at width — no change")
-                 ("#{p5:v}"  :v "toolong" "toolong" "right pad: longer than width — pass through")
-                 ("#{p-5:v}" :v "ab"      "   ab"   "left pad: 2 chars to 5")
-                 ("#{p-5:v}" :v "hello"   "hello"   "left pad: at width — no change")))
-      (destructuring-bind (spec key val expected desc) c
-        (declare (ignore desc))
-        (expect (string= expected (fmt spec key val))))))
+  (it-each (("#{p5:v}"  :v "ab"      "ab   ")
+            ("#{p5:v}"  :v "hello"   "hello")
+            ("#{p5:v}"  :v "toolong" "toolong")
+            ("#{p-5:v}" :v "ab"      "   ab")
+            ("#{p-5:v}" :v "hello"   "hello"))
+      "pad ~A ~*~S"
+      (spec key val expected)
+    (expect (string= expected (fmt spec key val))))
 
   ;; #{U:var} uppercases and #{L:var} lowercases the resolved value.
-  (it "format-modifier-case-table"
-    (dolist (c '(("#{U:v}"            :v            "hello" "HELLO" "uppercase literal")
-                 ("#{U:window_name}"  :window-name  "bash"  "BASH"  "uppercase via variable")
-                 ("#{L:v}"            :v            "HELLO" "hello" "lowercase literal")
-                 ("#{L:session_name}" :session-name "MAIN"  "main"  "lowercase via variable")))
-      (destructuring-bind (spec key val expected desc) c
-        (declare (ignore desc))
-        (expect (string= expected (fmt spec key val))))))
+  (it-each (("#{U:v}"            :v            "hello" "HELLO")
+            ("#{U:window_name}"  :window-name  "bash"  "BASH")
+            ("#{L:v}"            :v            "HELLO" "hello")
+            ("#{L:session_name}" :session-name "MAIN"  "main"))
+      "case ~A ~*~S"
+      (spec key val expected)
+    (expect (string= expected (fmt spec key val))))
 
   ;; #{n:var} returns the character length of the value as a string (tmux FORMAT_LENGTH;
   ;; #{l:...} is now the literal/unescape modifier).
-  (it "format-modifier-length"
-    (dolist (c '(("#{n:v}"            :v            "hello" "5" "hello is 5 chars")
-                 ("#{n:v}"            :v            ""      "0" "empty string is 0")
-                 ("#{n:session_name}" :session-name "abc"   "3" "resolves via var name")))
-      (destructuring-bind (spec key val expected desc) c
-        (declare (ignore desc))
-        (expect (string= expected (fmt spec key val))))))
+  (it-each (("#{n:v}"            :v            "hello" "5")
+            ("#{n:v}"            :v            ""      "0")
+            ("#{n:session_name}" :session-name "abc"   "3"))
+      "length ~A ~*~S"
+      (spec key val expected)
+    (expect (string= expected (fmt spec key val))))
 
   ;; %strftime-format internal helpers produce correct output.
   (it "format-modifier-strftime-unit-tests"

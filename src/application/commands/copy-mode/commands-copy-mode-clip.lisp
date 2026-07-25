@@ -43,7 +43,7 @@
 ;;; ── copy-pipe helper ─────────────────────────────────────────────────────────
 ;;;
 ;;; When the "copy-command" option is set to a non-empty string, the yank text
-;;; is also piped to that shell command via uiop:run-program.  Errors are
+;;; is also piped to that shell command via process-kit:run.  Errors are
 ;;; silently swallowed so a misconfigured copy-command does not crash the session.
 
 (defconstant +copy-command-timeout+ 30
@@ -51,13 +51,15 @@
 
 (defun %run-shell-cmd-with-input (command text)
   "Pipe TEXT as stdin to COMMAND (a shell string), bounded by +copy-command-timeout+.
-   Errors are silently swallowed so a misconfigured command does not crash the session."
+   process-kit:run owns the deadline: on overrun it escalates SIGTERM->SIGKILL
+   over the child's process group, so no belt-and-suspenders bt:with-timeout is
+   needed and no orphaned shell survives the deadline.  Errors are silently
+   swallowed so a misconfigured command does not crash the session."
   (ignore-errors
-    (bt:with-timeout (+copy-command-timeout+)
-      (uiop:run-program (list "/bin/sh" "-c" command)
-                        :input (make-string-input-stream text)
-                        :ignore-error-status t
-                        :timeout +copy-command-timeout+))))
+    (process-kit:run "/bin/sh" (list "-c" command)
+                     :input text
+                     :timeout-seconds +copy-command-timeout+
+                     :on-timeout :return)))
 
 (defun %run-copy-command (text)
   "Pipe TEXT to the shell command stored in the \"copy-command\" option.

@@ -1,8 +1,9 @@
 (in-package #:cl-tmux/test)
 
 ;;;; Unit tests for pty.lisp: argument-assembly helpers.
-;;;; These cover %spawn-directory, %spawn-environment-assignments,
-;;;; and %string-non-empty-p without spawning a real PTY process.
+;;;; These cover %spawn-directory and %string-non-empty-p without spawning a
+;;;; real PTY process.  (The child-environment assignment logic now lives in
+;;;; session-child-environment; see session-environment-tests.lisp.)
 
 (describe "pty-unit-suite"
 
@@ -24,49 +25,6 @@
   (it "string-non-empty-p-false-for-non-string"
     (expect (cl-tmux/pty::%string-non-empty-p 42) :to-be-falsy)
     (expect (cl-tmux/pty::%string-non-empty-p '(a b)) :to-be-falsy))
-
-  ;;; ── %spawn-environment-assignments ──────────────────────────────────────────
-
-  ;; %spawn-environment-assignments with only a TERM string produces one NAME=VALUE entry.
-  (it "spawn-environment-assignments-with-term-only"
-    (let ((result (cl-tmux/pty::%spawn-environment-assignments "xterm-256color" nil)))
-      (expect (= 1 (length result)))
-      (expect (string= "TERM=xterm-256color" (first result)))))
-
-  ;; %spawn-environment-assignments includes EXTRA-ENV pairs after TERM.
-  (it "spawn-environment-assignments-with-extra-env"
-    (let ((result (cl-tmux/pty::%spawn-environment-assignments
-                   "xterm-256color"
-                   (list (cons "MY_VAR" "hello") (cons "OTHER" "42")))))
-      (expect (= 3 (length result)))
-      (expect (string= "TERM=xterm-256color" (first result)))
-      (expect (member "MY_VAR=hello" result :test #'string=))
-      (expect (member "OTHER=42" result :test #'string=))))
-
-  ;; %spawn-environment-assignments omits the TERM entry when TERM is empty.
-  (it "spawn-environment-assignments-empty-term-skipped"
-    (let ((result (cl-tmux/pty::%spawn-environment-assignments
-                   "" (list (cons "FOO" "bar")))))
-      (expect (= 1 (length result)))
-      (expect (string= "FOO=bar" (first result)))))
-
-  ;; %spawn-environment-assignments omits the TERM entry when TERM is NIL.
-  (it "spawn-environment-assignments-nil-term-skipped"
-    (let ((result (cl-tmux/pty::%spawn-environment-assignments
-                   nil (list (cons "X" "y")))))
-      (expect (= 1 (length result)))
-      (expect (string= "X=y" (first result)))))
-
-  ;; %spawn-environment-assignments silently skips pairs that are not (string . string).
-  (it "spawn-environment-assignments-skips-non-string-pair"
-    (let ((result (cl-tmux/pty::%spawn-environment-assignments
-                   nil (list (cons 42 "val")))))
-      (expect (null result))))
-
-  ;; %spawn-environment-assignments returns NIL with no TERM and no extra env.
-  (it "spawn-environment-assignments-empty-no-term-no-extra"
-    (let ((result (cl-tmux/pty::%spawn-environment-assignments nil nil)))
-      (expect (null result))))
 
   ;;; ── %spawn-directory ─────────────────────────────────────────────────────────
 

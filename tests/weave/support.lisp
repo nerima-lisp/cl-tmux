@@ -1,7 +1,7 @@
 ;;;; Shared support for the reasoning cl-weave suite.
 ;;;;
 ;;;; `fresh-default-rulebase' isolates the key-table store the same way the
-;;;; FiveAM suite's WITH-ISOLATED-CONFIG does — a fresh `*key-tables*' rebound
+;;;; unit suite's WITH-ISOLATED-CONFIG does — a fresh `*key-tables*' rebound
 ;;;; only for the duration of the build — then projects the standard default
 ;;;; bindings into a self-contained rulebase.  The rulebase is plain data, so
 ;;;; it outlives the dynamic binding and never leaks store state between tests.

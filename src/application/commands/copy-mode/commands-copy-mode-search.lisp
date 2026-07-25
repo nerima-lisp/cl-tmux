@@ -85,6 +85,29 @@
   "T when copy-mode search should wrap around the buffer ends."
   (cl-tmux/options:get-option "wrap-search" t))
 
+(defun %copy-mode-wrap-start (forwardp screen)
+  "The (vrow col) a wrapped search restarts from: the top-left corner when
+   searching FORWARDP, otherwise the bottom-right corner of the virtual buffer."
+  (if forwardp
+      (values 0 0)
+      (values (1- (%copy-mode-total-rows screen)) (screen-width screen))))
+
+(defun %search-with-wrap (finder screen term start-vrow start-col wrap-start-fn found-k)
+  "Continuation-passing search engine shared by every copy-mode search.
+   Run FINDER at (START-VROW, START-COL); on a miss, and only when wrap-search is
+   on, retry once from the position (funcall WRAP-START-FN) returns.  Invoke the
+   success continuation FOUND-K with the hit's (vrow col) on the first match and
+   return T; return NIL on a total miss.  The caller supplies FOUND-K, so this
+   engine never touches screen cursor state itself."
+  (flet ((attempt (vrow col)
+           (multiple-value-bind (found-vrow found-col)
+               (funcall finder screen term vrow col)
+             (and found-vrow (progn (funcall found-k found-vrow found-col) t)))))
+    (or (attempt start-vrow start-col)
+        (and (%wrap-search-p)
+             (multiple-value-bind (wrap-vrow wrap-col) (funcall wrap-start-fn)
+               (attempt wrap-vrow wrap-col))))))
+
 ;;; ── Public search commands ───────────────────────────────────────────────────
 
 (defun %copy-mode-search-direction (screen term direction &optional (save-direction-p t))
@@ -103,17 +126,10 @@
            (forwardp   (eq direction :forward))
            (finder     (if forwardp #'%copy-mode-find-forward #'%copy-mode-find-backward))
            (start-col  (if forwardp (1+ (cdr cursor)) (cdr cursor))))
-      (multiple-value-bind (found-vrow found-col)
-          (funcall finder screen term start-vrow start-col)
-        (when (and (null found-vrow) (%wrap-search-p))
-          (multiple-value-setq (found-vrow found-col)
-            (if forwardp
-                (funcall finder screen term 0 0)
-                (funcall finder screen term
-                         (1- (%copy-mode-total-rows screen))
-                         (screen-width screen)))))
-        (when found-vrow
-          (%copy-mode-set-virtual-row screen found-vrow found-col))))))
+      (%search-with-wrap finder screen term start-vrow start-col
+                         (lambda () (%copy-mode-wrap-start forwardp screen))
+                         (lambda (found-vrow found-col)
+                           (%copy-mode-set-virtual-row screen found-vrow found-col))))))
 
 (defun copy-mode-search-forward (screen term)
   "Search forward from the current cursor for TERM through the full scrollback + live grid.

@@ -20,11 +20,14 @@
       text))
 
 (defun %run-format-shell-command (command)
-  "Run COMMAND for #(shell-command) expansion and return normalized stdout."
+  "Run COMMAND for #(shell-command) expansion and return normalized stdout.
+   process-kit:run enforces the deadline by escalating SIGTERM->SIGKILL against
+   the child's whole process group, so a hung expansion never orphans a shell."
   (handler-case
       (%trim-one-trailing-newline
-       (uiop:run-program (list "/bin/sh" "-c" (%format-shell-capture-command command))
-                         :output :string
-                         :ignore-error-status t
-                         :timeout +format-shell-command-timeout+))
+       (process-kit:process-result-stdout
+        (process-kit:run "/bin/sh"
+                         (list "-c" (%format-shell-capture-command command))
+                         :timeout-seconds +format-shell-command-timeout+
+                         :on-timeout :return)))
     (error () "")))

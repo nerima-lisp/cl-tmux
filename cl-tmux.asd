@@ -7,9 +7,9 @@
   :version "0.1.0"
   :author "takeokunn <bararararatty@gmail.com>"
   :license "MIT"
-  :homepage "https://github.com/takeokunn/cl-tmux"
-  :source-control (:git "https://github.com/takeokunn/cl-tmux.git")
-  :bug-tracker "https://github.com/takeokunn/cl-tmux/issues"
+  :homepage "https://github.com/nerima-lisp/cl-tmux"
+  :source-control (:git "https://github.com/nerima-lisp/cl-tmux.git")
+  :bug-tracker "https://github.com/nerima-lisp/cl-tmux/issues"
   :depends-on (:cffi           ; C foreign-function interface
                :bordeaux-threads ; portable threads + locks
                :babel            ; string↔octet encoding
@@ -19,7 +19,8 @@
                :cl-boundary-kit  ; process boundary for run-shell/if-shell
                :cl-dataflow      ; copy-mode lifecycle state machine (src/dataflow)
                :cl-parser-kit    ; commands-tokenizer combinator rewrite
-               :cl-tty-kit)      ; true-color -> 256/16 downsampling (renderer-format)
+               :cl-tty-kit       ; true-color -> 256/16 downsampling (renderer-format)
+               :cl-process-kit)  ; timeout-guarded subprocess run (SIGTERM->SIGKILL, pgid-isolated)
   :components
   ((:module "src"
     :serial t
@@ -80,7 +81,12 @@
        (:file "char-write") ; combining chars, DEC graphics, wide/normal cell writes (uses cursor-down/scroll, insert-chars)
        (:file "modes-alt-screen") ; DEC modes — alt-screen enter/exit helpers (part I)
        (:file "modes-dec-pm")     ; DEC modes — DEC PM rule-table macro + dispatch table (part II)
-       (:file "modes-d")   ; DEC modes — focus, DECSC, reset, ANSI SM/RM, charset (parts III-IV)
+       (:file "modes-cursor-save") ; DECSC/DECRC cursor save-restore + DECSCUSR shape
+       (:file "modes-reset")       ; reset-terminal-modes + RIS/DECSTR/DECALN
+       (:file "modes-charset")     ; G0..G3 charset designation/invocation rule table
+       (:file "modes-ansi-sm-rm")  ; ANSI (non-private) SM/RM rule table
+       (:file "screen-projection") ; copy-mode scrollback viewport cell projection
+       (:file "screen-osc-state")  ; focus reports, BEL, title stack, OSC title/colour state
        (:file "sgr")
        (:file "csi-replies")    ; CSI reply-queue helpers (DSR/DA/CPR/DECRQM/XTWINOPS); loads before csi
        (:file "csi-parameters") ; CSI parameter-to-domain-value translation
@@ -383,7 +389,7 @@
   :in-order-to ((test-op (test-op "cl-tmux/test"))))
 
 (defsystem "cl-tmux/test"
-  :description "Test suite for cl-tmux (cl-weave, via the FiveAM-surface shim)"
+  :description "Test suite for cl-tmux, authored natively in cl-weave"
   :depends-on (:cl-tmux :cl-weave)
   :components #.(symbol-value (find-symbol "*CL-TMUX-TEST-COMPONENTS*" :cl-user))
   ;; Run with: (asdf:test-system :cl-tmux)

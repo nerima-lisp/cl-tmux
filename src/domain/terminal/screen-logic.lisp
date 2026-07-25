@@ -52,7 +52,8 @@
 ;;; ── SGR pen reset ──────────────────────────────────────────────────────────
 ;;;
 ;;; Both cl-tmux/terminal/sgr (DISPATCH layer) and cl-tmux/terminal/actions
-;;; (modes-d.lisp, LOGIC layer) perform an identical five-slot SGR reset.
+;;; (modes-reset / modes-cursor-save, LOGIC layer) perform an identical
+;;; five-slot SGR reset.
 ;;; The canonical definition lives in this shared file so neither layer needs
 ;;; to reference the other, resolving the historical load-order circularity.
 

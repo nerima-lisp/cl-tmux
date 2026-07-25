@@ -9,8 +9,12 @@
     # ASDF systems.  They are consumed purely as source: their .asd files are
     # placed on ASDF's central registry, so no nixpkgs Lisp-package plumbing
     # is required.
-    cl-weave.url       = "github:takeokunn/cl-weave";
-    cl-prolog.url      = "github:takeokunn/cl-prolog";
+    cl-weave.url       = "github:nerima-lisp/cl-weave";
+    cl-prolog.url      = "github:nerima-lisp/cl-prolog";
+    # cl-weave's own flake still declares its paredit-cli dev input under the
+    # pre-migration owner; pin it to the org so no takeokunn/* rev survives in
+    # our lock (paredit-cli is only a transitive dev tool, never linked in).
+    cl-weave.inputs.paredit-cli.url = "github:nerima-lisp/paredit-cli";
     # flake = false: consumed as a plain source checkout (pushed onto ASDF's
     # central registry below), not through each repo's own flake outputs —
     # keeps this working regardless of whether a given sibling repo ships its
@@ -25,10 +29,13 @@
     cl-parser-kit.flake  = false;
     cl-tty-kit.url       = "github:nerima-lisp/cl-tty-kit";
     cl-tty-kit.flake     = false;
+    cl-process-kit.url   = "github:nerima-lisp/cl-process-kit";
+    cl-process-kit.flake = false;
   };
 
   outputs = { self, nixpkgs, flake-utils, cl-weave, cl-prolog
-            , cl-cli, cl-boundary-kit, cl-dataflow, cl-parser-kit, cl-tty-kit }:
+            , cl-cli, cl-boundary-kit, cl-dataflow, cl-parser-kit, cl-tty-kit
+            , cl-process-kit }:
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = import nixpkgs { inherit system; config.allowBroken = true; };
@@ -52,7 +59,7 @@
         # on other siblings here), so each is consumed purely as source: push
         # its checkout onto ASDF's central registry rather than packaging it
         # through nixpkgs.  This one list drives every sbcl invocation below.
-        siblingRepos = [ cl-prolog cl-weave cl-cli cl-boundary-kit cl-dataflow cl-parser-kit cl-tty-kit ];
+        siblingRepos = [ cl-prolog cl-weave cl-cli cl-boundary-kit cl-dataflow cl-parser-kit cl-tty-kit cl-process-kit ];
         siblingRegistryPushEvals =
           pkgs.lib.concatMapStringsSep " " (repo: ''--eval "(push (truename \"${repo}/\") asdf:*central-registry*)"'')
             siblingRepos;
@@ -186,9 +193,22 @@
         devShells.default = pkgs.mkShell {
           buildInputs = [ sbclWithTestDeps ];
           shellHook = ''
+            # Registers the central-registry entries the check derivations above use,
+            # so an interactive `sbcl` session can find cl-tmux and every dogfooded
+            # sibling library without repeating those --eval flags by hand.  A plain
+            # `sbcl --load cl-tmux.asd` fails: .asd files read `defsystem` in whatever
+            # package ASDF put the reader in, which is only set up correctly once
+            # `(require :asdf)` and the registry pushes below have run.
+            cl-tmux-sbcl() {
+              sbcl --eval "(require :asdf)" \
+                   --eval "(push (truename \".\") asdf:*central-registry*)" \
+                   ${siblingRegistryPushEvals} \
+                   "$@"
+            }
+            export -f cl-tmux-sbcl
             echo "cl-tmux dev shell"
-            echo "  sbcl --load cl-tmux.asd --eval '(asdf:load-system :cl-tmux)'"
-            echo "  run tests: sbcl --eval '(asdf:test-system :cl-tmux)' --quit"
+            echo "  cl-tmux-sbcl --eval '(asdf:load-system :cl-tmux)'"
+            echo "  run tests: cl-tmux-sbcl --eval '(asdf:test-system :cl-tmux)' --quit"
           '';
         };
 

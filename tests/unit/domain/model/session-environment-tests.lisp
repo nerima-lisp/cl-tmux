@@ -112,6 +112,16 @@
           (expect (stringp entry))
           (expect (position #\= entry))))))
 
+  ;; session-child-environment step 4: a non-empty :term overrides TERM in the
+  ;; child environment, while :extra-env entries are merged as NAME=VALUE.
+  (it "session-child-environment-applies-term-override"
+    (let* ((sess (make-session :id 1 :name "s"))
+           (env  (session-child-environment sess
+                                            :term "xterm-256color"
+                                            :extra-env '(("CL_TMUX_TEST" . "1")))))
+      (expect (member "TERM=xterm-256color" env :test #'string=) :to-be-truthy)
+      (expect (member "CL_TMUX_TEST=1" env :test #'string=) :to-be-truthy)))
+
   ;;; ── %environment-entry-name / %environment-entry-value ─────────────────────
 
   ;; %environment-entry-name and %environment-entry-value split a NAME=VALUE

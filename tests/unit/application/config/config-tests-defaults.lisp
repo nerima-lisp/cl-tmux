@@ -18,6 +18,20 @@
 
 (describe "config-suite"
 
+  ;;; ── copy-mode-count-command-p ────────────────────────────────────────────────
+
+  ;; copy-mode-count-command-p: T for the motion/scroll commands that honour a
+  ;; vi-style numeric count, NIL for commands (and non-commands) that do not.
+  (it-each ((:copy-mode-cursor-down    t)
+            (:copy-mode-cursor-up      t)
+            (:copy-mode-page-down      t)
+            (:copy-mode-copy-selection nil)
+            (:copy-mode-cancel         nil)
+            (:not-a-copy-mode-command  nil))
+      "copy-mode-count-command-p ~S → ~A"
+      (command expected)
+    (expect (eq expected (cl-tmux/config:copy-mode-count-command-p command))))
+
   ;;; ── Default prefix bindings and list-keys output ──────────────────────────
 
   ;; All standard single-char prefix bindings are registered with the correct commands.

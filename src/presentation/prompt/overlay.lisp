@@ -93,6 +93,40 @@
       (setf *overlay-scroll-offset*
             (max 0 (min max-offset (+ *overlay-scroll-offset* delta)))))))
 
+;;; -- Singleton overlay lifecycle (popup, menu) -------------------------------
+;;;
+;;; A "singleton overlay" is one at most one of which is active at a time, held
+;;; in a single special variable.  Popups and menus share the identical
+;;; show/dismiss/predicate lifecycle, so it is generated once from a declarative
+;;; (kind, backing-variable) pair rather than hand-written per kind.
+
+(defmacro define-singleton-overlay (kind var)
+  "Generate the SHOW-KIND / CLOSE-KIND / KIND-ACTIVE-P lifecycle accessors for a
+   singleton overlay of type KIND backed by the special variable VAR.  Callers go
+   through these accessors so the lifecycle boundary stays inside this module
+   instead of touching VAR directly."
+  (flet ((sym (control) (intern (format nil control (symbol-name kind))
+                                (symbol-package kind))))
+    (let ((show (sym "SHOW-~A"))
+          (close (sym "CLOSE-~A"))
+          (active-p (sym "~A-ACTIVE-P")))
+      `(progn
+         (defun ,show (,kind)
+           ,(format nil "Register ~(~A~) as the active ~(~:*~A~) overlay.  Any ~
+                         currently-active one is silently replaced (not torn ~
+                         down); call ~(~A~) first when the previous overlay needs ~
+                         cleanup." (symbol-name kind) (symbol-name close))
+           (setf ,var ,kind))
+         (defun ,close ()
+           ,(format nil "Dismiss the active ~(~A~) overlay by setting ~(~A~) to ~
+                         NIL.  Safe to call when none is active (a no-op)."
+                    (symbol-name kind) (symbol-name var))
+           (setf ,var nil))
+         (defun ,active-p ()
+           ,(format nil "Return T when a ~(~A~) overlay is currently displayed, ~
+                         NIL otherwise." (symbol-name kind))
+           (and ,var t))))))
+
 ;;; -- Popup overlay -----------------------------------------------------------
 
 (defconstant +default-popup-width+  40
@@ -114,20 +148,7 @@
   "The currently displayed POPUP overlay, or NIL.
    Session-persistent: use defvar so image reloads do not reset live state.")
 
-(defun show-popup (popup)
-  "Register POPUP as the active popup overlay.
-   If another popup is already active it is silently replaced — the old popup
-   is not closed or cleaned up.  Callers requiring teardown must call close-popup first."
-  (setf *active-popup* popup))
-
-(defun close-popup ()
-  "Dismiss the active popup overlay, setting *active-popup* to NIL.
-   Safe to call when no popup is active (no-op)."
-  (setf *active-popup* nil))
-
-(defun popup-active-p ()
-  "Return T when a popup overlay is currently displayed, NIL otherwise."
-  (and *active-popup* t))
+(define-singleton-overlay popup *active-popup*)
 
 ;;; -- Menu overlay ------------------------------------------------------------
 
@@ -146,17 +167,4 @@
   "The currently displayed MENU overlay, or NIL.
    Session-persistent: use defvar so image reloads do not reset live state.")
 
-(defun show-menu (menu)
-  "Register MENU as the active menu overlay.
-   Callers should use this instead of directly mutating *active-menu* so that
-   the lifecycle boundary stays inside this module."
-  (setf *active-menu* menu))
-
-(defun close-menu ()
-  "Dismiss the active menu overlay.
-   Callers should use this instead of directly setting *active-menu* to NIL."
-  (setf *active-menu* nil))
-
-(defun menu-active-p ()
-  "True when a menu overlay is currently displayed."
-  (and *active-menu* t))
+(define-singleton-overlay menu *active-menu*)

@@ -290,13 +290,6 @@
     (expect (cl-tmux/pty::%string-non-empty-p nil) :to-be-falsy)
     (expect (cl-tmux/pty::%string-non-empty-p 42) :to-be-falsy))
 
-  ;; %spawn-environment-assignments emits TERM first, then valid extra env pairs.
-  (it "spawn-environment-assignments-preserves-override-order"
-    (expect (equal '("TERM=xterm-256color" "FOO=bar" "TERM=screen")
-                   (cl-tmux/pty::%spawn-environment-assignments
-                    "xterm-256color"
-                    '(("FOO" . "bar") ("TERM" . "screen") ("BAD" . 1) (42 . "no"))))))
-
   ;; +microseconds-per-second+ is 1000000.
   (it "microseconds-per-second-is-one-million"
     (expect (= 1000000 cl-tmux/pty::+microseconds-per-second+)))

@@ -204,11 +204,12 @@
     (let ((line (cl-tmux/renderer::%justify-right "very-long-left-text" "99:99" 5)))
       (expect (= 5 (length line)))))
 
-  ;;; ── %status-current-time ────────────────────────────────────────────────────
+  ;;; ── %current-time-string ────────────────────────────────────────────────────
 
-  ;; %status-current-time returns a 5-char HH:MM string.
-  (it "status-current-time-returns-hhmm"
-    (let ((t-str (cl-tmux/renderer::%status-current-time)))
+  ;; %current-time-string (the status-bar clock formatter, used by status-right)
+  ;; returns a 5-char HH:MM string.
+  (it "current-time-string-returns-hhmm"
+    (let ((t-str (cl-tmux/format::%current-time-string)))
       (expect (= 5 (length t-str)))
       (expect (char= #\: (char t-str 2)))
       (expect (every #'digit-char-p (remove #\: t-str)))))

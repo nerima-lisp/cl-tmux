@@ -3,11 +3,10 @@
 ;;;; Dispatch test suite and shared support macros.
 ;;;;
 ;;;; This file defines no tests of its own — it only provides the shared
-;;;; helper macros used by the dispatch-suite family of test files (some
-;;;; still on the FiveAM-compat shim, some converted to cl-weave).  The
-;;;; `dispatch-suite` symbol itself is auto-vivified by whichever sibling
-;;;; file's `(in-suite dispatch-suite)` runs first, so no `def-suite`/
-;;;; `in-suite` form is needed here.
+;;;; helper macros used by the dispatch-suite family of test files, each of
+;;;; which opens its own `(describe "dispatch-suite" ...)` block.  cl-weave
+;;;; merges same-named describe blocks across files, so no separate suite
+;;;; declaration is needed here.
 
 (defmacro with-copy-mode-active-screen ((session-var screen-var &key feed) &body body)
   "Bind SESSION-VAR and SCREEN-VAR in an active copy-mode session.

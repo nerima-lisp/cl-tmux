@@ -123,9 +123,8 @@ COMMAND values are frequently raw Lisp strings (parsed command lists start
 with a string, e.g. (\"resize-pane\" \"-L\" \"5\")), and cl-prolog's
 standard-order-of-terms comparator does not have a case for STRINGP — SETOF
 signals \"Not a Prolog term\" as soon as it needs to order two distinct
-string-bearing solutions. Verified experimentally; see
-[[cl-tmux-fiveam-shim-removal]] memory notes for the failure mode. FINDALL
-does not sort/dedup internally, so both are explicit Lisp-level steps here."
+string-bearing solutions (verified experimentally). FINDALL does not
+sort/dedup internally, so both are explicit Lisp-level steps here."
   (sort (remove-duplicates (%findall rulebase '?command '(repeatable-command ?command))
                            :test #'equal :from-end t)
         #'string< :key #'prin1-to-string))

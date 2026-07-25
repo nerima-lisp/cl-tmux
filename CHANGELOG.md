@@ -28,9 +28,9 @@ Initial public development. Highlights of what the tree contains today:
 - Client/server over per-user Unix sockets (`-L`/`-S`, `$TMUX_TMPDIR`),
   session groups sharing one window set, control mode (`-C`).
 - Test suite (11,000+ checks) run hermetically via `nix flake check`, now on
-  the [`cl-weave`](https://github.com/takeokunn/cl-weave) framework.
+  the [`cl-weave`](https://github.com/nerima-lisp/cl-weave) framework.
 - Cold-path reasoning read-models built on the dependency-free
-  [`cl-prolog`](https://github.com/takeokunn/cl-prolog) engine, now a **core
+  [`cl-prolog`](https://github.com/nerima-lisp/cl-prolog) engine, now a **core
   dependency** compiled into the binary (`src/reasoning/`). Two declarative
   domains are projected into Prolog rulebases and queried for relations the
   flat tables cannot express directly:
@@ -43,7 +43,7 @@ Initial public development. Highlights of what the tree contains today:
 - `cl-weave` regression suite (`cl-tmux/weave`) for the reasoning models, using
   custom matchers, `around-each` fixtures, a property test, and `cl-prolog`'s
   own `deftest-queries` bridge; exposed as the `weave` flake check.
-- Five more dependency-light sibling libraries adopted as **core
+- Six more dependency-light sibling libraries adopted as **core
   dependencies**, each replacing or augmenting a hand-rolled piece of the
   same concern it specializes in:
   - [`cl-cli`](https://github.com/nerima-lisp/cl-cli) — the top-level
@@ -81,17 +81,38 @@ Initial public development. Highlights of what the tree contains today:
     has no off-the-shelf equivalent) composed with a whitespace-skip rule and
     run through `tokenize-string`, inheriting span tracking and the library's
     tokenizer resource-limit guards for free.
+  - [`cl-process-kit`](https://github.com/nerima-lisp/cl-process-kit) — the
+    three direct "shell out, capture stdout, enforce a deadline" call sites
+    that still hand-rolled `uiop:run-program` + a `:timeout` (and, for
+    copy-command, a redundant belt-and-suspenders `bt:with-timeout`) now call
+    `process-kit:run` directly: `#(shell-command)` format expansion
+    (`format-shell-command.lisp`), the `pgrep`/`ps`/`readlink`/`lsof`
+    `#{pane_current_*}` OS probes (`format-context-os-probe.lisp`), and the
+    copy-mode `copy-command` pipe (`commands-copy-mode-clip.lisp`). On a
+    deadline overrun `process-kit:run` escalates SIGTERM→SIGKILL against the
+    child's **whole process group**, so a hung command can no longer orphan a
+    shell past its timeout — the behaviour the bare `bt:with-timeout` wrapper
+    only pretended to guarantee. `run-shell`/`if-shell` deliberately stay on
+    `cl-boundary-kit`, which supplies the injectable test double
+    (`make-test-process-boundary`) that cl-process-kit has no equivalent for.
 
 ### Changed
 
+- **Org migration `github:takeokunn` → `github:nerima-lisp`.** Every project
+  URL (flake inputs `cl-weave`/`cl-prolog`, the `.asd`
+  homepage/source-control/bug-tracker, README/SECURITY badges and links, the
+  Cachix cache name) now points at the `nerima-lisp` organization; author
+  attribution (`© takeokunn`, the `:author` slots) is unchanged. Sibling flake
+  inputs were re-locked to their current `nerima-lisp` revs in the same pass.
+
 - **Test framework migrated from FiveAM to cl-weave.** The `fiveam` dependency
-  is gone from the ASDF test system and the Nix checks. A small compatibility
-  shim (`tests/fiveam-compat.lisp`) maps the FiveAM authoring surface
-  (`def-suite` / `in-suite` / `test` / `is` / `signals` / …) onto cl-weave's
-  registration engine, so the ~296 test files run unchanged while cl-weave
-  registers, runs (single-worker sequential), and reports every check. The
-  runner (`run-tests`) drives `cl-weave:run-all`; per-test thread cleanup runs
-  through a root `after-each` hook.
+  is gone from the ASDF test system and the Nix checks, and so is the temporary
+  compatibility shim that first bridged the two — every test file is now
+  authored directly in cl-weave's native surface (`describe` / `it` / `expect`
+  / `signals` / `finishes` / `skip`), with custom matchers and `around-each`
+  fixtures where useful. The runner (`run-tests`) drives `cl-weave:run-all`
+  (single-worker sequential); per-test thread cleanup runs through a root
+  `after-each` hook.
 
 ### Fixed
 
@@ -119,3 +140,12 @@ Initial public development. Highlights of what the tree contains today:
 - Restored the `-F`-skipping loop in `%list-commands-arguments`; a refactor had
   replaced it with a positional scan that returned the `-F` format value as the
   command name.
+- `flake.nix`'s `devShells.default` printed `sbcl --load cl-tmux.asd --eval
+  '(asdf:load-system :cl-tmux)'` as the way to start hacking, but that command
+  fails outright: `.asd` files read `defsystem` in whatever package ASDF
+  happens to install as the reader's current package, which is only correct
+  once `(require :asdf)` and the sibling-library central-registry pushes (the
+  same ones the `checks` derivations already assemble as
+  `siblingRegistryPushEvals`) have run first. The shell hook now exports a
+  `cl-tmux-sbcl` function wrapping those in, and prints working commands built
+  on it.

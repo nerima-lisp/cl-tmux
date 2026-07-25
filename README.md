@@ -1,6 +1,6 @@
 # cl-tmux
 
-[![CI](https://github.com/takeokunn/cl-tmux/actions/workflows/ci.yml/badge.svg)](https://github.com/takeokunn/cl-tmux/actions/workflows/ci.yml)
+[![CI](https://github.com/nerima-lisp/cl-tmux/actions/workflows/ci.yml/badge.svg)](https://github.com/nerima-lisp/cl-tmux/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 A tmux-compatible terminal multiplexer written entirely in Common Lisp.
@@ -52,7 +52,7 @@ different, and where the remaining risk lives.
 With Nix (the only supported build path — it pins SBCL and all Lisp deps):
 
 ```bash
-nix run github:takeokunn/cl-tmux    # run directly
+nix run github:nerima-lisp/cl-tmux    # run directly
 # or, from a checkout:
 nix build .                          # → ./result/bin/cl-tmux
 ./result/bin/cl-tmux
@@ -149,7 +149,7 @@ nix flake check -L    # build + full cl-weave suite (same as CI)
 ```
 
 The suite (290+ test files, 11,000+ checks) runs on
-[`cl-weave`](https://github.com/takeokunn/cl-weave) and covers the VT100 emulator,
+[`cl-weave`](https://github.com/nerima-lisp/cl-weave) and covers the VT100 emulator,
 layout geometry, command dispatch, format engine, options/hooks, copy mode,
 the client/server protocol, and live PTY integration against a real shell.
 PTY tests self-skip where `/dev/ptmx` is unavailable, so sandboxed runs stay
@@ -197,7 +197,7 @@ cl-tmux/
 ### Cold-path reasoning with cl-prolog
 
 `src/reasoning/` is a declarative read-model built on
-[`cl-prolog`](https://github.com/takeokunn/cl-prolog), a dependency-free
+[`cl-prolog`](https://github.com/nerima-lisp/cl-prolog), a dependency-free
 Common Lisp Prolog engine that is a **core dependency** of cl-tmux (compiled
 into the binary). It projects cl-tmux's declarative tables into Prolog
 rulebases and answers relational questions the flat tables cannot express
@@ -220,7 +220,7 @@ Two domains ship today — key bindings and the canonical command table:
 ```
 
 Its regression suite (`cl-tmux/weave`) uses
-[`cl-weave`](https://github.com/takeokunn/cl-weave) — custom matchers,
+[`cl-weave`](https://github.com/nerima-lisp/cl-weave) — custom matchers,
 `around-each` fixtures, a property test, and `cl-prolog`'s own
 `deftest-queries` bridge — and runs as the `weave` flake check
 (`nix build .#checks.<system>.weave`).
@@ -258,6 +258,13 @@ hand — not bolted on beside it:
   generic library has tmux's "quotes extend the current argument" grammar
   built in) plus a whitespace-skip rule, composed through
   `cl-parser-kit:tokenize-string`.
+- [`cl-process-kit`](https://github.com/nerima-lisp/cl-process-kit) is the
+  timeout-guarded subprocess runner the three direct "shell out and capture"
+  sites call: `#(shell-command)` format expansion, the `#{pane_current_*}` OS
+  probes, and the copy-mode `copy-command` pipe. `process-kit:run` escalates
+  SIGTERM→SIGKILL over the child's process group on a deadline overrun, so a
+  hung command never orphans a shell.  (`run-shell`/`if-shell` stay on
+  cl-boundary-kit for its injectable test double.)
 
 The layering rule: `domain` has no I/O; `application` orchestrates domain
 logic through port variables; `infrastructure` provides the real PTY/socket

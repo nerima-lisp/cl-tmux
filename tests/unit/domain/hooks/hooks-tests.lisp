@@ -19,6 +19,20 @@
 
 (describe "hooks-suite"
 
+  ;;; ── scoped-hook-entry-p ──────────────────────────────────────────────────────
+
+  ;; scoped-hook-entry-p: T for a cons whose head is one of +scoped-hook-kinds+
+  ;; (:scoped-session / :scoped-window / :scoped-pane), NIL for anything else.
+  (it-each (((:scoped-session . x) t)
+            ((:scoped-window . x)  t)
+            ((:scoped-pane . x)    t)
+            ((:global . x)         nil)
+            (:scoped-session       nil)   ; a bare keyword is not a scoped ENTRY
+            (nil                   nil))
+      "scoped-hook-entry-p ~S → ~A"
+      (entry expected)
+    (expect (eq expected (and (cl-tmux/hooks:scoped-hook-entry-p entry) t))))
+
   ;;; ── Hook event constant values ───────────────────────────────────────────────
 
   ;; Hook event constants defined via define-hook-events have the expected string values.

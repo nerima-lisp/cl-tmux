@@ -71,10 +71,10 @@
     (with-guarded-socket-test
       (send-frame server-side (msg-frame "HELLO"))
       (force-output server-side)
-      ;; Keep `expect` assertions OUTSIDE with-output-to-string: FiveAM writes a progress
-      ;; dot via (format *test-dribble* ".") — and *test-dribble* defaults to T
-      ;; (= *standard-output*) — so a passing `is` inside the capture body would
-      ;; contaminate painted with "." making it "HELLO." instead of "HELLO".
+      ;; Keep `expect` assertions OUTSIDE the with-output-to-string capture: any
+      ;; runner progress/diagnostic output written to *standard-output* during an
+      ;; assertion would otherwise contaminate `painted` (e.g. "HELLO." for a
+      ;; captured "HELLO"), so we capture first and assert on the result after.
       (let (result)
         (let ((painted (with-output-to-string (*standard-output*)
                          (setf result (cl-tmux::%receive-server-frame client-side)))))

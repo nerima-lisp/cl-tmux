@@ -158,28 +158,35 @@
            (start-dir        (%flag-value flags #\c)))
       (multiple-value-bind (cols rows)
           (%new-session-dimensions-from-flags flags detach-p)
-        (when attach-if-exists
-          (return-from %cmd-new-session-arg
-            (%new-session-attach-existing name detach-p print-p print-fmt)))
-        (setf name (%new-session-resolve-name name attach-if-exists flags))
-        (when (null name)
-          (return-from %cmd-new-session-arg nil))
-        (when group-target
-          (let ((grouped (%new-session-create-grouped name group-target detach-p)))
-            (%new-session-apply-environment grouped env-pairs)
-            (when (and grouped print-p)
-              (%show-session-info-overlay grouped print-fmt))
-            (return-from %cmd-new-session-arg grouped)))
-        ;; -e makes the initial pane inherit VAR=val via *pane-extra-env*; -E
-        ;; suppresses update-environment for the whole creation (incl. that pane).
-        (let* ((cl-tmux/model:*suppress-update-environment* suppress-env-p)
-               (*pane-extra-env* (or env-pairs *pane-extra-env*))
-               (new-sess (new-session name rows cols :start-dir start-dir)))
-          ;; Persist -c as the session working directory for future windows.
-          (when (and new-sess start-dir)
-            (setf (session-start-directory new-sess) start-dir))
-          (%new-session-apply-environment new-sess env-pairs)
-          (let ((result (%new-session-finalize new-sess win-name detach-p)))
-            (when (and result print-p)
-              (%show-session-info-overlay result print-fmt))
-            result))))))
+        ;; Four mutually-exclusive creation paths, read top-to-bottom:
+        (cond
+          ;; -A: attach to an existing session of this NAME instead of creating.
+          (attach-if-exists
+           (%new-session-attach-existing name detach-p print-p print-fmt))
+          (t
+           (setf name (%new-session-resolve-name name attach-if-exists flags))
+           (cond
+             ;; name resolution refused it (e.g. duplicate name without -A).
+             ((null name) nil)
+             ;; -t <group>: join an existing session's group, sharing its windows.
+             (group-target
+              (let ((grouped (%new-session-create-grouped name group-target detach-p)))
+                (%new-session-apply-environment grouped env-pairs)
+                (when (and grouped print-p)
+                  (%show-session-info-overlay grouped print-fmt))
+                grouped))
+             ;; default: create a brand-new session.  -e makes the initial pane
+             ;; inherit VAR=val via *pane-extra-env*; -E suppresses
+             ;; update-environment for the whole creation (including that pane).
+             (t
+              (let* ((cl-tmux/model:*suppress-update-environment* suppress-env-p)
+                     (*pane-extra-env* (or env-pairs *pane-extra-env*))
+                     (new-sess (new-session name rows cols :start-dir start-dir)))
+                ;; Persist -c as the session working directory for future windows.
+                (when (and new-sess start-dir)
+                  (setf (session-start-directory new-sess) start-dir))
+                (%new-session-apply-environment new-sess env-pairs)
+                (let ((result (%new-session-finalize new-sess win-name detach-p)))
+                  (when (and result print-p)
+                    (%show-session-info-overlay result print-fmt))
+                  result))))))))))

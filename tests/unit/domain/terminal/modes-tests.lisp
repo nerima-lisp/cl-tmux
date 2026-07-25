@@ -1,6 +1,7 @@
 (in-package #:cl-tmux/test)
 
-;;;; Mode and screen-state tests (src/domain/terminal/modes-alt-screen.lisp, modes-dec-pm.lisp).
+;;;; Mode and screen-state tests covering src/domain/terminal/modes-alt-screen.lisp,
+;;;; modes-reset.lisp (RIS), and modes-cursor-save.lisp (DECSC/DECRC).
 ;;;; Tests: modes suite — RIS, alt-screen, DECSC/DECRC.
 
 (describe "terminal-suite/modes"

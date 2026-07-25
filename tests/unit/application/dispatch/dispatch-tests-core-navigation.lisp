@@ -112,4 +112,17 @@
   (it "dispatch-unknown-command-passes-through"
     (with-fake-session (s)
       (expect (null (cl-tmux::dispatch-command s :no-such-command (char-code #\a))))
-      (expect cl-tmux::*dirty* :to-be-truthy))))
+      (expect cl-tmux::*dirty* :to-be-truthy)))
+
+  ;; Registry integrity meta-test: every arg-command spec must name a handler
+  ;; that is actually fbound.  Each spec stores its handler as a bare
+  ;; (quote %cmd-…) symbol that %make-dispatch-arg-table resolves WITHOUT an
+  ;; fboundp check, so a spec typo (naming %cmd-foo when only %cmd-foo-arg is
+  ;; defined) stays invisible until a user runs that scriptable command and
+  ;; trips an undefined-function error.  One assertion over the whole table
+  ;; guards the entire class — including every command added later.
+  (it "every-arg-command-handler-is-fbound"
+    (let ((unbound (loop for (names . handler) in cl-tmux::*arg-command-table*
+                         unless (fboundp handler)
+                           collect (list handler :for names))))
+      (expect (null unbound)))))

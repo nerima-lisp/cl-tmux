@@ -10,9 +10,10 @@
 ;;; down / scrolls) without a carriage return even when LNM is on.  IND (ESC D)
 ;;; calls cursor-lf directly.
 
-;; NOTE: direct-action-cursor is defined (def-suite ... :in terminal-suite) in
-;; tests/unit/domain/terminal/cursor-tests.lisp; this describe block covers
-;; only the tests that originally lived in this file.
+;; The "terminal-suite/direct-action-cursor" group is also opened by
+;; tests/unit/domain/terminal/cursor-tests.lisp; cl-weave merges same-named
+;; describe blocks, so this file just contributes the cursor tests that live
+;; here.
 (describe "terminal-suite/direct-action-cursor"
 
   ;; cursor-lf from a row that is not the scroll-bottom simply increments cursor-y.

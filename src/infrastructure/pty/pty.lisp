@@ -39,18 +39,6 @@
   "Return T when VALUE is a non-empty string."
   (and (stringp value) (plusp (length value))))
 
-(defun %spawn-environment-assignments (term extra-env)
-  "Return TERM and valid EXTRA-ENV overrides as NAME=VALUE strings."
-  (let ((assignments nil))
-    (when (%string-non-empty-p term)
-      (push (format nil "TERM=~A" term) assignments))
-    (dolist (pair extra-env)
-      (when (and (consp pair)
-                 (stringp (car pair))
-                 (stringp (cdr pair)))
-        (push (format nil "~A=~A" (car pair) (cdr pair)) assignments)))
-    (nreverse assignments)))
-
 (defun %spawn-directory (start-dir)
   "Return a truename pathname for START-DIR, or NIL when it is absent/invalid.
    The old child path ignored chdir failures; keeping NIL preserves that behavior

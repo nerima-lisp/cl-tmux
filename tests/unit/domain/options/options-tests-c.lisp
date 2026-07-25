@@ -8,49 +8,45 @@
   ;;; ── define-type-coercions ecase dispatch ─────────────────────────────────
 
   ;; %coerce-value :boolean coerces strings, integers, and non-string values correctly.
-  (it "type-coercions-boolean-table"
-    (dolist (c '(("on"    t   "on → T")
-                 ("true"  t   "true → T")
-                 ("1"     t   "1 → T")
-                 ("off"   nil "off → NIL")
-                 ("false" nil "false → NIL")
-                 ("0"     nil "0 → NIL")
-                 (42      t   "42 → T")
-                 (nil     nil "nil → NIL")))
-      (destructuring-bind (input expected desc) c
-        (declare (ignore desc))
-        (expect (eq expected (cl-tmux/options::%coerce-value :boolean input))))))
+  (it-each (("on"    t)
+            ("true"  t)
+            ("1"     t)
+            ("off"   nil)
+            ("false" nil)
+            ("0"     nil)
+            (42      t)
+            (nil     nil))
+      "%coerce-value :boolean ~S → ~S"
+      (input expected)
+    (expect (eq expected (cl-tmux/options::%coerce-value :boolean input))))
 
   ;; %coerce-value :integer parses strings and truncates floats; nil/garbage → 0.
-  (it "type-coercions-integer-table"
-    (dolist (c '(("42"           42 "numeric string → 42")
-                 ("not-a-number" 0  "non-numeric string → 0")
-                 (3.7            3  "float → truncated to 3")
-                 (nil            0  "nil → 0")))
-      (destructuring-bind (input expected desc) c
-        (declare (ignore desc))
-        (expect (= expected (cl-tmux/options::%coerce-value :integer input))))))
+  (it-each (("42"           42)
+            ("not-a-number" 0)
+            (3.7            3)
+            (nil            0))
+      "%coerce-value :integer ~S → ~A"
+      (input expected)
+    (expect (= expected (cl-tmux/options::%coerce-value :integer input))))
 
   ;; %coerce-value :string formats any value as a string.
-  (it "type-coercions-string"
-    (dolist (c '((42      "42"    "integer -> decimal string")
-                 (t       "T"     "T -> \"T\"")
-                 ("hello" "hello" "string passes through unchanged")))
-      (destructuring-bind (input expected desc) c
-        (declare (ignore desc))
-        (expect (string= expected (cl-tmux/options::%coerce-value :string input))))))
+  (it-each ((42      "42")
+            (t       "T")
+            ("hello" "hello"))
+      "%coerce-value :string ~S → ~S"
+      (input expected)
+    (expect (string= expected (cl-tmux/options::%coerce-value :string input))))
 
   ;;; ── set-option unregistered-option passthrough path ──────────────────────
 
   ;; set-option stores unregistered values without coercion for any value type.
-  (it "set-option-unregistered-stores-as-is-table"
-    (dolist (c '(("custom-unknown-option" "raw-value" "string stored as-is")
-                 ("custom-int-option"     99          "integer stored as-is")))
-      (destructuring-bind (name value desc) c
-        (declare (ignore desc))
-        (with-fresh-options
-          (cl-tmux/options:set-option name value)
-          (expect (equal value (cl-tmux/options:get-option name)))))))
+  (it-each (("custom-unknown-option" "raw-value")
+            ("custom-int-option"     99))
+      "set-option ~S stores ~S as-is"
+      (name value)
+    (with-fresh-options
+      (cl-tmux/options:set-option name value)
+      (expect (equal value (cl-tmux/options:get-option name)))))
 
   ;;; ── all-options count matches registration ────────────────────────────────
 
@@ -142,31 +138,30 @@
   ;;; ── option defaults table ────────────────────────────────────────────────
 
   ;; Key global options return the expected default values from *option-registry*.
-  (it "option-defaults-table"
-    (dolist (c '(("status-position"   "bottom")
-                 ("base-index"        0)
-                 ("mouse"             nil)
-                 ("synchronize-panes" nil)
-                 ("status-interval"   15)
-                 ("history-limit"     2000)
-                 ("status"            "on")))
-      (destructuring-bind (name expected) c
-        (expect (equal expected (cl-tmux/options:get-option name))))))
+  (it-each (("status-position"   "bottom")
+            ("base-index"        0)
+            ("mouse"             nil)
+            ("synchronize-panes" nil)
+            ("status-interval"   15)
+            ("history-limit"     2000)
+            ("status"            "on"))
+      "default of ~S is ~S"
+      (name expected)
+    (expect (equal expected (cl-tmux/options:get-option name))))
 
   ;;; ── make-option-spec constructor ─────────────────────────────────────────
 
   ;; make-option-spec stores type, default, and name correctly for each type.
-  (it "make-option-spec-table"
-    (dolist (c '((:boolean nil    "my-opt" "boolean with nil default")
-                 (:integer 42     "count"  "integer with 42 default")
-                 (:string  "hello" "label" "string with hello default")))
-      (destructuring-bind (type default name desc) c
-        (declare (ignore desc))
-        (let ((spec (cl-tmux/options:make-option-spec :name name :type type :default default)))
-          (expect (not (null spec)))
-          (expect (string= name (cl-tmux/options:option-spec-name spec)))
-          (expect (eq type (cl-tmux/options:option-spec-type spec)))
-          (expect (equal default (cl-tmux/options:option-spec-default spec)))))))
+  (it-each ((:boolean nil     "my-opt")
+            (:integer 42      "count")
+            (:string  "hello" "label"))
+      "make-option-spec ~S default ~S"
+      (type default name)
+    (let ((spec (cl-tmux/options:make-option-spec :name name :type type :default default)))
+      (expect (not (null spec)))
+      (expect (string= name (cl-tmux/options:option-spec-name spec)))
+      (expect (eq type (cl-tmux/options:option-spec-type spec)))
+      (expect (equal default (cl-tmux/options:option-spec-default spec)))))
 
   ;;; ── show-window-options unit tests ──────────────────────────────────────
   ;;;

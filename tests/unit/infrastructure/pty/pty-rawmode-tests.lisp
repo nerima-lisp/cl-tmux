@@ -53,14 +53,15 @@
 
   ;; enable-raw-mode! then disable-raw-mode! round-trips on a real TTY and
   ;; restores the terminal — cl-tty-kit remembers and pops the saved state.
-  ;; Skipped when stdout is not a TTY (e.g., sandboxed Nix builds).
+  ;; The guard probes the ACTUAL capability (can raw mode be entered on fd 1?)
+  ;; rather than a proxy like tcgetattr: a sandboxed Nix build may inherit a tty
+  ;; on which tcgetattr succeeds yet tcsetattr/raw-mode is still unavailable, so
+  ;; we attempt the enable and skip cleanly whenever it cannot be performed.
   (it "enable-then-disable-round-trips-on-tty"
-    (let ((is-tty (handler-case (progn (sb-posix:tcgetattr 1) t) (error () nil))))
-      (if (not is-tty)
-          (skip "stdout is not a TTY (sandboxed environment)")
+    (let ((enabled (handler-case (progn (cl-tmux/pty:enable-raw-mode! 1) t)
+                     (error () nil))))
+      (if (not enabled)
+          (skip "raw mode cannot be entered on fd 1 in this environment")
           (unwind-protect
-               (finishes
-                 (progn
-                   (cl-tmux/pty:enable-raw-mode! 1)
-                   (cl-tmux/pty:disable-raw-mode! 1)))
+               (finishes (cl-tmux/pty:disable-raw-mode! 1))
             (ignore-errors (cl-tmux/pty:disable-raw-mode! 1)))))))

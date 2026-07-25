@@ -24,7 +24,7 @@ knowing when assessing an issue:
 ## Reporting a vulnerability
 
 Please report suspected vulnerabilities privately via
-[GitHub Security Advisories](https://github.com/takeokunn/cl-tmux/security/advisories/new)
+[GitHub Security Advisories](https://github.com/nerima-lisp/cl-tmux/security/advisories/new)
 rather than opening a public issue. Include reproduction steps and the
 platform (OS, SBCL version, terminal). You should receive an acknowledgement
 within a week.

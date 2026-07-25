@@ -12,15 +12,18 @@
 
   ;; ── Single-character shorthands ─────────────────────────────────────────────
 
-  ;; Each #X shorthand expands to the correct context key value; ## yields a literal #.
-  (it "expand-format-hash-shorthands"
-    (dolist (c '(("#S" :session-name "mysession")
-                 ("#I" :window-index "2")
-                 ("#W" :window-name  "bash")
-                 ("#P" :pane-index   "1")
-                 ("#H" :hostname     "box")))
-      (destructuring-bind (spec key val) c
-        (expect (string= val (fmt spec key val)))))
+  ;; Each #X shorthand expands to the correct context key value.
+  (it-each (("#S" :session-name "mysession")
+            ("#I" :window-index "2")
+            ("#W" :window-name  "bash")
+            ("#P" :pane-index   "1")
+            ("#H" :hostname     "box"))
+      "shorthand ~A → ~*~S"
+      (spec key val)
+    (expect (string= val (fmt spec key val))))
+
+  ;; ## yields a literal #.
+  (it "expand-format-hash-hash-is-literal-hash"
     (expect (string= "#" (fmt "##"))))
 
   ;; ── Brace variable form ──────────────────────────────────────────────────────
@@ -36,13 +39,12 @@
   ;; ── Conditional form ─────────────────────────────────────────────────────────
 
   ;; #{?cond,true,false}: truthy condition → true branch; zero/empty → false branch.
-  (it "expand-format-conditional-table"
-    (dolist (c '(("#{?1,yes,no}" "yes" "truthy condition → true branch")
-                 ("#{?0,yes,no}" "no"  "zero condition → false branch")
-                 ("#{?,yes,no}"  "no"  "empty condition → false branch")))
-      (destructuring-bind (input expected desc) c
-        (declare (ignore desc))
-        (expect (string= expected (fmt input))))))
+  (it-each (("#{?1,yes,no}" "yes")
+            ("#{?0,yes,no}" "no")
+            ("#{?,yes,no}"  "no"))
+      "conditional ~A → ~S"
+      (input expected)
+    (expect (string= expected (fmt input))))
 
   ;; ── Plain text and unknown specifiers ────────────────────────────────────────
 
