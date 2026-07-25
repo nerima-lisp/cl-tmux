@@ -5,9 +5,25 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+<!--
+Heading format is fixed across the org:
+
+    ## [X.Y.Z] - YYYY-MM-DD
+
+The version is bracketed, the separator is an ASCII hyphen (not an em dash),
+and the date is ISO 8601. release.yml extracts the section matching the pushed
+tag as the GitHub Release body, so a heading that deviates makes the release
+fail. Keep `## [Unreleased]` at the top at all times.
+
+Use only these subsection names, and omit the ones that are empty:
+Added / Changed / Deprecated / Removed / Fixed / Security
+-->
+
 ## [Unreleased]
 
-Initial public development. Highlights of what the tree contains today:
+## [0.1.0] - 2026-07-26
+
+### Added
 
 - tmux-compatible terminal multiplexer written in pure Common Lisp (SBCL +
   sb-posix + CFFI; no custom C).
@@ -95,9 +111,35 @@ Initial public development. Highlights of what the tree contains today:
     only pretended to guarantee. `run-shell`/`if-shell` deliberately stay on
     `cl-boundary-kit`, which supplies the injectable test double
     (`make-test-process-boundary`) that cl-process-kit has no equivalent for.
+- Four external (non-org) runtime dependencies, the only ones in the
+  organization: `cffi` (BSD-style/MIT), `bordeaux-threads` (MIT), `babel`
+  (MIT) and `cl-ppcre` (BSD-2-Clause). All four are permissive and compatible
+  with this project's MIT license. `DEPENDENCY_POLICY.md` grandfathers them in
+  on the grounds that cl-tmux is the sole L4 application package, so nothing
+  in the organization can inherit a break from them. The reason each is
+  required is recorded per line in `cl-tmux.asd` and in `flake.nix`.
 
 ### Changed
 
+- **Conformance with the org package standard.** The repository layout now
+  follows `PACKAGE_STANDARD.md`: tests moved from `tests/` to `t/`, a single
+  `run-tests.lisp` at the root became the only Lisp-level test entry point,
+  the four standard workflows and the `nix-setup` composite action were
+  installed with every `uses:` pinned to a 40-character commit SHA, the
+  hardcoded Cachix cache name was replaced by `vars.CACHIX_CACHE`, and the
+  documentation moved into a `docs/src/` MkDocs site gated by
+  `mkdocs --strict`. `src/` stays nested, which the standard records as this
+  repository's one sanctioned exception.
+- **flake.nix moved off flake-utils to plain `nixpkgs.lib.genAttrs`.**
+  `eachDefaultSystem` derived the platform list from flake-utils' hardcoded
+  default set, which advertised `aarch64-linux` and `x86_64-darwin` — two
+  platforms nothing in this project has ever built. `systems` is now the two
+  that are actually verified, `x86_64-linux` by CI and `aarch64-darwin` by
+  `nix flake check` on the development machine (ADR-0078). In the same pass
+  the version became a read of `cl-tmux.asd` rather than a second hardcoded
+  number, every sibling input gained a release tag, and `checks` gained
+  `formatting` (treefmt/nixfmt) and `docs` (`mkdocs --strict`) alongside the
+  existing `default`, `weave` and `dataflow`.
 - **Org migration `github:takeokunn` → `github:nerima-lisp`.** Every project
   URL (flake inputs `cl-weave`/`cl-prolog`, the `.asd`
   homepage/source-control/bug-tracker, README/SECURITY badges and links, the
