@@ -11,7 +11,7 @@
   "Bitmask used to convert an ASCII letter to its control-character code.
    (logand char-code +ctrl-mask+) = byte sent when Ctrl is held with that key.")
 
-;;; -- Runtime-modifiable prefix key -------------------------------------------
+;;; ── Runtime-modifiable prefix key ────────────────────────────────────────
 ;;;
 ;;; *prefix-key-code* shadows +prefix-key-code+ for the event loop so that
 ;;; "set-option -g prefix C-a" (or any other .tmux.conf directive) can remap the
@@ -65,7 +65,7 @@
      (char-code (char key-str 0)))
     (t nil)))
 
-;;; -- Key-table name constants ------------------------------------------------
+;;; ── Key-table name constants ──────────────────────────────────────────────
 ;;;
 ;;; All references to the standard table names use these constants so a typo
 ;;; is caught at compile time and a rename touches only one place.
@@ -93,7 +93,7 @@
   (%defconstant-rebind-guard '+table-copy-mode-vi+ "copy-mode-vi")
   "Name of the vi copy-mode key-table.")
 
-;;; -- Shell default -----------------------------------------------------------
+;;; ── Shell default ─────────────────────────────────────────────────────────
 ;;;
 ;;; *default-shell* starts as "/bin/sh".  The ORCHESTRATE layer (main.lisp)
 ;;; calls init-default-shell at startup to read $SHELL from the environment.
@@ -132,7 +132,7 @@
   "Select timeout in microseconds for per-pane PTY reader threads (50 ms).
    Allows the reader loop to observe *running* even when the shell is silent.")
 
-;;; -- Initial key-binding data (declarative) ----------------------------------
+;;; ── Initial key-binding data (declarative) ────────────────────────────────
 ;;;
 ;;; The key-table storage primitives (*key-tables*, ensure-key-table,
 ;;; key-table-bind/unbind/lookup, key-table-command/repeatable-p/note) live in
@@ -199,7 +199,7 @@
                   *compile-file-pathname*)))
     (load (merge-pathnames #P"src/application/config/config-listing.lisp" root))))
 
-;;; -- Copy-mode binding helpers -----------------------------------------------
+;;; ── Copy-mode binding helpers ────────────────────────────────────────────
 ;;;
 ;;; %bind-copy-mode-named-navigation is a thin wrapper around the shared
 ;;; %install-key-bindings helper (defined above); the binding DATA tables
@@ -220,7 +220,7 @@
                   *compile-file-pathname*)))
     (load (merge-pathnames #P"src/application/config/config-copy-mode-defaults.lisp" root))))
 
-;;; -- Initialisation ----------------------------------------------------------
+;;; ── Initialisation ────────────────────────────────────────────────────────
 
 (defun initialize-default-key-tables ()
   "Install the standard default prefix bindings, the C-b C-b -> :send-prefix

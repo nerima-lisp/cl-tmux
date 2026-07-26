@@ -99,7 +99,7 @@
    ;; Port adapter (installs cl-tmux/ports vars at server startup)
    #:install-pty-port))
 
-;;; -- Client/server wire protocol ---------------------------------------------
+;;; ── Client/server wire protocol ──────────────────────────────────────────
 
 (defpackage #:cl-tmux/protocol
   (:use #:cl)
@@ -135,7 +135,7 @@
    ;; Integer codec helpers (exported so tests can use single-colon access)
    #:u16-octets #:u32-octets #:u16-octets-pair #:read-u16 #:read-u32))
 
-;;; -- Client/server stream transport ------------------------------------------
+;;; ── Client/server stream transport ───────────────────────────────────────
 
 (defpackage #:cl-tmux/transport
   (:use #:cl)
@@ -170,4 +170,4 @@
    #:socket-stream #:socket-fd #:close-socket
    #:unix-socket-available-p))
 
-;;; -- Terminal sub-packages ---------------------------------------------------
+;;; ── Terminal sub-packages ────────────────────────────────────────────────

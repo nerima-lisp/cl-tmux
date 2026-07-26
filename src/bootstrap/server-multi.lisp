@@ -22,7 +22,7 @@
 ;;;;   process-client-keys, decode-size, decode-command-payload, render-…,
 ;;;;   send-frame/read-frame, msg-frame/msg-bye, socket-fd/-stream/close-socket.
 
-;;; -- Client connection registry ----------------------------------------------
+;;; ── Client connection registry ──────────────────────────────────────────────
 
 (defstruct (client-conn (:constructor %make-client-conn))
   "One attached client: its socket, a cached binary STREAM and FD, a private
@@ -66,7 +66,7 @@
   ;; Unknown message type: treat as disconnect.
   (t :drop))
 
-;;; -- Effective geometry (smallest attached client) ---------------------------
+;;; ── Effective geometry (smallest attached client) ───────────────────────────
 
 (defun %client-size-reduce (fn)
   "Apply FN (e.g. #'min or #'max) across all attached clients' rows and cols,
@@ -108,7 +108,7 @@
     (%relayout-active-window session rows cols)
     (%mark-dirty)))
 
-;;; -- Frame broadcast ---------------------------------------------------------
+;;; ── Frame broadcast ─────────────────────────────────────────────────────────
 
 (defun %render-frame (session)
   "Pure: render SESSION at the current *term-rows* x *term-cols* and return the
@@ -137,7 +137,7 @@
   "The socket fds of every attached client (for the select read-set)."
   (mapcar #'client-conn-fd *clients*))
 
-;;; -- Connection lifecycle ----------------------------------------------------
+;;; ── Connection lifecycle ────────────────────────────────────────────────────
 
 (defun %add-client (socket)
   "Register SOCKET as a new client: build its CLIENT-CONN (with a fresh keystroke

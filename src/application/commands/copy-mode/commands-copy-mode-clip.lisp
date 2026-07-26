@@ -4,7 +4,7 @@
 ;;;; Uses selection helpers from commands-copy-mode-selection.lisp and search
 ;;;; helpers from commands-copy-mode-search.lisp.
 
-;;; -- Rectangle selection text ------------------------------------------------
+;;; ── Rectangle selection text ────────────────────────────────────────────────
 ;;;
 ;;; When rectangle select is active (screen-copy-rect-select-p), each row in
 ;;; the selection range is read between the same left and right column bounds
@@ -30,7 +30,7 @@
                            (write-char #\Newline out)))))))
         (and (plusp (length text)) text)))))
 
-;;; -- Selection-text dispatch helper ------------------------------------------
+;;; ── Selection-text dispatch helper ──────────────────────────────────────────
 
 (defun %get-selection-text (screen)
   "Return the selected text for SCREEN, respecting rectangle-select mode.
@@ -40,7 +40,7 @@
       (%rectangle-selection-text screen)
       (%selection-text screen)))
 
-;;; -- copy-pipe helper --------------------------------------------------------
+;;; ── copy-pipe helper ─────────────────────────────────────────────────────────
 ;;;
 ;;; When the "copy-command" option is set to a non-empty string, the yank text
 ;;; is also piped to that shell command via process-kit:run.  Errors are
@@ -121,7 +121,7 @@
     (%copy-mode-do-yank screen)
     (setf (screen-dirty-p screen) t)))
 
-;;; -- Rectangle-select toggle -------------------------------------------------
+;;; ── Rectangle-select toggle ─────────────────────────────────────────────────
 
 (defun copy-mode-toggle-rectangle (screen)
   "Toggle rectangle-select mode for SCREEN.
@@ -132,7 +132,7 @@
           (not (screen-copy-rect-select-p screen))
           (screen-dirty-p screen) t)))
 
-;;; -- Append selection --------------------------------------------------------
+;;; ── Append selection ────────────────────────────────────────────────────────
 ;;;
 ;;; append-selection appends the current selection to the *most recent* paste
 ;;; buffer entry (if one exists) instead of pushing a new entry.  If the paste
@@ -164,7 +164,7 @@
   (copy-mode-cancel-selection screen)
   (copy-mode-exit screen))
 
-;;; -- copy-pipe / pipe families (yank-and-pipe, pipe-only) --------------------
+;;; ── copy-pipe / pipe families (yank-and-pipe, pipe-only) ────────────────────
 ;;;
 ;;; tmux exposes two related command families that pipe copy-mode text to a
 ;;; shell command:
@@ -298,7 +298,7 @@
    "Pipe the selection to CMD (no buffer copy), then exit copy mode (tmux
     `pipe-and-cancel`)."))
 
-;;; -- Explicit rectangle on/off (tmux rectangle-on / rectangle-off) -----------
+;;; ── Explicit rectangle on/off (tmux rectangle-on / rectangle-off) ────────────
 
 (defun copy-mode-rectangle-on (screen)
   "Turn ON rectangle (block) selection mode (tmux `rectangle-on`)."

@@ -2,7 +2,7 @@
 
 ;;;; server-access ACL commands.
 
-;;; -- server-access -----------------------------------------------------------
+;;; ── server-access ──────────────────────────────────────────────────────────
 ;;; tmux's server-access maintains an access-control list for the (multi-user)
 ;;; server socket.  cl-tmux is single-user and does not share its server over a
 ;;; socket, so the list gates nothing — but modelling it faithfully lets a

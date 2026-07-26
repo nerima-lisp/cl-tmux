@@ -32,7 +32,7 @@
     (%apply-named-layout-to-session session (aref +named-layouts+ next))))
 
 (define-command-handlers
-  ;; -- Break / join pane ------------------------------------------------------
+  ;; ── Break / join pane ─────────────────────────────────────────────────────
   (:break-pane
    (with-active-window (win session)
      (when (> (length (window-panes win)) 1)
@@ -48,7 +48,7 @@
                           (when src-pane
                             (join-pane session src-win src-pane dst-win :h)))))))
 
-  ;; -- Pipe pane / synchronize ------------------------------------------------
+  ;; ── Pipe pane / synchronize ────────────────────────────────────────────────
   (:pipe-pane
    (with-active-pane (ap session)
      (if (pane-pipe-active-p ap)
@@ -62,7 +62,7 @@
   (:unlock-session
    (setf (session-locked-p session) nil))
 
-  ;; -- Miscellaneous commands -------------------------------------------------
+  ;; ── Miscellaneous commands ─────────────────────────────────────────────────
   (:refresh-client
    ;; Force an immediate redraw of the terminal.  Useful after terminal resize
    ;; or when the display has been corrupted by another program.
@@ -102,7 +102,7 @@
   (:set-window-option  (%set-option-from-prompt "set-window-option"))
   (:set-session-option (%set-option-from-prompt "set-session-option"))
 
-  ;; -- Paste-buffer commands --------------------------------------------------
+  ;; ── Paste-buffer commands ─────────────────────────────────────────────────
   ;; These delegate to helpers; the full implementations live in
   ;; dispatch-handlers-buffer.lisp, loaded after this file.
   (:list-buffers   (%cmd-list-buffers))
@@ -112,7 +112,7 @@
   (:save-buffer    (%cmd-save-buffer))
   (:load-buffer    (%cmd-load-buffer))
 
-  ;; -- Mark / layout helpers --------------------------------------------------
+  ;; ── Mark / layout helpers ─────────────────────────────────────────────────
   (:mark-pane
    (with-active-pane (ap session)
      (%toggle-mark-pane ap)))

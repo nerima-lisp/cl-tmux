@@ -30,7 +30,7 @@
         (%run-command-tokens session cmd))))))
 
 (define-command-handlers
-  ;; -- Popup / menu overlays --------------------------------------------------
+  ;; ── Popup / menu overlays ──────────────────────────────────────────────────
   (:display-popup
    (prompt-nonempty "popup command"
                     (lambda (cmd)

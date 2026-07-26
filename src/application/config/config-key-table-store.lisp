@@ -1,6 +1,6 @@
 (in-package #:cl-tmux/config)
 
-;;; -- Key-table system --------------------------------------------------------
+;;; ── Key-table system ──────────────────────────────────────────────────────
 ;;;
 ;;; *key-tables* maps table-name (string) → hash-table of chord → (keyword . flags).
 ;;; Flags is a plist; :repeatable T means the prefix stays active after dispatch.

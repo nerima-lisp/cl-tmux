@@ -201,7 +201,7 @@
   (:export
    #:screen-process-bytes))
 
-;;; -- Terminal umbrella (re-export facade) ------------------------------------
+;;; ── Terminal umbrella (re-export facade) ─────────────────────────────────
 
 (defpackage #:cl-tmux/terminal
   (:use #:cl

@@ -1,10 +1,10 @@
 (in-package #:cl-tmux/commands)
 
-;;; -- Copy-mode word / WORD navigation ----------------------------------------
+;;; ── Copy-mode word / WORD navigation ───────────────────────────────────────
 ;;;
 ;;; This file contains the word-motion core shared by vi w/b/e and W/B/E.
 
-;;; -- Row-character helper ----------------------------------------------------
+;;; ── Row-character helper ─────────────────────────────────────────────────────
 
 (defun %copy-mode-row-chars (screen row)
   "Return a simple-vector of characters on ROW of SCREEN in viewport projection.
@@ -103,7 +103,7 @@
      ,@body
      (setf (screen-dirty-p ,screen) t)))
 
-;;; -- Multi-line word-navigation helpers --------------------------------------
+;;; ── Multi-line word-navigation helpers ──────────────────────────────────────
 ;;;
 ;;; Real tmux copy-mode `w`/`b`/`e` (and W/B/E) cross line boundaries.  Three
 ;;; private helpers implement the scans parameterised on a separator predicate;

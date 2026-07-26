@@ -115,7 +115,7 @@
    quit/detach decision is unit-testable without a live client connection."
   (%process-bytes-cps session payload state 0))
 
-;;; -- Message-type dispatch macro ---------------------------------------------
+;;; ── Message-type dispatch macro ──────────────────────────────────────────────
 ;;;
 ;;; define-msg-dispatch follows the define-csi-rules / with-incoming-frame
 ;;; Prolog-dispatch pattern: a declarative rule table whose keys are message-type

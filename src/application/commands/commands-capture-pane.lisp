@@ -1,6 +1,6 @@
 (in-package #:cl-tmux/commands)
 
-;;; -- capture-pane -e: reconstruct SGR escapes from cell attributes -----------
+;;; ── capture-pane -e: reconstruct SGR escapes from cell attributes ───────────
 ;;;
 ;;; A self-contained cell→SGR encoder (the commands layer must not depend on the
 ;;; renderer).  capture-pane -e emits these so a captured buffer keeps its colours

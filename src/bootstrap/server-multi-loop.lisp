@@ -1,6 +1,6 @@
 (in-package #:cl-tmux)
 
-;;; -- Event-loop iteration ----------------------------------------------------
+;;; ── Event-loop iteration ────────────────────────────────────────────────────
 
 (defun %exit-when-empty-and-option-enabled-p (items option-name)
   "True when ITEMS is empty and OPTION-NAME is enabled."

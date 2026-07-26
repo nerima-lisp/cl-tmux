@@ -11,7 +11,7 @@
 (declaim (special cl-tmux/options:*global-options*
                   cl-tmux/options:*server-options*))
 
-;;; -- Simple directive definitions --------------------------------------------
+;;; ── Simple directive definitions ─────────────────────────────────────────
 ;;;
 ;;; The set-option canonical commands all forward to cl-tmux/options:set-option
 ;;; at config-file load time, because no session/window/pane context is
@@ -60,7 +60,7 @@
 
 (define-core-config-directives)
 
-;;; -- set-option flag handling (-g / -a / -s / ...) ---------------------------
+;;; ── set-option flag handling (-g / -a / -s / ...) ──────────────────────────
 ;;;
 ;;; The fixed-arity directive table cannot match `set-option -g status off`
 ;;; (3 tokens vs arity 2), so %apply-set-directive consumes leading scope flags:

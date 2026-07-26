@@ -13,7 +13,7 @@
 ;;;;   %decode-server-frame  — pure: read one server frame, return disposition + text
 ;;;;   %receive-server-frame — effect boundary: call decode, then write text to stdout
 
-;;; -- run-client event-loop helpers -------------------------------------------
+;;; ── run-client event-loop helpers ───────────────────────────────────────────
 
 (defun %maybe-send-resize (stream)
   "If *resize-pending* is set, clear it, sample the current terminal dimensions,
@@ -63,7 +63,7 @@
       (:frame  (write-string text) (force-output) nil)
       (t       nil))))
 
-;;; -- run-client --------------------------------------------------------------
+;;; ── run-client ───────────────────────────────────────────────────────────────
 
 (defun %receive-if-ready (stream server-socket-fd ready)
   "If SERVER-SOCKET-FD appears in the READY fd list, read and dispatch one server

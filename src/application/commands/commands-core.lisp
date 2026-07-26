@@ -5,7 +5,7 @@
 
 ;;; Core tmux commands: kill, rename, select, resize
 
-;;; -- Kill --------------------------------------------------------------------
+;;; ── Kill ───────────────────────────────────────────────────────────────────
 ;;;
 ;;; kill_pane(Session)  :- close_pty(Pane), remove_pane(Window, Pane),
 ;;;                         (empty(Window) -> kill_window(Session, Window) ; true).
@@ -103,7 +103,7 @@
     (%select-window-after-kill remaining session target killed-id)))
 
 
-;;; -- Rename / Select ---------------------------------------------------------
+;;; ── Rename / Select ────────────────────────────────────────────────────────
 ;;;
 ;;; rename_window(Window, Name)   :- set(window-name, Name), run_hooks(after-rename-window).
 ;;; rename_session(Session, Name) :- nonempty(Name), set(session-name, Name).
@@ -141,7 +141,7 @@
     (when win
       (session-select-window session win))))
 
-;;; -- Resize ------------------------------------------------------------------
+;;; ── Resize ─────────────────────────────────────────────────────────────────
 ;;;
 ;;; resize_pane(Window, Dir, Amount) :- active_pane(Window, P),
 ;;;                                     adjust_split_tree(Window, P, Dir, Amount).

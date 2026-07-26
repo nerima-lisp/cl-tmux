@@ -2,7 +2,7 @@
 
 ;;;; bind directive argument parsing.
 
-;;; -- bind-key flag parsing ---------------------------------------------------
+;;; ── bind-key flag parsing ────────────────────────────────────────────────
 ;;;
 ;;; %parse-bind-key-args handles the optional flags before key and command:
 ;;;   bind [-n] [-r] [-T table] [-N note] key command

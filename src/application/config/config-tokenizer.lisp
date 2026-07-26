@@ -1,18 +1,18 @@
 (in-package #:cl-tmux/config)
 
-;;; -- Config file parsing + directive processing ------------------------------
+;;; ── Config file parsing + directive processing ───────────────────────────
 ;;;
 ;;; This file depends on the key-table mutators defined in config.lisp
 ;;; (key-table-bind, key-table-unbind) and the mutable specials
 ;;; (*key-tables*, *default-shell*, *status-height*).
 
-;;; -- Tokenizer phase helpers -------------------------------------------------
+;;; ── Tokenizer phase helpers ──────────────────────────────────────────────
 
 (defun %whitespace-p (ch)
   "True when CH is a configuration whitespace character (space or tab)."
   (or (char= ch #\Space) (char= ch #\Tab)))
 
-;;; -- Tokenizer phase helpers -------------------------------------------------
+;;; ── Tokenizer phase helpers ──────────────────────────────────────────────
 ;;;
 ;;; Each helper handles one tokenizer state and returns the updated character
 ;;; index.
@@ -169,7 +169,7 @@
      (or (%parse-control-char (subseq token 2)) token))
     (t token)))
 
-;;; -- Command-name registry ---------------------------------------------------
+;;; ── Command-name registry ────────────────────────────────────────────────
 ;;;
 ;;; *bindable-commands*, *known-command-names*, %known-command-name-p, and
 ;;; %command-keyword

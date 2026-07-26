@@ -2,7 +2,7 @@
 
 ;;;; Copy-mode virtual-buffer helpers.
 
-;;; -- Virtual buffer helpers --------------------------------------------------
+;;; ── Virtual buffer helpers ───────────────────────────────────────────────────
 
 (defun %copy-mode-total-rows (screen)
   "Total row count in the virtual buffer (scrollback + live grid)."

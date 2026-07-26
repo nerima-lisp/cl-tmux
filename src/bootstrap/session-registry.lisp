@@ -12,7 +12,7 @@
 ;;;; Sessions in the same group see the same windows; switching a window in one
 ;;;; automatically switches all others in the group.
 
-;;; -- In-memory session store (concrete repository) ---------------------------
+;;; ── In-memory session store (concrete repository) ────────────────────────────
 ;;;
 ;;; Implements the cl-tmux/repository protocol by delegating to the global
 ;;; *server-sessions* alist already maintained by server-* functions.
@@ -40,7 +40,7 @@
     ((store in-memory-session-store))
   (server-current-session))
 
-;;; -- Session registry --------------------------------------------------------
+;;; ── Session registry ──────────────────────────────────────────────────────────
 
 (defun server-add-session (session)
   "Register SESSION in *server-sessions* keyed by (session-name session).
@@ -100,7 +100,7 @@
   "Return a list of all active sessions."
   (mapcar #'cdr *server-sessions*))
 
-;;; -- Session groups ----------------------------------------------------------
+;;; ── Session groups ────────────────────────────────────────────────────────────
 ;;;
 ;;; A session group is a set of sessions that share the same window list.
 ;;; Sessions in the same group see the same windows; switching window in one
@@ -116,7 +116,7 @@
   "Allocate a fresh group-id via a monotonic counter (never derives from alist length)."
   (incf *group-id-counter*))
 
-;;; -- Session group helpers (data / logic decomposed) -------------------------
+;;; ── Session group helpers (data / logic decomposed) ──────────────────────────
 ;;;
 ;;; server-new-session-in-group has four distinct phases:
 ;;;   1. Allocate/reuse a group-id   (pure: id derivation)

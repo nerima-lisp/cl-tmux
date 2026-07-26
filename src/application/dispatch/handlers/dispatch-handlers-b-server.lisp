@@ -8,7 +8,7 @@
    Example: C-b is 0x02; (logior 0x02 0x40) = 0x42 = #\\b.")
 
 (define-command-handlers
-  ;; -- Server management ------------------------------------------------------
+  ;; ── Server management ─────────────────────────────────────────────────────
   (:server-info
    (show-overlay
     (format nil "server info~%  sessions: ~D~%  term: ~Dx~D~%  prefix: C-~A (~D)"
@@ -41,7 +41,7 @@
          for sess = (cdr entry)
          do (setf (session-locked-p sess) t)))
 
-  ;; -- Environment ------------------------------------------------------------
+  ;; ── Environment ───────────────────────────────────────────────────────────
   (:show-environment
    (%cmd-show-environment-arg session nil))
   (:set-environment
@@ -54,7 +54,7 @@
                           (cl-tmux/model:session-set-environment session name value)
                           (%overlayf "set ~A=~A" name value))))))
 
-  ;; -- resize-window ----------------------------------------------------------
+  ;; ── resize-window ────────────────────────────────────────────────────────
   (:resize-window
    (with-active-window (win session)
      (prompt-nonempty "resize-window WxH"
@@ -65,7 +65,7 @@
                             (window-relayout win rows cols)
                             (%overlayf "resized to ~Dx~D" cols rows)))))))
 
-  ;; -- attach-session ---------------------------------------------------------
+  ;; ── attach-session ───────────────────────────────────────────────────────
   (:attach-session
    (prompt-nonempty "attach-session -t name"
                     (lambda (name)
@@ -75,7 +75,7 @@
                                    (%overlayf "attached to ~A" name))
                             (%overlayf "session not found: ~A" name))))))
 
-  ;; -- respawn-window ---------------------------------------------------------
+  ;; ── respawn-window ───────────────────────────────────────────────────────
   ;; Restart the shell in every pane of the active window.
   (:respawn-window
    (with-active-window (win session)
@@ -84,7 +84,7 @@
          (let ((new-pane (respawn-pane session pane)))
            (start-reader-thread new-pane))))))
 
-  ;; -- Prompt history ---------------------------------------------------------
+  ;; ── Prompt history ───────────────────────────────────────────────────────
   (:show-prompt-history
    (show-overlay
     (if *prompt-history*
