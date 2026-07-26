@@ -104,6 +104,17 @@ Added / Changed / Deprecated / Removed / Fixed / Security
   real `nix build .#cl-tmux` binary — not just the test suite. Now signals
   a clear `cl-tmux: server failed to start (...)` and exits 1, the same
   clean-error path every other startup failure already uses.
+- **Bare `cl-tmux` with no arguments — real tmux's own default
+  invocation — always crashed** with `The function COMMON-LISP:NIL is
+  undefined` the instant it tried to spawn the first pane's shell.
+  `install-pty-port` (wiring the CFFI PTY implementation into
+  `cl-tmux/ports`'s spawn/write/resize/close function variables) was only
+  ever called by `run-server`; `run-standalone` (the default mode) and
+  `run-control-mode` (`-C`) create panes too but never installed it, so
+  those variables stayed `NIL`. Moved the call into
+  `%initialize-session-environment`, the init step already shared by both.
+  Found the same way as the previous entry — the existing test suite uses
+  a mocked port and could not have caught this.
 
 ## [0.1.0] - 2026-07-26
 
