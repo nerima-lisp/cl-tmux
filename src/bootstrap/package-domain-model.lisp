@@ -250,6 +250,7 @@
            #:get-option #:set-option
            #:option-defined-p #:all-options
            #:option-scope-from-name
+           #:user-option-name-p
            #:style-option-p #:append-option-value
            #:*server-options* #:*server-option-registry*
            #:define-server-options

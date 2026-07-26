@@ -9,7 +9,7 @@
 
 ;;; ── User-option predicate ─────────────────────────────────────────────────
 
-(defun %user-option-name-p (name)
+(defun user-option-name-p (name)
   "Return true for tmux user options, whose names begin with @."
   (and (stringp name)
        (plusp (length name))
@@ -131,7 +131,7 @@
 
 (defun option-present-for-scope-p (name &optional scope)
   "Return true when NAME is valid or present in SCOPE (for set-option routing)."
-  (or (%user-option-name-p name)
+  (or (user-option-name-p name)
       (nth-value 1 (gethash name (%scope-options scope)))
       (%exact-option-spec-for-scope name scope)
       (%array-option-p name scope)
@@ -142,6 +142,6 @@
 
 (defun option-present-for-display-p (name &optional scope)
   "Return true when NAME may be shown by show-option/show-options in SCOPE."
-  (if (%user-option-name-p name)
+  (if (user-option-name-p name)
       (nth-value 1 (gethash name (%scope-options scope)))
       (option-present-for-scope-p name scope)))

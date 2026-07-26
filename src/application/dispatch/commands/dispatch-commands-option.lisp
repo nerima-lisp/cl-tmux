@@ -26,11 +26,6 @@
         session (session-active-window session) (session-active-pane session)))
       raw-value))
 
-(defun %user-option-name-p (name)
-  "True when NAME is a user option (`@foo`): these stay global regardless of any
-   window-scope name inference."
-  (and (stringp name) (plusp (length name)) (char= (char name 0) #\@)))
-
 (defun %with-option-scope (session flags target-str name k)
   "Resolve the option scope from FLAGS / TARGET-STR / option NAME, then call K with
    (scope target).  SCOPE is :pane, :window, :server, or :global; TARGET is the
@@ -56,7 +51,7 @@
       ;; options_scope_from_name).  A window-scoped option (not a user @-option)
       ;; routes to the -t / active window; session/server names stay :global.
       ((and name (not globalp)
-            (not (%user-option-name-p name))
+            (not (cl-tmux/options:user-option-name-p name))
             (eq :window (cl-tmux/options:option-scope-from-name name)))
        (let ((win (%resolve-window-target-or-active session target-str)))
          (funcall k (if win :window :global) win)))

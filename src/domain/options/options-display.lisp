@@ -108,9 +108,7 @@
 
 (defun %global-window-option-present-p (name)
   "Return true when NAME exists in the global/default option table."
-  (and (or (and (stringp name)
-                (plusp (length name))
-                (char= (char name 0) #\@))
+  (and (or (user-option-name-p name)
            (eq :window (option-scope-from-name name)))
        (or (%hash-present-p name *global-options*)
            (%hash-present-p name *option-registry*))))
