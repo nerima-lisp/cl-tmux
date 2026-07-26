@@ -37,6 +37,14 @@ Added / Changed / Deprecated / Removed / Fixed / Security
   cursor-not-on-bracket fallback plus nested/cross-row backward matching.
   `config.lisp`'s low expression-coverage number was confirmed a load-time
   artifact (data/`eval-when` forms), not a gap.
+- Closed two more coverage gaps, src/-only SB-COVER now 87.50% expression /
+  82.72% branch (up from 85.82%/82.27%): `%run-command-line`'s
+  semicolon-chaining (previously only exercised through the static `bind`
+  directive parser, never a runtime command line), and
+  `%execute-menu-cmd`'s list-encoded `(:select-window id)`/`(:switch-client
+  name)` shapes — the actual per-item command format tmux's
+  choose-window/choose-session menus use, which existing tests never
+  triggered past "the menu opens."
 - Covered `flags-of-command` (`src/reasoning/command-rulebase.lisp`), the
   one query helper in the command-metadata reasoning read-model with no test
   call sites — found by a paredit `unused-definitions` re-audit, which
@@ -44,6 +52,13 @@ Added / Changed / Deprecated / Removed / Fixed / Security
 
 ### Changed
 
+- **Readability: extracted the 6 most deeply-nested functions in the
+  codebase** (per `paredit inspect complexity`'s per-definition nesting
+  metric), each split so every dispatch branch has a named helper matching
+  its siblings — `%expand-brace`, `describe-key-binding-notes`,
+  `%render-copy-search-matches`, `%cmd-send-keys-arg`, `%parse-rgb-color`,
+  `%cmd-new-session-arg`. No behavior change; verified by the full test
+  suite after each extraction.
 - **Sibling dependency bump: `cl-boundary-kit` v0.6.0 → v1.0.0,
   `cl-process-kit` v1.0.0 → v1.0.1.** Both are behavior-preserving per
   upstream release notes — `cl-boundary-kit` 1.0.0 is a stability-policy
