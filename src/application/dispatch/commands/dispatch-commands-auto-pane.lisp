@@ -21,6 +21,17 @@
     (cl-tmux/terminal/actions:ris-action (pane-screen target-pane))
     (setf *dirty* t)))
 
+(defun %send-keys-regular (count positionals hex-p target-pane literal-p)
+  "Send POSITIONALS to TARGET-PANE, COUNT times through the whole sequence.
+   Each key is sent literally when LITERAL-P; when HEX-P, each key is instead
+   a send-keys -H hex code translated via %send-keys-hex-to-string."
+  (dotimes (_ count)
+    (dolist (key positionals)
+      (if hex-p
+          (let ((str (%send-keys-hex-to-string key)))
+            (when str (send-keys-to-pane target-pane str :literal t)))
+          (send-keys-to-pane target-pane key :literal literal-p)))))
+
 (defun %cmd-send-keys-arg (session args)
   "send-keys [-lHMR] [-N count] [-t target-pane] [-X] [key ...]: send keys or a
    copy-mode command.
@@ -73,12 +84,7 @@
             ;; Regular keys: send the whole positional sequence COUNT times. With
             ;; -H each positional is a hex code -> the literal character it names.
             ((and positionals target-pane)
-             (dotimes (_ count)
-               (dolist (key positionals)
-                 (if hex-p
-                     (let ((str (%send-keys-hex-to-string key)))
-                       (when str (send-keys-to-pane target-pane str :literal t)))
-                     (send-keys-to-pane target-pane key :literal literal-p)))))))))))
+             (%send-keys-regular count positionals hex-p target-pane literal-p))))))))
 
 (defun %cmd-send-prefix-arg (session args)
   "send-prefix [-2] [-t target-pane]: send the configured prefix key to a pane.
@@ -101,3 +107,4 @@
                  (not *client-read-only*)
                  (%send-byte-to-pane target-pane prefix-byte))
         t))))
+
