@@ -79,7 +79,8 @@
           (:file "parser-basic-text-tests") ; printable characters, CR/LF, wrap, BS, TAB - part IIIa
           (:file "parser-inline-predicate-tests") ; inline predicate helpers - part IIIb
           (:file "parser-state-cps-tests") ; direct CPS parser state functions + define-state - part IIIc
-          (:file "emulator-tests")))
+          (:file "emulator-tests")
+          (:file "parser-fuzz-tests"))) ; it-fuzz coverage of screen-process-bytes
         (:module "domain/model"
          :serial t
          :components

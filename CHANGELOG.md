@@ -59,6 +59,16 @@ Added / Changed / Deprecated / Removed / Fixed / Security
   one query helper in the command-metadata reasoning read-model with no test
   call sites — found by a paredit `unused-definitions` re-audit, which
   otherwise reconfirmed zero removable dead code in this codebase.
+- **Added cl-weave `it-fuzz` coverage of the VT100 parser's single entry
+  point, `screen-process-bytes`** (`t/unit/domain/terminal/parser-fuzz-tests.lisp`):
+  a "must never signal an error" invariant over arbitrary and
+  ESC-prefixed byte streams, generated and shrunk via cl-weave's property
+  generators. Property-based testing (`it-property`) was already used for
+  the wire protocol's encode/decode round-trips
+  (`t/unit/infrastructure/net/protocol-tests.lisp`); `it-fuzz` is its
+  crash-oriented counterpart and had no prior use in this codebase, despite
+  being the better fit for a byte-stream parser fed by an external,
+  not-under-this-codebase's-control PTY child process.
 
 ### Changed
 

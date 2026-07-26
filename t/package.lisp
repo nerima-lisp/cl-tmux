@@ -13,8 +13,8 @@
                 #:signals #:finishes #:fail #:skip
                 #:before-each #:after-each #:before-all #:after-all #:around-each
                 #:make-mock-function #:with-mocked-functions #:mock-calls
-                #:it-property #:gen-integer #:gen-list #:gen-boolean #:gen-string
-                #:gen-member #:gen-one-of
+                #:it-property #:it-fuzz #:gen-integer #:gen-list #:gen-boolean #:gen-string
+                #:gen-vector #:gen-member #:gen-one-of
                 #:defmatcher)
   (:import-from #:cl-tmux/terminal
                 #:make-screen
