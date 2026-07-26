@@ -44,6 +44,22 @@
               (t             (string key))))
       (princ-to-string key)))
 
+(defun %write-table-binding-notes (inner include-unnoted-p tname out)
+  "Write one 'TNAME KEY  NOTE' line per binding in INNER (a key-table's inner
+   hash-table) to OUT, sorted by key.  Skips un-noted bindings unless
+   INCLUDE-UNNOTED-P, in which case the command name stands in for NOTE."
+  (let (rows)
+    (maphash
+     (lambda (key binding)
+       (let ((note (getf (cdr binding) :note)))
+         (when (or note include-unnoted-p)
+           (push (list (key-display-string key)
+                       (or note (format nil "~(~A~)" (car binding))))
+                 rows))))
+     inner)
+    (dolist (row (sort rows #'string< :key #'first))
+      (format out "~A ~A  ~A~%" tname (first row) (second row)))))
+
 (defun describe-key-binding-notes (table-name include-unnoted-p)
   "list-keys -N: list per-binding notes.  Bindings carrying a bind -N note are
    listed as 'TABLE KEY  NOTE'; INCLUDE-UNNOTED-P (-a) also lists un-noted
@@ -55,17 +71,7 @@
       (dolist (entry (sort tables #'string< :key #'car))
         (destructuring-bind (tname . inner) entry
           (when (or (null table-name) (string= tname table-name))
-            (let (rows)
-              (maphash
-               (lambda (key binding)
-                 (let ((note (getf (cdr binding) :note)))
-                   (when (or note include-unnoted-p)
-                     (push (list (key-display-string key)
-                                 (or note (format nil "~(~A~)" (car binding))))
-                           rows))))
-               inner)
-              (dolist (row (sort rows #'string< :key #'first))
-                (format out "~A ~A  ~A~%" tname (first row) (second row))))))))))
+            (%write-table-binding-notes inner include-unnoted-p tname out)))))))
 
 (defun key-table-unbind (table key)
   "Remove any binding for KEY from TABLE and return T when TABLE existed."
@@ -92,3 +98,4 @@
   "Return the -N description string for a key-table ENTRY, or NIL.
    Safe to call with NIL (returns NIL without signaling)."
   (and entry (getf (cdr entry) :note)))
+
