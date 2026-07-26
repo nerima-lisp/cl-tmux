@@ -162,41 +162,36 @@
 (describe "terminal-suite/cursor-boundary-table-suite"
 
   ;; Each cursor direction clamps correctly at both the lower and upper boundary.
-  (it "cursor-boundary-clamping-table"
-    ;; Each entry: (fn-sym axis init-val count expected-val description)
-    (let ((cases
-           `((cursor-up    :y  0  1  0  "cursor-up at row 0 stays at 0")
-             (cursor-down  :y  9  1  9  "cursor-down at height-1 stays at height-1")
-             (cursor-left  :x  0  1  0  "cursor-left at col 0 stays at 0")
-             (cursor-right :x  9  1  9  "cursor-right at width-1 stays at width-1"))))
-      (dolist (c cases)
-        (destructuring-bind (fn-sym axis init-val count expected desc) c
-          (declare (ignore desc))
-          (with-screen (s 10 10)
-            (if (eq axis :x)
-                (setf (cl-tmux/terminal/types:screen-cursor-x s) init-val)
-                (setf (cl-tmux/terminal/types:screen-cursor-y s) init-val))
-            (funcall (symbol-function (find-symbol (symbol-name fn-sym)
-                                                   '#:cl-tmux/terminal/actions))
-                     s count)
-            (let ((actual (if (eq axis :x)
-                              (screen-cursor-x s)
-                              (screen-cursor-y s))))
-              (expect (= expected actual))))))))
+  (it-each ((cursor-up    :y  0  1  0  "cursor-up at row 0 stays at 0")
+            (cursor-down  :y  9  1  9  "cursor-down at height-1 stays at height-1")
+            (cursor-left  :x  0  1  0  "cursor-left at col 0 stays at 0")
+            (cursor-right :x  9  1  9  "cursor-right at width-1 stays at width-1"))
+      "cursor-boundary-clamping: ~*~*~*~*~*~A"
+      (fn-sym axis init-val count expected desc)
+    (declare (ignore desc))
+    (with-screen (s 10 10)
+      (if (eq axis :x)
+          (setf (cl-tmux/terminal/types:screen-cursor-x s) init-val)
+          (setf (cl-tmux/terminal/types:screen-cursor-y s) init-val))
+      (funcall (symbol-function (find-symbol (symbol-name fn-sym)
+                                             '#:cl-tmux/terminal/actions))
+               s count)
+      (let ((actual (if (eq axis :x)
+                        (screen-cursor-x s)
+                        (screen-cursor-y s))))
+        (expect (= expected actual)))))
 
   ;; cursor-up/down from the middle by various counts produce the expected row.
-  (it "cursor-up-down-table-driven"
-    ;; (init-y direction count expected-y description)
-    (let ((cases '((5 :up   2 3 "up 2 from row 5 → row 3")
-                   (5 :down 3 8 "down 3 from row 5 → row 8")
-                   (5 :up   5 0 "up 5 from row 5 → row 0 (clamp at scroll-top=0)")
-                   (5 :down 4 9 "down 4 from row 5 → row 9 (clamp at scroll-bottom=9)"))))
-      (dolist (c cases)
-        (destructuring-bind (init-y dir count expected desc) c
-          (declare (ignore desc))
-          (with-screen (s 10 10)
-            (setf (cl-tmux/terminal/types:screen-cursor-y s) init-y)
-            (ecase dir
-              (:up   (cl-tmux/terminal/actions:cursor-up   s count))
-              (:down (cl-tmux/terminal/actions:cursor-down s count)))
-            (expect (= expected (screen-cursor-y s)))))))))
+  (it-each ((5 :up   2 3 "up 2 from row 5 -> row 3")
+            (5 :down 3 8 "down 3 from row 5 -> row 8")
+            (5 :up   5 0 "up 5 from row 5 -> row 0 (clamp at scroll-top=0)")
+            (5 :down 4 9 "down 4 from row 5 -> row 9 (clamp at scroll-bottom=9)"))
+      "cursor-up-down: ~*~*~*~*~A"
+      (init-y dir count expected desc)
+    (declare (ignore desc))
+    (with-screen (s 10 10)
+      (setf (cl-tmux/terminal/types:screen-cursor-y s) init-y)
+      (ecase dir
+        (:up   (cl-tmux/terminal/actions:cursor-up   s count))
+        (:down (cl-tmux/terminal/actions:cursor-down s count)))
+      (expect (= expected (screen-cursor-y s))))))

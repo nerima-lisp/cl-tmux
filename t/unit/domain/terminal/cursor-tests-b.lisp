@@ -75,24 +75,21 @@
     (expect (cl-tmux/terminal/actions:combining-char-p #\Null) :to-be-falsy))
 
   ;; Table-driven test across all five combining ranges.
-  (it "combining-char-p-table-driven"
-    ;; Each entry: (code-point expected-result description)
-    (let ((cases
-           `((#x0300 t   "combining grave accent — Diacritical Marks start")
-             (#x036F t   "combining latin small letter x — Diacritical Marks end")
-             (#x0370 nil "greek capital letter Heta — just after Diacritical Marks")
-             (#x1AB0 t   "combining doubled circumflex accent — Extended start")
-             (#x1AFF t   "last code in Extended block")
-             (#x20D0 t   "combining left harpoon above — Marks for Symbols start")
-             (#x20FF t   "last code in Marks for Symbols block")
-             (#x0041 nil "ASCII A — not a combining character"))))
-      (dolist (c cases)
-        (destructuring-bind (cp expected description) c
-          (declare (ignore description))
-          (let ((ch (code-char cp)))
-            (if expected
-                (expect (cl-tmux/terminal/actions:combining-char-p ch))
-                (expect (cl-tmux/terminal/actions:combining-char-p ch) :to-be-falsy))))))))
+  (it-each ((#x0300 t   "combining grave accent - Diacritical Marks start")
+            (#x036F t   "combining latin small letter x - Diacritical Marks end")
+            (#x0370 nil "greek capital letter Heta - just after Diacritical Marks")
+            (#x1AB0 t   "combining doubled circumflex accent - Extended start")
+            (#x1AFF t   "last code in Extended block")
+            (#x20D0 t   "combining left harpoon above - Marks for Symbols start")
+            (#x20FF t   "last code in Marks for Symbols block")
+            (#x0041 nil "ASCII A - not a combining character"))
+      "combining-char-p: ~*~*~A"
+      (cp expected description)
+    (declare (ignore description))
+    (let ((ch (code-char cp)))
+      (if expected
+          (expect (cl-tmux/terminal/actions:combining-char-p ch))
+          (expect (cl-tmux/terminal/actions:combining-char-p ch) :to-be-falsy)))))
 
 ;;; ── SUITE: write-char-at-cursor combining-char path ─────────────────────────
 ;;;
@@ -167,37 +164,35 @@
       (expect (char= #\j (char-at s 0 0)))))
 
   ;; Table-driven DEC graphics remapping for all documented mappings.
-  (it "set-charset-dec-graphics-table-driven"
-    ;; Each entry: (input-char expected-char description)
-    (let ((cases '((#\j #\┘ "lower-right corner")
-                   (#\k #\┐ "upper-right corner")
-                   (#\l #\┌ "upper-left corner")
-                   (#\m #\└ "lower-left corner")
-                   (#\n #\┼ "crossing")
-                   (#\t #\├ "left tee")
-                   (#\u #\┤ "right tee")
-                   (#\v #\┴ "bottom tee")
-                   (#\w #\┬ "top tee")
-                   (#\q #\─ "horizontal line")
-                   (#\x #\│ "vertical line")
-                   (#\a #\▒ "checkerboard")
-                   (#\` #\◆ "diamond")
-                   ;; Upper half of the set — math/relational symbols + scan lines.
-                   (#\y #\≤ "less-than-or-equal")
-                   (#\z #\≥ "greater-than-or-equal")
-                   (#\{ #\π "pi")
-                   (#\| #\≠ "not-equal")
-                   (#\} #\£ "UK pound sign")
-                   (#\~ #\· "centred dot")
-                   (#\o #\⎺ "scan line 1")
-                   (#\s #\⎽ "scan line 9"))))
-      (dolist (entry cases)
-        (destructuring-bind (in expected desc) entry
-          (declare (ignore desc))
-          (with-screen (s 10 5)
-            (cl-tmux/terminal/actions:designate-charset s :g0 :dec-graphics)
-            (cl-tmux/terminal/actions:write-char-at-cursor s in)
-            (expect (char= expected (char-at s 0 0))))))))
+  (it-each ((#\j #\┘ "lower-right corner")
+            (#\k #\┐ "upper-right corner")
+            (#\l #\┌ "upper-left corner")
+            (#\m #\└ "lower-left corner")
+            (#\n #\┼ "crossing")
+            (#\t #\├ "left tee")
+            (#\u #\┤ "right tee")
+            (#\v #\┴ "bottom tee")
+            (#\w #\┬ "top tee")
+            (#\q #\─ "horizontal line")
+            (#\x #\│ "vertical line")
+            (#\a #\▒ "checkerboard")
+            (#\` #\◆ "diamond")
+            ;; Upper half of the set - math/relational symbols + scan lines.
+            (#\y #\≤ "less-than-or-equal")
+            (#\z #\≥ "greater-than-or-equal")
+            (#\{ #\π "pi")
+            (#\| #\≠ "not-equal")
+            (#\} #\£ "UK pound sign")
+            (#\~ #\· "centred dot")
+            (#\o #\⎺ "scan line 1")
+            (#\s #\⎽ "scan line 9"))
+      "set-charset-dec-graphics: ~*~*~A"
+      (in expected desc)
+    (declare (ignore desc))
+    (with-screen (s 10 5)
+      (cl-tmux/terminal/actions:designate-charset s :g0 :dec-graphics)
+      (cl-tmux/terminal/actions:write-char-at-cursor s in)
+      (expect (char= expected (char-at s 0 0)))))
 
   ;; Characters not in the DEC graphics table pass through unchanged.
   (it "set-charset-dec-graphics-unmapped-char-passes-through"

@@ -85,17 +85,17 @@
           (expect (and yanked (search "hello" yanked)))))))
 
   ;; copy-mode-copy-end-of-line and copy-mode-copy-line leave paste-buffers empty outside copy mode.
-  (it "copy-mode-copy-yank-noop-outside-copy-mode-table"
-    (dolist (c '((cl-tmux/commands::copy-mode-copy-end-of-line "copy-end-of-line")
-                 (cl-tmux/commands::copy-mode-copy-line        "copy-line")))
-      (destructuring-bind (fn desc) c
-        (declare (ignore desc))
-        (let ((cl-tmux/buffer:*paste-buffers* nil))
-          (let ((s (make-screen 20 5)))
-            (feed s "hello world")
-            (setf (cl-tmux/terminal/types:screen-copy-cursor s) (cons 0 0))
-            (funcall fn s)
-            (expect (null cl-tmux/buffer:*paste-buffers*)))))))
+  (it-each ((cl-tmux/commands::copy-mode-copy-end-of-line "copy-end-of-line")
+            (cl-tmux/commands::copy-mode-copy-line        "copy-line"))
+      "copy-mode-copy-yank-noop-outside-copy-mode: ~*~A"
+      (fn desc)
+    (declare (ignore desc))
+    (let ((cl-tmux/buffer:*paste-buffers* nil))
+      (let ((s (make-screen 20 5)))
+        (feed s "hello world")
+        (setf (cl-tmux/terminal/types:screen-copy-cursor s) (cons 0 0))
+        (funcall fn s)
+        (expect (null cl-tmux/buffer:*paste-buffers*)))))
 
   ;; ── copy-mode-search-forward / search-backward ──────────────────────────────
 

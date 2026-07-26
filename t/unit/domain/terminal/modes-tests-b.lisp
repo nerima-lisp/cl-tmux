@@ -12,21 +12,19 @@
 (describe "terminal-suite/set-cursor-shape-suite"
 
   ;; set-cursor-shape stores values in [0,6] unchanged.
-  (it "set-cursor-shape-stores-valid-values"
-    ;; Table: (input expected-shape description)
-    (let ((cases '((0 0 "default blinking block")
-                   (1 1 "blinking block")
-                   (2 2 "steady block")
-                   (3 3 "blinking underline")
-                   (4 4 "steady underline")
-                   (5 5 "blinking bar")
-                   (6 6 "steady bar"))))
-      (dolist (c cases)
-        (destructuring-bind (input expected desc) c
-          (declare (ignore desc))
-          (with-screen (s 10 5)
-            (cl-tmux/terminal/actions:set-cursor-shape s input)
-            (expect (= expected (cl-tmux/terminal/types:screen-cursor-shape s))))))))
+  (it-each ((0 0 "default blinking block")
+            (1 1 "blinking block")
+            (2 2 "steady block")
+            (3 3 "blinking underline")
+            (4 4 "steady underline")
+            (5 5 "blinking bar")
+            (6 6 "steady bar"))
+      "set-cursor-shape-stores-valid-values: ~*~*~A"
+      (input expected desc)
+    (declare (ignore desc))
+    (with-screen (s 10 5)
+      (cl-tmux/terminal/actions:set-cursor-shape s input)
+      (expect (= expected (cl-tmux/terminal/types:screen-cursor-shape s)))))
 
   ;; set-cursor-shape clamps values > 6 to 6.
   (it "set-cursor-shape-clamps-above-six-to-six"

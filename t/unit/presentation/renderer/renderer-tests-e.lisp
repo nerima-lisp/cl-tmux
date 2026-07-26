@@ -49,19 +49,16 @@
   ;;; ── status-justify-line dispatch table ──────────────────────────────────────
 
   ;; %status-justify-line dispatches correctly to right/centre/left strategies.
-  (it "status-justify-line-table-driven"
-    (let ((cases
-           ;; (justify left right cols . description)
-           '(("right"  "L" "R" 20 . "right")
-             ("centre" "L" "R" 20 . "centre")
-             ("left"   "L" "R" 20 . "left (default)")
-             ("unknown" "L" "R" 20 . "unknown falls back to left"))))
-      (dolist (c cases)
-        (destructuring-bind (justify left right cols . desc) c
-          (declare (ignore desc))
-          (let ((result (cl-tmux/renderer::%status-justify-line left right cols justify)))
-            (expect (<= (length result) cols))
-            (expect (search left result)))))))
+  (it-each (("right"   "L" "R" 20 "right")
+            ("centre"  "L" "R" 20 "centre")
+            ("left"    "L" "R" 20 "left (default)")
+            ("unknown" "L" "R" 20 "unknown falls back to left"))
+      "status-justify-line: ~*~*~*~*~A"
+      (justify left right cols desc)
+    (declare (ignore desc))
+    (let ((result (cl-tmux/renderer::%status-justify-line left right cols justify)))
+      (expect (<= (length result) cols))
+      (expect (search left result))))
 
   ;;; ── render-overlay with scroll offset ───────────────────────────────────────
 
@@ -195,47 +192,47 @@
   ;;; ── Background-window bell relay (gap #23) ────────────────────────────────
 
   ;; bell-action controls whether BEL in a non-active window reaches the rendered frame.
-  (it "render-session-background-bell-action-table"
-    (dolist (row '(("any"     t   "bell-action 'any': background BEL must appear")
-                   ("other"   t   "bell-action 'other': background BEL must appear")
-                   ("current" nil "bell-action 'current': background BEL must be swallowed")
-                   ("none"    nil "bell-action 'none': all BELs must be swallowed")))
-      (destructuring-bind (bell-action expected-bell-p desc) row
-        (declare (ignore desc))
-        (with-isolated-options ("bell-action" bell-action "visual-bell" "off" "status" "off")
-          (let* ((sess  (make-fake-session :nwindows 2))
-                 (win2  (second (cl-tmux/model:session-windows sess)))
-                 (pane2 (first (cl-tmux/model:window-panes win2))))
-            (setf (cl-tmux/terminal/types:screen-bell-pending
-                   (cl-tmux/model:pane-screen pane2)) t)
-            (let ((out (cl-tmux/renderer::render-session-to-string sess 5 20)))
-              (if expected-bell-p
-                  (expect (find (code-char 7) out))
-                  (expect (null (find (code-char 7) out))))
-              ;; The pending bell is consumed either way — a bell swallowed by
-              ;; bell-action must not ring later when its window becomes active.
-              (expect (null (cl-tmux/terminal/types:screen-bell-pending
-                             (cl-tmux/model:pane-screen pane2))))))))))
+  (it-each (("any"     t   "bell-action 'any': background BEL must appear")
+            ("other"   t   "bell-action 'other': background BEL must appear")
+            ("current" nil "bell-action 'current': background BEL must be swallowed")
+            ("none"    nil "bell-action 'none': all BELs must be swallowed"))
+      "render-session-background-bell-action: ~*~*~A"
+      (bell-action expected-bell-p desc)
+    (declare (ignore desc))
+    (with-isolated-options ("bell-action" bell-action "visual-bell" "off" "status" "off")
+      (let* ((sess  (make-fake-session :nwindows 2))
+             (win2  (second (cl-tmux/model:session-windows sess)))
+             (pane2 (first (cl-tmux/model:window-panes win2))))
+        (setf (cl-tmux/terminal/types:screen-bell-pending
+               (cl-tmux/model:pane-screen pane2)) t)
+        (let ((out (cl-tmux/renderer::render-session-to-string sess 5 20)))
+          (if expected-bell-p
+              (expect (find (code-char 7) out))
+              (expect (null (find (code-char 7) out))))
+          ;; The pending bell is consumed either way - a bell swallowed by
+          ;; bell-action must not ring later when its window becomes active.
+          (expect (null (cl-tmux/terminal/types:screen-bell-pending
+                         (cl-tmux/model:pane-screen pane2))))))))
 
   ;; A BEL in the ACTIVE window fires the alert-bell hook with the window when
   ;; bell-action applies to the current window (any/current); other/none do not.
-  (it "render-session-current-window-bell-fires-alert-bell-hook"
-    (dolist (row '(("any" t) ("current" t) ("other" nil) ("none" nil)))
-      (destructuring-bind (bell-action expect-fired) row
-        (with-isolated-options ("bell-action" bell-action "status" "off")
-          (with-isolated-hooks
-            (let* ((sess     (make-fake-session :nwindows 1))
-                   (win      (cl-tmux/model:session-active-window sess))
-                   (pane     (cl-tmux/model:window-active-pane win))
-                   (hook-win nil))
-              (setf (cl-tmux/terminal/types:screen-bell-pending
-                     (cl-tmux/model:pane-screen pane)) t)
-              (cl-tmux/hooks:add-hook "alert-bell"
-                                      (lambda (&rest args) (setf hook-win (first args))))
-              (cl-tmux/renderer::render-session-to-string sess 5 20)
-              (if expect-fired
-                  (expect (eq win hook-win))
-                  (expect (null hook-win)))))))))
+  (it-each (("any" t) ("current" t) ("other" nil) ("none" nil))
+      "render-session-current-window-bell-fires-alert-bell-hook: ~A"
+      (bell-action expect-fired)
+    (with-isolated-options ("bell-action" bell-action "status" "off")
+      (with-isolated-hooks
+        (let* ((sess     (make-fake-session :nwindows 1))
+               (win      (cl-tmux/model:session-active-window sess))
+               (pane     (cl-tmux/model:window-active-pane win))
+               (hook-win nil))
+          (setf (cl-tmux/terminal/types:screen-bell-pending
+                 (cl-tmux/model:pane-screen pane)) t)
+          (cl-tmux/hooks:add-hook "alert-bell"
+                                  (lambda (&rest args) (setf hook-win (first args))))
+          (cl-tmux/renderer::render-session-to-string sess 5 20)
+          (if expect-fired
+              (expect (eq win hook-win))
+              (expect (null hook-win)))))))
 
   ;; visual-bell off/both relay the audible BEL; on is visual-only.
   (it "emit-bell-visual-bell-tri-state-table"
