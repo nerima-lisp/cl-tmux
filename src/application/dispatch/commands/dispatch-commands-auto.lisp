@@ -243,16 +243,23 @@
   "Dispatch DIRECTIVE with ARGS through the config directive interpreter."
   (cl-tmux/config:apply-config-directive (cons directive args)))
 
-(defun %cmd-bind-arg (session args)
+(defmacro define-config-directive-command (name directive docstring)
+  "Define NAME as a (session args) command that ignores SESSION and delegates
+   ARGS to the string DIRECTIVE via %delegate-config-directive — the same
+   path .tmux.conf directives use.  For commands whose runtime form is
+   nothing more than that delegation (see %cmd-set-hook for a command that
+   needs its own extra runtime behavior and so does NOT use this macro)."
+  `(defun ,name (session args)
+     ,docstring
+     (declare (ignore session))
+     (%delegate-config-directive ,directive args)))
+
+(define-config-directive-command %cmd-bind-arg "bind"
   "bind [-n] [-r] [-T table] [-N note] key command...: bind a key at runtime
    (command-prompt / key binding / control mode).  Delegates to the config
    directive logic so the full flag set is honoured — the same path .tmux.conf
-   uses.  The no-arg form falls through to the interactive bind prompt."
-  (declare (ignore session))
-  (%delegate-config-directive "bind" args))
+   uses.  The no-arg form falls through to the interactive bind prompt.")
 
-(defun %cmd-unbind-arg (session args)
+(define-config-directive-command %cmd-unbind-arg "unbind"
   "unbind [-a] [-n] [-T table] [key]: unbind a key (or, with -a, every key in
-   a table) at runtime, delegating to the config directive logic."
-  (declare (ignore session))
-  (%delegate-config-directive "unbind" args))
+   a table) at runtime, delegating to the config directive logic.")
