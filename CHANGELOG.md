@@ -62,6 +62,16 @@ Added / Changed / Deprecated / Removed / Fixed / Security
 
 ### Changed
 
+- **Sibling dependency bump: `cl-tty-kit` v1.0.0 → v1.0.1.** Fixes
+  `*raw-mode-tcsetattr-function*` never being installed on SBCL (a
+  duplicate `defvar` in the SBCL-specific file was a no-op against the
+  platform-generic file's earlier `nil` binding, loaded first) — the root
+  cause underneath this release's `with-raw-mode`/`install-pty-port`
+  fixes. Reported and fixed upstream in this same session
+  (`nerima-lisp/cl-tty-kit@ff3a93d`). Verified end-to-end: a rebuilt
+  binary, driven via a real pty, now starts cleanly with no arguments and
+  renders a live shell — cl-tmux's most basic invocation, which crashed on
+  every attempt before this three-fix chain.
 - **Deduplicated two more genuine near-copies found by a directory-scoped
   `paredit inspect similarity` pass** (the whole-tree run is too slow to
   finish): `copy-mode-toggle-position`/`copy-mode-toggle-rectangle` now
@@ -115,6 +125,17 @@ Added / Changed / Deprecated / Removed / Fixed / Security
   `%initialize-session-environment`, the init step already shared by both.
   Found the same way as the previous entry — the existing test suite uses
   a mocked port and could not have caught this.
+- **Fixing the above uncovered a second, then a third layer of the same
+  crash.** `with-raw-mode`'s `handler-bind` safety net called
+  `disable-raw-mode!` on any error — but `handler-bind` runs its handler
+  before the stack unwinds, so when `enable-raw-mode!` itself was what
+  signalled (still holding cl-tty-kit's internal lock on the same thread),
+  that call recursed on the same lock, masking the real error behind
+  "Recursive lock attempt." Removed the now-unnecessary handler-bind
+  (cl-tty-kit's `enable-raw-mode` only records a fd as raw after its
+  syscall succeeds, so a failing call leaves nothing to undo) — the real
+  error hiding underneath was an upstream `cl-tty-kit` bug (see the
+  "Changed" section's sibling dependency bump), now fixed at v1.0.1.
 
 ## [0.1.0] - 2026-07-26
 
