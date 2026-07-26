@@ -104,6 +104,11 @@ Added / Changed / Deprecated / Removed / Fixed / Security
   (`cl-cli`, `cl-dataflow`, `cl-parser-kit`, `cl-prolog`, `cl-tty-kit`,
   `cl-weave`) are already pinned to their current newest tags, so there was
   nothing left to bump there.
+- Consolidated `options-scope.lisp`'s three `:server`/session scope-dispatch
+  one-liners (`%scope-options`, `%scope-registry`, `%scope-known-registry`)
+  behind a new `define-scope-accessor` macro — same "adding a third scope
+  only changes one place" intent the file's own comment already stated, now
+  actually enforced structurally instead of by convention.
 
 ### Fixed
 

@@ -19,19 +19,26 @@
 ;;;
 ;;; The :server / nil (session) duality appears in three parallel pairs of
 ;;; hash-tables.  All callers should go through these one-liners so that
-;;; adding a third scope only changes these three functions.
+;;; adding a third scope only changes this table.
 
-(defun %scope-options (scope)
-  "Return the runtime option table for SCOPE (:server or session/nil)."
-  (if (eq scope :server) *server-options* *global-options*))
+(defmacro define-scope-accessor (name docstring server-place other-place)
+  "Define NAME as a function of SCOPE returning SERVER-PLACE when SCOPE is
+   :SERVER, else OTHER-PLACE."
+  `(defun ,name (scope)
+     ,docstring
+     (if (eq scope :server) ,server-place ,other-place)))
 
-(defun %scope-registry (scope)
-  "Return the runtime spec registry for SCOPE (:server or session/nil)."
-  (if (eq scope :server) *server-option-registry* *option-registry*))
+(define-scope-accessor %scope-options
+    "Return the runtime option table for SCOPE (:server or session/nil)."
+  *server-options* *global-options*)
 
-(defun %scope-known-registry (scope)
-  "Return the stable tmux 3.6a spec registry for SCOPE (:server or session/nil)."
-  (if (eq scope :server) *known-server-option-registry* *known-option-registry*))
+(define-scope-accessor %scope-registry
+    "Return the runtime spec registry for SCOPE (:server or session/nil)."
+  *server-option-registry* *option-registry*)
+
+(define-scope-accessor %scope-known-registry
+    "Return the stable tmux 3.6a spec registry for SCOPE (:server or session/nil)."
+  *known-server-option-registry* *known-option-registry*)
 
 ;;; ── Array-option name parsing ─────────────────────────────────────────────
 ;;;
