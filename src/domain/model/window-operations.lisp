@@ -13,8 +13,10 @@
 ;;; Data/logic separation:
 ;;;   %zoom-in-geometry / %zoom-out-geometry — pure tree-slot mutations (no I/O)
 ;;;   window-zoom-toggle                     — orchestrator: tree mutation + PTY resize
-;;;   %build-spine-tree / %rotate-panes      — pure functional tree builders
-;;;   window-rotate                          — orchestrator: calls spine builder + relayout
+;;;   %rotate-panes                          — pure functional list rotation
+;;;   window-rotate                          — orchestrator: rotates panes, rebuilds the
+;;;                                             tree via layout.lisp's %build-flat-tree :h,
+;;;                                             and relays out
 
 ;;; ── Resize via the tree ──────────────────────────────────────────────────────
 
@@ -65,18 +67,6 @@
 ;;; rotate_window(Window, :up)   :- move first pane to end of panes list, relayout.
 ;;; rotate_window(Window, :down) :- move last  pane to front of panes list, relayout.
 
-(defun %build-spine-tree (panes)
-  "Build a right-spine binary tree from PANES using :h orientation and equal 1/2 ratios.
-   Rotation resets the layout to a flat left-to-right arrangement so visual order
-   matches the panes list.  Use apply-named-layout after rotating to restore a
-   specific orientation."
-  (if (null (rest panes))
-      (make-layout-leaf (first panes))
-      (make-layout-split :h
-                         (make-layout-leaf (first panes))
-                         (%build-spine-tree (rest panes))
-                         1/2)))
-
 (defun %rotate-panes (panes direction)
   "Return a new list of PANES rotated in DIRECTION.
    :UP moves the first pane to the end of the list.
@@ -100,10 +90,10 @@
     (when (> (length panes) 1)
       (let ((new-panes (%rotate-panes panes direction)))
         (if zoomed-p
-            (setf (window-zoom-tree window) (%build-spine-tree new-panes))
+            (setf (window-zoom-tree window) (%build-flat-tree new-panes :h))
             (progn
               (setf (window-panes window) new-panes
-                    (window-tree  window) (%build-spine-tree new-panes))
+                    (window-tree  window) (%build-flat-tree new-panes :h))
               (window-relayout window (window-height window) (window-width window))))))))
 
 ;;; ── Zoom helpers — pure tree transforms ─────────────────────────────────────
