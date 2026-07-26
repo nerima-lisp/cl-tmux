@@ -75,13 +75,13 @@ Added / Changed / Deprecated / Removed / Fixed / Security
   `%build-spine-tree` — a fully redundant duplicate of `layout.lisp`'s
   `%build-flat-tree :h` (their only difference, an explicit `1/2` ratio,
   was already `make-layout-split`'s default) — is deleted outright.
-- **Readability: extracted the 6 most deeply-nested functions in the
+- **Readability: extracted the 7 most deeply-nested functions in the
   codebase** (per `paredit inspect complexity`'s per-definition nesting
   metric), each split so every dispatch branch has a named helper matching
   its siblings — `%expand-brace`, `describe-key-binding-notes`,
   `%render-copy-search-matches`, `%cmd-send-keys-arg`, `%parse-rgb-color`,
-  `%cmd-new-session-arg`. No behavior change; verified by the full test
-  suite after each extraction.
+  `%cmd-new-session-arg`, `%status-window-list-styled`. No behavior change;
+  verified by the full test suite after each extraction.
 - **Sibling dependency bump: `cl-boundary-kit` v0.6.0 → v1.0.0,
   `cl-process-kit` v1.0.0 → v1.0.1.** Both are behavior-preserving per
   upstream release notes — `cl-boundary-kit` 1.0.0 is a stability-policy
