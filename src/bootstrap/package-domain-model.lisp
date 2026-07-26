@@ -1,8 +1,9 @@
 ;;; Domain model and domain service packages.
 
 (defpackage #:cl-tmux/model
-  (:use #:cl #:bordeaux-threads
+  (:use #:cl
         #:cl-tmux/config #:cl-tmux/ports #:cl-tmux/terminal)
+  (:import-from #:bordeaux-threads #:make-lock #:with-lock-held)
   (:documentation
    "DOMAIN layer: the aggregate every other package is ultimately about — session
     holds windows, a window holds panes, and a pane owns one PTY and one emulator

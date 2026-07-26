@@ -1,5 +1,6 @@
 (defpackage #:cl-tmux/terminal/types
-  (:use #:cl #:bordeaux-threads)
+  (:use #:cl)
+  (:import-from #:bordeaux-threads #:make-lock)
   (:documentation
    "DOMAIN layer, the DATA half of the terminal emulator.  Defines the two structs
     the whole emulator is written against — CELL (character, colours, attribute
@@ -336,7 +337,7 @@
 ;;; -- Terminal umbrella (re-export facade) ------------------------------------
 
 (defpackage #:cl-tmux/terminal
-  (:use #:cl #:bordeaux-threads
+  (:use #:cl
         #:cl-tmux/terminal/types
         #:cl-tmux/terminal/actions
         #:cl-tmux/terminal/sgr

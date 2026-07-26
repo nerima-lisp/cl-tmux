@@ -67,8 +67,10 @@
    ;; environment helpers, which used to carry their own identical copy)
    #:find-posix-function))
 
+;; No :import-from for #:cffi: every foreign operator in src/infrastructure/pty/
+;; is already written cffi:-qualified, which is what makes the C surface legible.
 (defpackage #:cl-tmux/pty
-  (:use #:cl #:cffi)
+  (:use #:cl)
   (:documentation
    "INFRASTRUCTURE layer: the pseudo-terminal device itself.  Forks a shell under a
     PTY, moves octets across the master fd, drives termios raw mode and TIOCSWINSZ

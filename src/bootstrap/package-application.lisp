@@ -1,12 +1,16 @@
 ;;; Application command and public facade packages.
 
 (defpackage #:cl-tmux/commands
-  (:use #:cl #:bordeaux-threads
+  (:use #:cl
         #:cl-tmux/config
         #:cl-tmux/pty
         #:cl-tmux/terminal
         #:cl-tmux/model
         #:cl-tmux/hooks)
+  ;; bt:with-timeout / bt:timeout in commands-shell.lisp and commands-pipe-pane.lisp
+  ;; stay qualified: TIMEOUT is also an ordinary parameter name in both files, and
+  ;; importing the condition type would make the two impossible to tell apart.
+  (:import-from #:bordeaux-threads #:with-lock-held)
   (:documentation
    "APPLICATION layer: the tmux commands themselves, as operations on the domain
     model.  Pane and window lifecycle (kill, resize, swap, break, join, respawn), the
@@ -117,7 +121,7 @@
    #:tokenize-command-string))
 
 (defpackage #:cl-tmux
-  (:use #:cl #:bordeaux-threads
+  (:use #:cl
         #:cl-tmux/config
         #:cl-tmux/pty
         #:cl-tmux/terminal
@@ -129,6 +133,16 @@
         #:cl-tmux/protocol
         #:cl-tmux/transport
         #:cl-tmux/net)
+  ;; The reader/timer thread machinery in runtime*.lisp and the control-mode output
+  ;; lock. bordeaux-threads:join-thread and thread-alive-p stay qualified in
+  ;; runtime.lisp, next to the THREAD parameter they are called on.
+  (:import-from #:bordeaux-threads
+                #:make-thread
+                #:make-lock
+                #:with-lock-held
+                #:make-condition-variable
+                #:condition-wait
+                #:condition-notify)
   (:documentation
    "BOOTSTRAP layer: the assembled program, and the widest package in the system.
     Four things live here because each one needs the whole stack below it and none of

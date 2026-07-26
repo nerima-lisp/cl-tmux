@@ -43,8 +43,9 @@
    #:show-menu #:close-menu #:menu-active-p))
 
 (defpackage #:cl-tmux/renderer
-  (:use #:cl #:bordeaux-threads
+  (:use #:cl
         #:cl-tmux/model #:cl-tmux/terminal #:cl-tmux/prompt)
+  (:import-from #:bordeaux-threads #:with-lock-held)
   (:documentation
    "PRESENTATION layer: the only package that writes to the real terminal.  Composites
     every pane's emulator screen, the borders between them, the status bar, and any
@@ -71,8 +72,10 @@
    #:*color-downsample-fn*
    #:%rgb-int-to-256))
 
+;; As in cl-tmux/pty, #:cffi needs no :import-from — input.lisp already writes
+;; cffi:with-foreign-object / cffi:foreign-funcall / cffi:mem-ref in full.
 (defpackage #:cl-tmux/input
-  (:use #:cl #:cffi
+  (:use #:cl
         #:cl-tmux/config #:cl-tmux/pty)
   (:documentation
    "INFRASTRUCTURE layer: keyboard input, read from fd 0 rather than from a Lisp
