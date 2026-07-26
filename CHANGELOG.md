@@ -37,6 +37,10 @@ Added / Changed / Deprecated / Removed / Fixed / Security
   cursor-not-on-bracket fallback plus nested/cross-row backward matching.
   `config.lisp`'s low expression-coverage number was confirmed a load-time
   artifact (data/`eval-when` forms), not a gap.
+- Covered `flags-of-command` (`src/reasoning/command-rulebase.lisp`), the
+  one query helper in the command-metadata reasoning read-model with no test
+  call sites — found by a paredit `unused-definitions` re-audit, which
+  otherwise reconfirmed zero removable dead code in this codebase.
 
 ### Changed
 
