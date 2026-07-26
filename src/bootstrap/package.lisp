@@ -15,6 +15,7 @@
            (base (merge-pathnames #P"src/" root)))
       (load (merge-pathnames #P"bootstrap/package-version.lisp" base))
       (load (merge-pathnames #P"bootstrap/package-core.lisp" base))
+      (load (merge-pathnames #P"bootstrap/package-terminal-types.lisp" base))
       (load (merge-pathnames #P"bootstrap/package-terminal.lisp" base))
       (load (merge-pathnames #P"bootstrap/package-domain-ports.lisp" base))
       (load (merge-pathnames #P"bootstrap/package-domain-model.lisp" base))

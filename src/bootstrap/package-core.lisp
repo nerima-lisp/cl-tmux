@@ -138,7 +138,15 @@
 ;;; -- Client/server stream transport ------------------------------------------
 
 (defpackage #:cl-tmux/transport
-  (:use #:cl #:cl-tmux/protocol)
+  (:use #:cl)
+  ;; Four names out of the codec's forty: the header size and payload-length
+  ;; offset needed to know how much to read, the length decoder, and DECODE-FRAME.
+  ;; Everything else in cl-tmux/protocol is for packet authors, not for the pipe.
+  (:import-from #:cl-tmux/protocol
+                #:+header-size+
+                #:+payload-length-offset+
+                #:read-u32
+                #:decode-frame)
   (:documentation
    "INFRASTRUCTURE layer: the impure shell around the cl-tmux/protocol codec.  Moves
     whole frames across any binary stream — a socket stream in production, a

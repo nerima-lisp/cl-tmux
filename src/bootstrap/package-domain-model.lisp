@@ -136,8 +136,12 @@
    #:get-update-environment-vars
    #:layout-node-bounding-box))
 
+;; No :import-from for #:cl-tmux/model: the :use here was inert. All 44 model
+;; references in src/domain/format/ are already written cl-tmux/model:-qualified,
+;; which for this package is the more honest form anyway — the format language is
+;; a read-only projection of a model it does not belong to.
 (defpackage #:cl-tmux/format
-  (:use #:cl #:cl-tmux/model)
+  (:use #:cl)
   (:documentation
    "DOMAIN layer: the tmux format mini-language.  Expands #{pane_id}, #{window_name},
     #{session_attached} and the rest against a context built from a session, window,
