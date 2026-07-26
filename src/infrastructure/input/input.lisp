@@ -9,11 +9,17 @@
 
 (defmacro with-raw-mode (&body body)
   "Execute BODY with stdin in raw mode, restoring the terminal on exit.
-   A condition handler ensures raw mode is disabled even if an error is
-   signalled before the unwind-protect cleanup runs."
-  `(handler-bind ((error (lambda (c)
-                           (declare (ignore c))
-                           (disable-raw-mode! 0))))
+   ENABLE-RAW-MODE! runs OUTSIDE the unwind-protect deliberately: cl-tty-kit's
+   enable-raw-mode only records fd 0 as raw AFTER its TCSETATTR syscall
+   succeeds, so if it signals an error the terminal was never actually put
+   into raw mode and there is nothing to restore. A handler-bind safety net
+   used to call disable-raw-mode! unconditionally here, but handler-bind
+   runs its handler BEFORE unwinding the stack — if enable-raw-mode! itself
+   was the one signalling (still holding cl-tty-kit's internal raw-mode
+   lock), that handler's disable-raw-mode! call recursed on the same lock
+   from the same thread, crashing with a masking \"recursive lock attempt\"
+   error instead of the real one."
+  `(progn
      (enable-raw-mode! 0)        ; fd 0 = stdin
      (unwind-protect
           (progn ,@body)

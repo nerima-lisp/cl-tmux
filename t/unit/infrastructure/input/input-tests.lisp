@@ -18,8 +18,15 @@
       (expect body-pos :to-be-truthy)
       (expect (< enable-pos body-pos))))
 
-  ;; DISABLE-RAW-MODE! appears exactly twice: error handler + unwind cleanup.
-  (it "with-raw-mode-installs-disable-in-handler-and-cleanup"
+  ;; DISABLE-RAW-MODE! appears exactly once, in the unwind-protect cleanup.
+  ;; No handler-bind: enable-raw-mode! runs outside the unwind-protect, and
+  ;; cl-tty-kit's enable-raw-mode only records fd 0 as raw after its TCSETATTR
+  ;; succeeds, so an error from enable-raw-mode! itself leaves nothing to
+  ;; restore — a handler-bind calling disable-raw-mode! there would instead
+  ;; run while enable-raw-mode!'s own raw-mode-states lock was still held on
+  ;; the stack (handler-bind runs its handler before unwinding), recursing on
+  ;; that lock from the same thread.
+  (it "with-raw-mode-installs-disable-only-in-cleanup"
     (let* ((form (macroexpand-1 '(cl-tmux/input::with-raw-mode :body-marker)))
            (text (prin1-to-string form))
            (count 0)
@@ -29,9 +36,8 @@
             while pos
             do (incf count)
                (setf start (+ pos (length "DISABLE-RAW-MODE!"))))
-      (expect (= 2 count))
-      ;; The expansion should also establish a handler and an unwind-protect.
-      (expect (search "HANDLER-BIND" text) :to-be-truthy)
+      (expect (= 1 count))
+      (expect (null (search "HANDLER-BIND" text)))
       (expect (search "UNWIND-PROTECT" text) :to-be-truthy)))
 
   ;; with-raw-mode is defined as a macro.
