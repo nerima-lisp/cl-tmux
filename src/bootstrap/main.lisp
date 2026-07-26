@@ -93,10 +93,14 @@
 
 (defun %initialize-session-environment ()
   "Set up the shared session environment before spawning any panes.
-   Loads the default shell, wires the %if condition evaluator, installs
-   the history/alternate-screen/scroll-on-clear option callbacks, and applies
-   the user config file.  Called from both run-standalone and run-control-mode
+   Installs the CFFI PTY adapter into the cl-tmux/ports domain abstraction
+   (run-server was the only caller of install-pty-port; run-standalone and
+   run-control-mode create panes too, so they need it here), loads the
+   default shell, wires the %if condition evaluator, installs the
+   history/alternate-screen/scroll-on-clear option callbacks, and applies the
+   user config file.  Called from both run-standalone and run-control-mode
    to avoid duplicating the initialization boilerplate."
+  (install-pty-port)
   (cl-tmux/config:init-default-shell)
   (setf cl-tmux/config:*config-condition-evaluator* (%make-format-condition-evaluator))
   (%apply-editor-mode-keys)
