@@ -144,7 +144,14 @@
       ;; -t (target) is accepted by many commands
       (expect (commands-with-flag rb "t") :to-contain "kill-pane")
       (expect (commands-with-flag rb "t") :to-satisfy
-              (lambda (names) (> (length names) 10))))))
+              (lambda (names) (> (length names) 10)))))
+
+  (it "maps a command to the flags it accepts"
+    (let ((rb (current-command-rulebase)))
+      ;; bind-key: "[-nrN] [-T key-table] [-X] key [note] command ..."
+      (expect (flags-of-command rb "bind-key") :to-contain "T")
+      (expect (flags-of-command rb "bind-key") :to-contain "r")
+      (expect (flags-of-command rb "kill-server") :to-equal nil))))
 
 (deftest-queries "raw prolog command-metadata queries" ((current-command-rulebase))
   ("bind-key is a canonical command"
