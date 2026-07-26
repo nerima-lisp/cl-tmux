@@ -1,6 +1,6 @@
 (in-package #:cl-tmux/commands)
 
-;;; ── Pane operations ────────────────────────────────────────────────────────
+;;; -- Pane operations ---------------------------------------------------------
 ;;;
 ;;; swap_pane(Window, Dir)   :- active(Window, AP), neighbor(AP, Dir, Other),
 ;;;                              swap_positions(AP, Other), swap_list_order(AP, Other).
@@ -60,7 +60,7 @@
         (when other
           (swap-two-panes window ap other))))))
 
-;;; ── break-pane ─────────────────────────────────────────────────────────────
+;;; -- break-pane --------------------------------------------------------------
 ;;;
 ;;; break_pane(Session) :-
 ;;;   active_window(Session, Win),
@@ -145,7 +145,7 @@
             (or (cl-tmux/options:get-option "base-index") 0)))
        name select))))
 
-;;; ── join-pane / move-pane ───────────────────────────────────────────────────
+;;; -- join-pane / move-pane ---------------------------------------------------
 ;;;
 ;;; join_pane(Session, SrcWin, SrcPane, DstWin, Dir) :-
 ;;;   remove_pane(SrcWin, SrcPane),

@@ -3,7 +3,7 @@
 ;;;; Copy-mode key overrides, format helpers, new-session factory,
 ;;;;  and named-command table (C-b : prompt resolution).
 
-;;; ── Copy-mode key overrides macro ────────────────────────────────────────────
+;;; -- Copy-mode key overrides macro -------------------------------------------
 
 (defmacro define-copy-mode-key-overrides (&rest rules)
   "Build a copy-mode key-lookup function from a declarative override table.

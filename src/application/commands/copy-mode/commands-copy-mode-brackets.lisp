@@ -2,7 +2,7 @@
 
 ;;;; Copy-mode bracket matching helpers.
 
-;;; ── Bracket matching (vi %) ───────────────────────────────────────────────────
+;;; -- Bracket matching (vi %) -------------------------------------------------
 ;;;
 ;;; copy_mode_next_matching_bracket(Screen):
 ;;;   Cursor on ( [ { → scan forward for matching ) ] }.

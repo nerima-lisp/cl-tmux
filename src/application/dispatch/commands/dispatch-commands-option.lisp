@@ -6,7 +6,7 @@
 ;;; %cmd-show-options*, %cmd-show-window-options-arg, %cmd-show-session-options-arg,
 ;;; %cmd-show-server-options-arg.
 
-;;; ── set-option scope helpers (CPS + data-logic separation) ─────────────────
+;;; -- set-option scope helpers (CPS + data-logic separation) ------------------
 ;;;
 ;;; %cmd-set-option decomposes into three concerns:
 ;;;   1. Value expansion (-F flag) — data transformation before storage.

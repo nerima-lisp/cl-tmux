@@ -1,6 +1,6 @@
 (in-package #:cl-tmux/commands)
 
-;;; ── Copy-mode search subsystem ──────────────────────────────────────────────
+;;; -- Copy-mode search subsystem ----------------------------------------------
 ;;;
 ;;; copy_mode_search_forward(Screen, Term)  :- scan rows from cursor downward
 ;;;   through the *entire* virtual buffer (scrollback + live grid).
@@ -17,7 +17,7 @@
 ;;; Mapping from (copy-offset, viewport-row) to virtual row:
 ;;;   vrow = sb-count + viewport-row - copy-offset
 
-;;; ── Incremental-search origin store ─────────────────────────────────────────
+;;; -- Incremental-search origin store -----------------------------------------
 ;;;
 ;;; When incremental search starts, the current cursor+offset are saved so they
 ;;; can be restored on cancel (C-g / ESC) or used as the search anchor on each
@@ -28,7 +28,7 @@
   "Saved (cons (cons row col) offset) when incremental search is active.
    NIL when no incremental search is in progress.")
 
-;;; ── Matcher factory ──────────────────────────────────────────────────────────
+;;; -- Matcher factory ---------------------------------------------------------
 
 (defun %copy-mode-make-matcher (term)
   "Return a matcher closure (row-string start) → match-start-column (or NIL).
@@ -47,7 +47,7 @@
         (write-char #\\ out))
       (write-char ch out))))
 
-;;; ── Full-buffer directional search ──────────────────────────────────────────
+;;; -- Full-buffer directional search ------------------------------------------
 
 (defun %copy-mode-find-forward (screen term start-vrow start-col)
   "Scan forward through the full virtual buffer from (START-VROW, START-COL).
@@ -79,7 +79,7 @@
           when best return (values vrow best)
           finally (return (values nil nil)))))
 
-;;; ── Wrap-search option ───────────────────────────────────────────────────────
+;;; -- Wrap-search option ------------------------------------------------------
 
 (defun %wrap-search-p ()
   "T when copy-mode search should wrap around the buffer ends."
@@ -108,7 +108,7 @@
              (multiple-value-bind (wrap-vrow wrap-col) (funcall wrap-start-fn)
                (attempt wrap-vrow wrap-col))))))
 
-;;; ── Public search commands ───────────────────────────────────────────────────
+;;; -- Public search commands --------------------------------------------------
 
 (defun %copy-mode-search-direction (screen term direction &optional (save-direction-p t))
   "Shared search engine for copy-mode-search-{forward,backward}.
@@ -185,7 +185,7 @@
   "Search backward for the word under the copy-mode cursor, treating it literally."
   (%copy-mode-search-word screen :backward))
 
-;;; ── Incremental search (C-s / C-r) ──────────────────────────────────────────
+;;; -- Incremental search (C-s / C-r) ------------------------------------------
 ;;;
 ;;; Incremental search prompts the user for a search string while simultaneously
 ;;; moving the cursor to the first match after every keystroke.  On cancel (ESC /

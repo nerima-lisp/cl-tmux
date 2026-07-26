@@ -13,7 +13,7 @@
 (declaim (special cl-tmux/model:*update-environment*
                   cl-tmux/model:+default-update-environment+))
 
-;;; ── Option side-effect helpers ───────────────────────────────────────────────
+;;; -- Option side-effect helpers ----------------------------------------------
 
 (defun %nonempty-string-p (x)
   "T when X is a non-empty string."
@@ -36,7 +36,7 @@
          (setf (symbol-value key-code-var) byte)
          (key-table-bind +table-prefix+ (code-char byte) :send-prefix))))))
 
-;;; ── Declarative option-side-effect dispatch ──────────────────────────────────
+;;; -- Declarative option-side-effect dispatch ---------------------------------
 ;;;
 ;;; define-option-side-effect-handlers builds apply-option-side-effects from a
 ;;; Prolog-style fact table: one (NAME-STRING &body BODY) arm per option.  Each arm
@@ -113,7 +113,7 @@
                (remove-if (lambda (s) (zerop (length s)))
                           (uiop:split-string value :separator '(#\Space))))))))
 
-;;; ── set-hook directive ────────────────────────────────────────────────────────
+;;; -- set-hook directive ------------------------------------------------------
 
 (defun %apply-set-hook-directive (cmd args)
   "Handle 'set-hook [-a] [-r] [-u] event [command]' directives.

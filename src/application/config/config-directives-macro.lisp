@@ -1,7 +1,7 @@
 (in-package #:cl-tmux/config)
 
-;;; ── Runtime sb-posix helpers ─────────────────────────────────────────────────
-;;; ── Renderer mouse-reporting hook ────────────────────────────────────────────
+;;; -- Runtime sb-posix helpers ------------------------------------------------
+;;; -- Renderer mouse-reporting hook -------------------------------------------
 ;;;
 ;;; %apply-option-side-effects must call the renderer to enable/disable mouse
 ;;; reporting when the 'mouse' option changes, but the config layer cannot carry
@@ -15,7 +15,7 @@
    ENABLE-P is T to enable mouse reporting, NIL to disable it.  Set by the
    orchestrate layer (events-loop or main.lisp) to cl-tmux/renderer:enable/disable.")
 
-;;; ── Environment-variable helper ─────────────────────────────────────────────
+;;; -- Environment-variable helper ---------------------------------------------
 ;;;
 ;;; set-environment directives need to mutate the process environment.
 ;;; SB-POSIX is looked up lazily at call time — it is not an ASDF dependency of
@@ -35,7 +35,7 @@
   (let ((fn (find-posix-function "SETENV")))
     (when fn (ignore-errors (funcall fn name value 1)))))
 
-;;; ── run-shell tilde expansion helper ─────────────────────────────────────────
+;;; -- run-shell tilde expansion helper ----------------------------------------
 
 (defun %expand-leading-tilde (cmd)
   "Expand a leading \"~/\" in CMD to \"$HOME/\" using the HOME environment
@@ -98,7 +98,7 @@
               (declare (ignorable ,@arglist))
               ,@body)))))
 
-;;; ── Declarative directive dispatch macro ──────────────────────────────────
+;;; -- Declarative directive dispatch macro ------------------------------------
 
 (defmacro define-config-directives (&rest rules)
   "Build %APPLY-CONFIG-DIRECTIVE-INNER from canonical directive RULES.

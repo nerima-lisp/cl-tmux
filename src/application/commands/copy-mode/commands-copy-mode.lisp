@@ -6,7 +6,7 @@
 (defconstant +scroll-to-newest+ (- most-positive-fixnum)
   "Sentinel delta that clamps to offset 0 (live view / newest content).")
 
-;;; ── Copy mode ──────────────────────────────────────────────────────────────
+;;; -- Copy mode ---------------------------------------------------------------
 ;;;
 ;;; copy_mode(enter, Screen) :- set(copy-mode-p, true), set(copy-offset, 0).
 ;;; copy_mode(exit, Screen)  :- set(copy-mode-p, false), set(copy-offset, 0).
@@ -88,7 +88,7 @@
                  (zerop (screen-copy-offset screen)))
         (copy-mode-exit screen)))))
 
-;;; ── send-keys -X *-and-cancel / selection-mode / scroll-to-mouse ─────────────
+;;; -- send-keys -X *-and-cancel / selection-mode / scroll-to-mouse ------------
 ;;;
 ;;; These are real tmux window-copy commands (window-copy.c) that scroll/move and
 ;;; then exit copy mode when the live bottom (offset 0) is reached.

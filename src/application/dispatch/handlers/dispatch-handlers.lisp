@@ -82,7 +82,7 @@
       ((:quit :detach) outcome)
       (otherwise (setf *dirty* t) nil))))
 
-;;; ── Copy-mode dispatch table helper ─────────────────────────────────────────
+;;; -- Copy-mode dispatch table helper -----------------------------------------
 ;;;
 ;;; 45 copy-mode handlers follow one uniform contract:
 ;;;   (KEYWORD (%copy-mode-call session #'FUNCTION))
@@ -101,7 +101,7 @@
   "Call FN with SESSION and a trailing NIL argument via %COPY-MODE-CALL."
   (%copy-mode-call session (lambda (s) (funcall fn s nil))))
 
-;;; ── Directional-handler dispatch table helper ───────────────────────────────
+;;; -- Directional-handler dispatch table helper -------------------------------
 ;;;
 ;;; Several handler groups share one uniform contract:
 ;;;   (KEYWORD (HELPER-FN session DIRECTION-OR-NAME-KEYWORD))
@@ -116,7 +116,7 @@
                  `(,(first entry) (,helper-fn session ,(second entry))))
                entries)))
 
-;;; ── Resize commands ──────────────────────────────────────────────────────────
+;;; -- Resize commands ---------------------------------------------------------
 
 (define-directional-handlers %resize-active-window-pane
   (:resize-left   :left)
@@ -124,7 +124,7 @@
   (:resize-up     :up)
   (:resize-down   :down))
 
-;;; ── Pane selection ────────────────────────────────────────────────────────
+;;; -- Pane selection ----------------------------------------------------------
 
 (define-directional-handlers %select-pane-in-direction
   (:select-pane-left   :left)
@@ -132,7 +132,7 @@
   (:select-pane-up     :up)
   (:select-pane-down   :down))
 
-;;; ── Pane swap ─────────────────────────────────────────────────────────────
+;;; -- Pane swap ---------------------------------------------------------------
 
 (define-directional-handlers %swap-active-pane
   (:swap-pane-forward  :right)
@@ -140,7 +140,7 @@
   (:swap-pane-up       :up)
   (:swap-pane-down     :down))
 
-;;; ── Layout selection ──────────────────────────────────────────────────────
+;;; -- Layout selection --------------------------------------------------------
 
 (define-directional-handlers %apply-named-layout-to-session
   (:select-layout-even-h    :even-horizontal)
@@ -157,7 +157,7 @@
   (:next-pane (%cmd-cycle-pane session #'next-cyclic))
   (:prev-pane (%cmd-cycle-pane session #'prev-cyclic))
   (:split-horizontal (%cmd-split session :v))        ; C-b " adds a horizontal bar → :v stacking
-  (:split-vertical   (%cmd-split session :h))        ; C-b % adds a vertical bar   → :h side-by-side
+  (:split-vertical   (%cmd-split session :h))        ; C-b % adds a vertical bar -> :h side-by-side
   (:split-horizontal-no-focus (%cmd-split session :v :no-focus t))
   (:split-vertical-no-focus   (%cmd-split session :h :no-focus t))
   (:kill-pane (%handle-kill-result (kill-pane session)))
@@ -168,7 +168,7 @@
   (:rename-window (%rename-current-window session))
   (:list-keys (show-overlay (describe-key-bindings)))
 
-  ;; ── Copy-mode handlers ─────────────────────────────────────────────────────
+  ;; -- Copy-mode handlers -----------------------------------------------------
   ;; The 45 standard (%copy-mode-call session #'fn) handlers live in the
   ;; define-copy-mode-dispatch-handlers call in dispatch-handlers-copy-mode.lisp.
   ;; Non-standard copy-mode handlers follow here (cursor-fn / lambdas / no-ops).
@@ -200,7 +200,7 @@
                     :preview-length +buffer-preview-length+)
                    stream)))
 
-  ;; ── Paste / send ──────────────────────────────────────────────────────────
+  ;; -- Paste / send -----------------------------------------------------------
   (:select-window (%select-window-by-byte session byte))
   (:paste-buffer
    (let* ((text (cl-tmux/buffer:get-paste-buffer))
@@ -214,12 +214,12 @@
      (and (not *client-read-only*)
           (%send-byte-to-pane ap cl-tmux/config:*prefix-key-code*))))
 
-  ;; ── Zoom ──────────────────────────────────────────────────────────────────
+  ;; -- Zoom -------------------------------------------------------------------
   (:zoom-toggle
    (with-active-window (win session)
      (window-zoom-toggle win)))
 
-  ;; ── Session management ────────────────────────────────────────────────────
+  ;; -- Session management -----------------------------------------------------
   (:rename-session (%rename-current-session session))
   (:run-shell (%run-shell-prompt))
   (:if-shell (%if-shell-prompt))
@@ -243,7 +243,7 @@
        action)))
   (:has-session (%has-session-prompt))
 
-  ;; ── Window management ──────────────────────────────────────────────────────
+  ;; -- Window management ------------------------------------------------------
   (:list-windows (show-overlay (%format-window-list session)))
   ;; :choose-window: interactive j/k menu to select a window (C-b w).
   ;; Builds a menu with one entry per window; Enter selects, q/Esc dismisses.
@@ -264,7 +264,7 @@
                     (lambda (pattern)
                       (%show-window-search-results session pattern))))
 
-  ;; ── Pane management ────────────────────────────────────────────────────────
+  ;; -- Pane management --------------------------------------------------------
   (:last-pane
    ;; Jump to the previously active pane, popping zoom first.
    (let* ((win  (session-active-window session))
@@ -279,7 +279,7 @@
    ;; it also clears *display-panes-active* so the numbers vanish with it.
    (%show-display-panes-overlay session))
 
-  ;; ── Client switching ───────────────────────────────────────────────────────
+  ;; -- Client switching -------------------------------------------------------
   (:switch-client-next (%cmd-cycle-session session #'next-cyclic))
   (:switch-client-prev (%cmd-cycle-session session #'prev-cyclic))
   (:last-session
@@ -289,7 +289,7 @@
      (when second
        (%switch-to-session second))))
 
-  ;; ── Message / info ─────────────────────────────────────────────────────────
+  ;; -- Message / info ---------------------------------------------------------
   (:display-message (%display-message-prompt session))
   (:source-file (%source-file-prompt))
   (:show-options
@@ -309,7 +309,7 @@
 
 )
 
-;;; ── Copy-mode standard dispatch table ───────────────────────────────────────
+;;; -- Copy-mode standard dispatch table ---------------------------------------
 ;;;
 ;;; The copy-mode table is split into dispatch-handlers-copy-mode.lisp so this
 ;;; coordinator file stays focused on shared helpers, macro definitions, and the

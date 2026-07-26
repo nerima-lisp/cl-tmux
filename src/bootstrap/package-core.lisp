@@ -1,5 +1,11 @@
 (defpackage #:cl-tmux/config
   (:use #:cl)
+  (:documentation
+   "APPLICATION layer: everything that turns a .tmux.conf into runtime state.  Two
+    concerns share the package because the config file is the only writer of the
+    second: directive loading (tokenizer, %if/%elif preprocessor, source-file
+    recursion, set-option routing) and the key-table store that maps a key in a
+    named table to the command string it runs.")
   (:export
    #:+prefix-key-code+
    #:+ctrl-mask+
@@ -63,6 +69,13 @@
 
 (defpackage #:cl-tmux/pty
   (:use #:cl #:cffi)
+  (:documentation
+   "INFRASTRUCTURE layer: the pseudo-terminal device itself.  Forks a shell under a
+    PTY, moves octets across the master fd, drives termios raw mode and TIOCSWINSZ
+    geometry, and multiplexes readiness with select(2) — cl-tmux needs to poll PTY,
+    socket, and stdin fds together, which is the one libc call sb-posix does not
+    expose.  Supplies the concrete adapters that install-pty-port stores into
+    cl-tmux/ports.")
   (:export
    ;; PTY lifecycle
    #:forkpty-with-shell    ; (rows cols) → (values master-fd child-pid slave-path)
@@ -84,10 +97,16 @@
    ;; Port adapter (installs cl-tmux/ports vars at server startup)
    #:install-pty-port))
 
-;;; ── Client/server wire protocol ──────────────────────────────────────────
+;;; -- Client/server wire protocol ---------------------------------------------
 
 (defpackage #:cl-tmux/protocol
   (:use #:cl)
+  (:documentation
+   "INFRASTRUCTURE layer: the client/server wire format, as a pure codec.  Encodes
+    and decodes the frames a detached client exchanges with the server — keystrokes
+    and resizes upstream, rendered frames downstream — plus the delimiter-separated
+    command payload.  Deliberately holds no sockets and no global state, so the
+    format is unit-testable without a server; the I/O sits in cl-tmux/transport.")
   (:export
    ;; Message type tags + header size
    #:+msg-attach+ #:+msg-key+ #:+msg-resize+ #:+msg-detach+ #:+msg-frame+ #:+msg-bye+
@@ -114,10 +133,15 @@
    ;; Integer codec helpers (exported so tests can use single-colon access)
    #:u16-octets #:u32-octets #:u16-octets-pair #:read-u16 #:read-u32))
 
-;;; ── Client/server stream transport ───────────────────────────────────────
+;;; -- Client/server stream transport ------------------------------------------
 
 (defpackage #:cl-tmux/transport
   (:use #:cl #:cl-tmux/protocol)
+  (:documentation
+   "INFRASTRUCTURE layer: the impure shell around the cl-tmux/protocol codec.  Moves
+    whole frames across any binary stream — a socket stream in production, a
+    temp-file stream in tests — under a wall-clock budget that keeps a hung peer
+    from blocking a reader forever.  Does no framing of its own.")
   (:export
    #:send-frame            ; (stream octets)          — write one frame + flush
    #:read-frame            ; (stream) → (values type payload) or NIL at EOF
@@ -125,9 +149,15 @@
 
 (defpackage #:cl-tmux/net
   (:use #:cl)
+  (:documentation
+   "INFRASTRUCTURE layer: the Unix-domain socket underneath detach-attach.  Thin
+    wrappers over sb-bsd-sockets so the server and client loops speak in terms of
+    make-listener / accept-connection / connect-to and a binary stream rather than
+    the raw contrib API, and so tests can ask whether the transport is available at
+    all before exercising it.")
   (:export
    #:make-listener #:accept-connection #:connect-to
    #:socket-stream #:socket-fd #:close-socket
    #:unix-socket-available-p))
 
-;;; ── Terminal sub-packages ────────────────────────────────────────────────
+;;; -- Terminal sub-packages ---------------------------------------------------

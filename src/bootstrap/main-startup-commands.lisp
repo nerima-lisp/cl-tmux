@@ -165,7 +165,7 @@
                ,@(when raw-args-p
                    '(:raw-args-p t)))))
 
-;;; ── Startup mode dispatch (data / logic separation) ─────────────────────────
+;;; -- Startup mode dispatch (data / logic separation) -------------------------
 ;;;
 ;;; *startup-modes* is the DATA: a map from mode-name strings to handler
 ;;; functions.  main is the LOGIC: it looks up the mode and dispatches.

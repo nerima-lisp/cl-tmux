@@ -13,7 +13,7 @@
 ;;;; Loaded by config.lisp via a fragment-loader eval-when block, after
 ;;;; %install-key-bindings and %bind-copy-mode-named-navigation are defined.
 
-;;; ── Default emacs copy-mode bindings ─────────────────────────────────────
+;;; -- Default emacs copy-mode bindings ----------------------------------------
 
 (defparameter +default-copy-mode-bindings+
   '(("M-f" :copy-mode-word-end)
@@ -93,7 +93,7 @@
     :copy-mode-jump-reverse)
   "Copy-mode commands that consume numeric prefixes as repeat counts.")
 
-;;; ── Default vi copy-mode bindings ────────────────────────────────────────
+;;; -- Default vi copy-mode bindings -------------------------------------------
 
 (defparameter +default-copy-mode-vi-bindings+
   '((#\q :copy-mode-exit)
@@ -165,7 +165,7 @@
   "Default tmux copy-mode bindings for the vi-style table.
    Matches tmux 3.x key_bindings.c copy-mode-vi defaults.")
 
-;;; ── Install functions ─────────────────────────────────────────────────────
+;;; -- Install functions -------------------------------------------------------
 
 (defun copy-mode-count-command-p (command)
   "Does COMMAND consume the copy-mode numeric prefix as a repeat count?

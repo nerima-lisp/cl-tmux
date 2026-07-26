@@ -2,7 +2,7 @@
 
 ;;;; bind/unbind directive dispatch.
 
-;;; ── unbind-key flag parsing ──────────────────────────────────────────────
+;;; -- unbind-key flag parsing -------------------------------------------------
 ;;;
 ;;; %parse-unbind-key-args handles optional [-n] [-T table] flags before the key.
 ;;; Returns (values table key) or (values nil nil) on parse failure.
@@ -39,7 +39,7 @@
          (unless (= (length remaining) 1) (return (values nil nil nil)))
          (return (values table (%parse-key-token (first remaining)) all-p)))))))
 
-;;; ── Declarative bind/unbind verb dispatch ────────────────────────────────
+;;; -- Declarative bind/unbind verb dispatch -----------------------------------
 
 (defmacro define-key-directive-handlers (&rest rules)
   "Build %APPLY-KEY-DIRECTIVE from a declarative table of verb RULES.

@@ -64,7 +64,7 @@
       (cmd (%dispatch-forwarded-command session conn cmd target args))
       (t (%mark-dirty) nil))))
 
-;;; ── Per-client message dispatch ─────────────────────────────────────────────
+;;; -- Per-client message dispatch ---------------------------------------------
 
 (defun %split-window-input-arg-p (arg)
   "True when ARG requests split-window -I."

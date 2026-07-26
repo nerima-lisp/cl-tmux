@@ -5,7 +5,7 @@
 
 (in-package :cl-tmux)
 
-;;; ── Flag-parser macro ────────────────────────────────────────────────────────
+;;; -- Flag-parser macro -------------------------------------------------------
 ;;;
 ;;; define-flag-parser generates a parser for a set of boolean and value flags.
 ;;; Each FLAG-SPEC is one of:
@@ -73,7 +73,7 @@
   (:bool  "-d" detach)
   (:value "-c" start-dir))
 
-;;; ── Global CLI flags (cl-cli) ────────────────────────────────────────────────
+;;; -- Global CLI flags (cl-cli) -----------------------------------------------
 ;;;
 ;;; `cl-tmux [flags] [command [flags]]` mirrors real tmux(1) (verified against
 ;;; `man 1 tmux`, tmux 3.7b: usage `tmux [-2CDhlNuVv] [-c shell-command]

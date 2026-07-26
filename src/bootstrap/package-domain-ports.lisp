@@ -2,6 +2,12 @@
 
 (defpackage #:cl-tmux/ports
   (:use #:cl)
+  (:documentation
+   "DOMAIN layer: the PTY port, one half of the dependency inversion that keeps the
+    model free of the operating system.  Holds the *spawn-pty* / *write-pty* /
+    *resize-pty* / *close-pty* function cells that cl-tmux/model calls, and that the
+    INFRASTRUCTURE package cl-tmux/pty fills in via install-pty-port at server or
+    test setup time.")
   (:export
    #:*spawn-pty*
    #:*write-pty*
@@ -14,6 +20,12 @@
 
 (defpackage #:cl-tmux/repository
   (:use #:cl)
+  (:documentation
+   "DOMAIN layer: the session-persistence protocol, the other half of the dependency
+    inversion.  Session is the aggregate root — windows and panes are reachable only
+    through their owning session — so this is the complete set of operations a store
+    must offer.  The in-memory implementation over *server-sessions* lives in the
+    BOOTSTRAP layer (bootstrap/session-registry.lisp).")
   (:export
    #:repo-find-session
    #:repo-add-session

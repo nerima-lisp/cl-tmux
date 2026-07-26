@@ -3,6 +3,13 @@
 (defpackage #:cl-tmux/model
   (:use #:cl #:bordeaux-threads
         #:cl-tmux/config #:cl-tmux/ports #:cl-tmux/terminal)
+  (:documentation
+   "DOMAIN layer: the aggregate every other package is ultimately about — session
+    holds windows, a window holds panes, and a pane owns one PTY and one emulator
+    screen.  Also owns the layout tree (the binary split tree, its geometry solver,
+    resize and zoom) and the process environment that a session hands to the shells
+    it spawns.  Reaches the operating system only through cl-tmux/ports, so the model
+    can be exercised without forking anything.")
   (:export
    #:pane
    #:make-pane
@@ -130,11 +137,22 @@
 
 (defpackage #:cl-tmux/format
   (:use #:cl #:cl-tmux/model)
+  (:documentation
+   "DOMAIN layer: the tmux format mini-language.  Expands #{pane_id}, #{window_name},
+    #{session_attached} and the rest against a context built from a session, window,
+    or pane, including the conditional and regex-substitution modifiers.  This is the
+    read-only projection of the model that status lines, list-* commands, and
+    display-message all render through.")
   (:export #:expand-format #:expand-format-safe
            #:format-context-from-session #:format-context-from-window))
 
 (defpackage #:cl-tmux/buffer
   (:use #:cl)
+  (:documentation
+   "DOMAIN layer: the paste-buffer ring.  Holds the most-recent-first stack of named
+    and auto-named (buffer0, buffer1, ...) buffers behind copy-mode yanks, set-buffer,
+    and paste-buffer, bounded by the configured buffer-limit.  Also owns the OSC 52
+    handler, which is where a program running inside a pane reaches the same store.")
   (:export #:+default-buffer-limit+
            #:*paste-buffers* #:*buffer-auto-index*
            #:add-paste-buffer #:rename-paste-buffer #:get-paste-buffer #:set-named-buffer
@@ -157,6 +175,13 @@
 
 (defpackage #:cl-tmux/hooks
   (:use #:cl)
+  (:documentation
+   "DOMAIN layer: the event-hook registry, the seam through which configuration
+    reacts to things the domain does.  Carries two kinds: the named lifecycle and
+    alert hooks tmux defines (after-new-window, pane-exited, alert-bell, ...) and
+    per-command hooks attached to a command name and scope.  Stores and orders the
+    handlers; running them is delegated to an injected runner so the domain never
+    calls into the command dispatcher directly.")
   (:export
    #:+hook-after-new-window+
    #:+hook-after-new-pane+
@@ -205,6 +230,13 @@
 
 (defpackage #:cl-tmux/options
   (:use #:cl)
+  (:documentation
+   "DOMAIN layer: the option store and its scope rules.  tmux options are not a flat
+    table — server, global, session, window, and pane each hold their own overrides,
+    and a lookup walks outward until one is present.  This package owns that
+    resolution, the option-spec registry that gives each name a type and a default,
+    and the show-options projection that reports which scope a value actually came
+    from.")
   (:export #:*global-options* #:*option-registry*
            #:option-spec #:make-option-spec
            #:option-spec-name #:option-spec-type #:option-spec-default

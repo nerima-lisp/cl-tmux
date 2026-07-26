@@ -1,5 +1,12 @@
 (defpackage #:cl-tmux/terminal/types
   (:use #:cl #:bordeaux-threads)
+  (:documentation
+   "DOMAIN layer, the DATA half of the terminal emulator.  Defines the two structs
+    the whole emulator is written against — CELL (character, colours, attribute
+    bits, width) and SCREEN (the grid, the cursor, the SGR pen, scrollback, and the
+    dozens of DEC/ANSI mode flags) — together with their attribute-bit constants and
+    pure grid access.  Owns no behaviour beyond allocation and slot access; every
+    mutation lives in cl-tmux/terminal/actions.")
   (:export
    ;; Attribute bit constants (LSB first, matching bit layout in cell.lisp)
    #:+attr-bold+
@@ -173,6 +180,13 @@
 
 (defpackage #:cl-tmux/terminal/actions
   (:use #:cl #:cl-tmux/terminal/types)
+  (:documentation
+   "DOMAIN layer, the BEHAVIOUR half of the terminal emulator.  Every mutation of a
+    SCREEN lands here: cursor motion and tab stops, character writing, scrolling and
+    the scrollback ring, erase and DEC rectangle operations, line and character
+    insert/delete, scroll regions, alternate screen, charset designation, and the
+    RIS/DECSTR/DECALN resets.  Callers above state what happened; this package
+    decides what that does to the grid.")
   (:export
    ;; Cursor movement
    #:cursor-up
@@ -254,6 +268,12 @@
 ;; sgr package: apply-sgr + the inverse %pen-to-sgr-params (DECRQSS reports)
 (defpackage #:cl-tmux/terminal/sgr
   (:use #:cl #:cl-tmux/terminal/types)
+  (:documentation
+   "DOMAIN layer: SGR (Select Graphic Rendition) parameter interpretation, kept apart
+    from the rest of CSI because it is the one sequence whose parameters form a
+    stream rather than a fixed arity.  APPLY-SGR folds a parameter list into the
+    screen's pen; %PEN-TO-SGR-PARAMS runs the mapping backwards so DECRQSS can
+    report the pen as the parameters that would reproduce it.")
   (:export
    #:%dispatch-sgr-code
    #:apply-sgr
@@ -264,6 +284,12 @@
         #:cl-tmux/terminal/types
         #:cl-tmux/terminal/actions
         #:cl-tmux/terminal/sgr)
+  (:documentation
+   "DOMAIN layer: the CSI rule table.  Maps a parsed control sequence — final byte,
+    private-marker, and parameters — onto the cl-tmux/terminal/actions call it means,
+    and generates the replies the host expects back (DSR/CPR cursor reports, DA1/DA2
+    device attributes, DECRQM mode state, XTWINOPS size reports).  Declarative on
+    purpose: the sequence set is a specification, not an algorithm.")
   (:export
    #:execute-csi))
 
@@ -274,6 +300,13 @@
         #:cl-tmux/terminal/csi)
   ;; cl-tmux/buffer is used for OSC 52 clipboard paste storage.
   ;; We reference it by qualified name to avoid circular deps.
+  (:documentation
+   "DOMAIN layer: the byte-level VT100 state machine, written in continuation-passing
+    style.  Each state — ground, escape, CSI, OSC, DCS, UTF-8 continuation, charset
+    designator — is a closure that takes the next byte and returns the next state,
+    and the only place that state is stored is the screen's PARSER slot.  That is
+    what lets a pane be fed one octet at a time from a PTY and resume mid-sequence
+    across reads.")
   (:export
    #:ground-state
    #:escape-state
@@ -292,10 +325,15 @@
 (defpackage #:cl-tmux/terminal/emulator
   (:use #:cl
         #:cl-tmux/terminal/types)
+  (:documentation
+   "DOMAIN layer: the emulator's entry point, and nothing else.  SCREEN-PROCESS-BYTES
+    drives a run of raw PTY octets through the CPS parser loop.  It is a package of
+    its own so the layers above depend on the act of feeding bytes rather than on the
+    state machine that consumes them.")
   (:export
    #:screen-process-bytes))
 
-;;; ── Terminal umbrella (re-export facade) ─────────────────────────────────
+;;; -- Terminal umbrella (re-export facade) ------------------------------------
 
 (defpackage #:cl-tmux/terminal
   (:use #:cl #:bordeaux-threads
@@ -305,6 +343,15 @@
         #:cl-tmux/terminal/csi
         #:cl-tmux/terminal/parser
         #:cl-tmux/terminal/emulator)
+  (:documentation
+   "DOMAIN layer: the terminal facade.  The six sub-packages above split the emulator
+    by mechanism, which is the right seam for the emulator's own authors and the
+    wrong one for its callers.  This package re-exports the subset the model, the
+    renderer, and the command layer are meant to reach — construction, geometry,
+    cursor, grid and viewport access, copy-mode scrollback, and the mode flags the
+    renderer must honour — so that no caller outside src/domain/terminal/ needs to
+    know which sub-package a name came from.  Adding a name here is a deliberate
+    widening of the emulator's public surface.")
   (:export
    ;; Construction
    #:make-screen

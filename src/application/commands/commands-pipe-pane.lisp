@@ -1,6 +1,6 @@
 (in-package #:cl-tmux/commands)
 
-;;; ── pipe-pane ───────────────────────────────────────────────────────────────
+;;; -- pipe-pane ---------------------------------------------------------------
 ;;;
 ;;; pipe_pane(Pane, Cmd) :-
 ;;;   (existing_pipe(Pane) -> close_pipe(Pane) ; true),

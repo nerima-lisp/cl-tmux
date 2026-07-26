@@ -1,6 +1,6 @@
 (in-package #:cl-tmux/config)
 
-;;; ── Key-binding accessors (thin wrappers over key-tables) ─────────────────
+;;; -- Key-binding accessors (thin wrappers over key-tables) -------------------
 
 (defun lookup-key-binding (key)
   "Return the command keyword bound to KEY (a character or string), or NIL.

@@ -7,6 +7,13 @@
         #:cl-tmux/terminal
         #:cl-tmux/model
         #:cl-tmux/hooks)
+  (:documentation
+   "APPLICATION layer: the tmux commands themselves, as operations on the domain
+    model.  Pane and window lifecycle (kill, resize, swap, break, join, respawn), the
+    whole of copy mode (motion, selection, search, jump, yank and its pipe variants),
+    capture-pane, pipe-pane, send-keys, and run-shell/if-shell.  Each is a plain
+    function taking model objects; nothing here parses argv or knows a client
+    exists — that is the dispatch layer in the cl-tmux package.")
   (:export
    #:kill-pane
    #:close-pane-pty
@@ -122,6 +129,16 @@
         #:cl-tmux/protocol
         #:cl-tmux/transport
         #:cl-tmux/net)
+  (:documentation
+   "BOOTSTRAP layer: the assembled program, and the widest package in the system.
+    Four things live here because each one needs the whole stack below it and none of
+    them can be reached from the domain: the binary entry point and startup flag
+    handling; the server and client halves of detach-attach, with the session
+    registry that implements cl-tmux/repository and the per-pane reader and status
+    timer threads; the event loop that turns keystrokes and mouse reports into
+    commands; and the command dispatcher that resolves -t targets and argv into calls
+    on cl-tmux/commands.  Nothing depends on this package — it is the top of the
+    graph, which is why it may see everything.")
   (:export
    #:main
    #:*server-sessions*

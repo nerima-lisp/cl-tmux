@@ -2,6 +2,13 @@
 
 (defpackage #:cl-tmux/prompt
   (:use #:cl)
+  (:documentation
+   "PRESENTATION layer: the transient interactive UI that sits on top of the panes.
+    Four kinds of overlay share the package because at most one of them is up at a
+    time and the renderer draws them from the same pass — the single-line command
+    prompt with its editing, history, and vi-normal state; message and list overlays;
+    popups running their own pane; and menus.  Holds state and edit operations only:
+    deciding what a submitted prompt means is the event layer's job.")
   (:export
    #:prompt #:make-prompt #:prompt-p
    #:prompt-label #:prompt-buffer #:prompt-cursor-index #:prompt-on-submit
@@ -38,6 +45,13 @@
 (defpackage #:cl-tmux/renderer
   (:use #:cl #:bordeaux-threads
         #:cl-tmux/model #:cl-tmux/terminal #:cl-tmux/prompt)
+  (:documentation
+   "PRESENTATION layer: the only package that writes to the real terminal.  Composites
+    every pane's emulator screen, the borders between them, the status bar, and any
+    active overlay into one full repaint, emitted as raw ANSI/VT100 escapes with no
+    curses dependency and flushed as a single write to avoid tearing.  Also owns
+    style-string parsing and the true-colour downsampling used when the outer
+    terminal cannot show 24-bit colour.")
   (:export
    #:render-session
    #:render-session-to-string
@@ -60,6 +74,12 @@
 (defpackage #:cl-tmux/input
   (:use #:cl #:cffi
         #:cl-tmux/config #:cl-tmux/pty)
+  (:documentation
+   "INFRASTRUCTURE layer: keyboard input, read from fd 0 rather than from a Lisp
+    stream.  A multiplexer has to see each keystroke the moment it arrives and has to
+    distinguish 'nothing yet' from end of input, neither of which a buffered stream
+    offers — so reads go through select(2) and a one-byte read(2).  Declared beside
+    the renderer because it is the input half of the same terminal.")
   (:export
    #:with-raw-mode
    #:read-byte-nonblock))

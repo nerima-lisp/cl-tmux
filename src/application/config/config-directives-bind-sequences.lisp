@@ -2,7 +2,7 @@
 
 ;;;; bind directive command-sequence helpers.
 
-;;; ── Semicolon-sequence splitter ──────────────────────────────────────────
+;;; -- Semicolon-sequence splitter ---------------------------------------------
 ;;;
 ;;; tmux bind directives support ";" (from "\;" in the config line) as a
 ;;; command separator: bind r source-file ~/.tmux.conf \; display "Reloaded!"

@@ -10,7 +10,7 @@
 ;;;; Loaded by config-tokenizer.lisp via a fragment-loader eval-when block,
 ;;;; after the key-parsing utilities it depends on are defined.
 
-;;; ── Bindable keyword set ─────────────────────────────────────────────────
+;;; -- Bindable keyword set ----------------------------------------------------
 ;;;
 ;;; These are the keywords that can appear as the command argument of a bind
 ;;; directive and are dispatched directly by cl-tmux:dispatch-command.  They
@@ -84,12 +84,12 @@
    excluded from the public command list.
    Updated whenever a new dispatchable command is added to dispatch-handlers.")
 
-;;; ── Command alias policy ─────────────────────────────────────────────────
+;;; -- Command alias policy ----------------------------------------------------
 ;;;
 ;;; cl-tmux accepts canonical command names only.  tmux short aliases such as
 ;;; neww/splitw/killp are deliberately not kept as a compatibility layer.
 
-;;; ── Known canonical command names ────────────────────────────────────────
+;;; -- Known canonical command names -------------------------------------------
 ;;;
 ;;; This list covers all primary command names from tmux's cmd_table that
 ;;; cl-tmux either implements or accepts as valid bind targets.  Combined with
