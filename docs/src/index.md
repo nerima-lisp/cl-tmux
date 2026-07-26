@@ -47,7 +47,7 @@ of what is implemented and what is deliberately different.
 - **babel** / **cl-ppcre** — UTF-8 codecs and regexes (format `s///` and `m/r:`
   matching).
 
-Beyond those four, cl-tmux runs on six sibling `nerima-lisp` libraries; see
+Beyond those four, cl-tmux runs on eight sibling `nerima-lisp` libraries; see
 [Dogfooded sibling libraries](guide/sibling-libraries.md).
 
 ## Project
