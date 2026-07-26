@@ -62,16 +62,18 @@ Added / Changed / Deprecated / Removed / Fixed / Security
 
 ### Changed
 
-- **Sibling dependency bump: `cl-tty-kit` v1.0.0 → v1.0.1.** Fixes
+- **Sibling dependency bump: `cl-tty-kit` v1.0.0 → v1.0.2.** Fixes
   `*raw-mode-tcsetattr-function*` never being installed on SBCL (a
   duplicate `defvar` in the SBCL-specific file was a no-op against the
   platform-generic file's earlier `nil` binding, loaded first) — the root
   cause underneath this release's `with-raw-mode`/`install-pty-port`
   fixes. Reported and fixed upstream in this same session
-  (`nerima-lisp/cl-tty-kit@ff3a93d`). Verified end-to-end: a rebuilt
-  binary, driven via a real pty, now starts cleanly with no arguments and
-  renders a live shell — cl-tmux's most basic invocation, which crashed on
-  every attempt before this three-fix chain.
+  (`nerima-lisp/cl-tty-kit@ff3a93d`; v1.0.1 carried the same fix but its
+  own release workflow failed on a stale test constant, so v1.0.2
+  corrects that and is what this project pins). Verified end-to-end: a
+  rebuilt binary, driven via a real pty, now starts cleanly with no
+  arguments and renders a live shell — cl-tmux's most basic invocation,
+  which crashed on every attempt before this three-fix chain.
 - **Deduplicated two more genuine near-copies found by a directory-scoped
   `paredit inspect similarity` pass** (the whole-tree run is too slow to
   finish): `copy-mode-toggle-position`/`copy-mode-toggle-rectangle` now
