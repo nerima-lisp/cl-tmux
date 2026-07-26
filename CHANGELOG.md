@@ -93,6 +93,18 @@ Added / Changed / Deprecated / Removed / Fixed / Security
   `cl-weave`) are already pinned to their current newest tags, so there was
   nothing left to bump there.
 
+### Fixed
+
+- **`new-session -d` silently reported success even when the auto-started
+  background server never actually started.** `%ensure-server-running`
+  already polled for up to 3 seconds for the spawned server's socket to
+  appear, but returned the same either way; a later `attach`/
+  `list-sessions` would then fail with a bare "No such file or directory"
+  with nothing tying the two together. Found by rebuilding and running the
+  real `nix build .#cl-tmux` binary — not just the test suite. Now signals
+  a clear `cl-tmux: server failed to start (...)` and exits 1, the same
+  clean-error path every other startup failure already uses.
+
 ## [0.1.0] - 2026-07-26
 
 ### Added
