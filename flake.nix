@@ -64,7 +64,11 @@
       flake = false;
     };
     cl-tty-kit = {
-      url = "github:nerima-lisp/cl-tty-kit/v1.0.0";
+      # v1.0.1: fixes *raw-mode-tcsetattr-function* never being installed on
+      # SBCL (a duplicate defvar shadowed the platform-specific initial
+      # value) — found via cl-tmux's own default invocation crashing every
+      # time it entered raw mode. Load-bearing for cl-tmux, not cosmetic.
+      url = "github:nerima-lisp/cl-tty-kit/v1.0.1";
       flake = false;
     };
     cl-process-kit = {
