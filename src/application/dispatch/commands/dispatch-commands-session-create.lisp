@@ -120,6 +120,28 @@
     (dolist (pair env-pairs)
       (cl-tmux/model:session-set-environment sess (car pair) (cdr pair)))))
 
+(defun %new-session-create-fresh (suppress-env-p env-pairs *pane-extra-env*
+                                   name rows cols start-dir win-name
+                                   detach-p print-p print-fmt)
+  "Create a brand-new session NAME (the default new-session path, taken when
+   -A and -t <group> are absent).  *PANE-EXTRA-ENV* is dynamically rebound
+   (its earmuffed name IS the parameter, per its cl-tmux/model defvar) so the
+   initial pane inherits ENV-PAIRS via -e; SUPPRESS-ENV-P (-E) additionally
+   suppresses update-environment for the whole creation via
+   cl-tmux/model:*suppress-update-environment*.  Returns the finalized
+   session, printing -P/-F info first when PRINT-P."
+  (let* ((cl-tmux/model:*suppress-update-environment* suppress-env-p)
+         (*pane-extra-env* (or env-pairs *pane-extra-env*))
+         (new-sess (new-session name rows cols :start-dir start-dir)))
+    ;; Persist -c as the session working directory for future windows.
+    (when (and new-sess start-dir)
+      (setf (session-start-directory new-sess) start-dir))
+    (%new-session-apply-environment new-sess env-pairs)
+    (let ((result (%new-session-finalize new-sess win-name detach-p)))
+      (when (and result print-p)
+        (%show-session-info-overlay result print-fmt))
+      result)))
+
 (defun %cmd-new-session-arg (session args)
   "new-session [-AdEP] [-s name] [-n window-name] [-c start-dir] [-e VAR=val]
    [-F format] [-x width] [-y height]: create a new session.
@@ -179,14 +201,5 @@
              ;; inherit VAR=val via *pane-extra-env*; -E suppresses
              ;; update-environment for the whole creation (including that pane).
              (t
-              (let* ((cl-tmux/model:*suppress-update-environment* suppress-env-p)
-                     (*pane-extra-env* (or env-pairs *pane-extra-env*))
-                     (new-sess (new-session name rows cols :start-dir start-dir)))
-                ;; Persist -c as the session working directory for future windows.
-                (when (and new-sess start-dir)
-                  (setf (session-start-directory new-sess) start-dir))
-                (%new-session-apply-environment new-sess env-pairs)
-                (let ((result (%new-session-finalize new-sess win-name detach-p)))
-                  (when (and result print-p)
-                    (%show-session-info-overlay result print-fmt))
-                  result))))))))))
+              (%new-session-create-fresh suppress-env-p env-pairs *pane-extra-env* name rows cols start-dir win-name detach-p print-p print-fmt)))))))))
+
