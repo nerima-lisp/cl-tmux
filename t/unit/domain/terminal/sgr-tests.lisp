@@ -218,17 +218,17 @@
   ;;; ── %pen-to-sgr-params (inverse SGR, for DECRQSS) ────────────────────────────
 
   ;; %pen-to-sgr-params reconstructs the SGR parameter string from fg/bg/attrs/unicode.
-  (it "pen-to-sgr-params-table"
-    (dolist (c (list
-                (list cl-tmux/terminal/types:+default-color+ cl-tmux/terminal/types:+default-color+ 0 0  "0"          "default pen")
-                (list 1 cl-tmux/terminal/types:+default-color+ 1 0  "0;1;31"       "bold red fg (default bg)")
-                (list (logior #x1000000 (ash 255 16) (ash 128 8) 0) cl-tmux/terminal/types:+default-color+ 0 0
-                      "0;38;2;255;128;0"        "truecolor fg (default bg)")
-                (list cl-tmux/terminal/types:+default-color+ 12 0 0 "0;104"        "bright bg 12 (default fg)")))
-      (destructuring-bind (fg bg attrs unicode expected desc) c
-        (declare (ignore desc))
-        (expect (string= expected
-                     (cl-tmux/terminal/sgr:%pen-to-sgr-params fg bg attrs unicode))))))
+  (it-each ((#.cl-tmux/terminal/types:+default-color+ #.cl-tmux/terminal/types:+default-color+ 0 0
+             "0"          "default pen")
+            (1 #.cl-tmux/terminal/types:+default-color+ 1 0  "0;1;31"       "bold red fg (default bg)")
+            (#.(logior #x1000000 (ash 255 16) (ash 128 8) 0) #.cl-tmux/terminal/types:+default-color+ 0 0
+             "0;38;2;255;128;0"        "truecolor fg (default bg)")
+            (#.cl-tmux/terminal/types:+default-color+ 12 0 0 "0;104"        "bright bg 12 (default fg)"))
+      "pen-to-sgr-params: ~*~*~*~*~*~A"
+      (fg bg attrs unicode expected desc)
+    (declare (ignore desc))
+    (expect (string= expected
+                 (cl-tmux/terminal/sgr:%pen-to-sgr-params fg bg attrs unicode))))
 
   ;;; ── Coverage gap: %pen-to-sgr-params attrs2 (double-underline / overline) ────
   ;;;
@@ -238,22 +238,21 @@
 
   ;; %pen-to-sgr-params emits ;21 for double-underline and ;53 for overline when
   ;; set in ATTRS2, and both together when both bits are set.
-  (it "pen-to-sgr-params-attrs2-table"
-    (dolist (c (list
-                (list cl-tmux/terminal/types:+attr2-double-underline+
-                      "0;21" "double-underline bit alone → ;21")
-                (list cl-tmux/terminal/types:+attr2-overline+
-                      "0;53" "overline bit alone → ;53")
-                (list (logior cl-tmux/terminal/types:+attr2-double-underline+
-                              cl-tmux/terminal/types:+attr2-overline+)
-                      "0;21;53" "both bits → ;21;53 in declaration order")))
-      (destructuring-bind (attrs2 expected desc) c
-        (declare (ignore desc))
-        (expect (string= expected
-                     (cl-tmux/terminal/sgr:%pen-to-sgr-params
-                      cl-tmux/terminal/types:+default-color+
-                      cl-tmux/terminal/types:+default-color+
-                      0 attrs2))))))
+  (it-each ((#.cl-tmux/terminal/types:+attr2-double-underline+
+             "0;21" "double-underline bit alone -> ;21")
+            (#.cl-tmux/terminal/types:+attr2-overline+
+             "0;53" "overline bit alone -> ;53")
+            (#.(logior cl-tmux/terminal/types:+attr2-double-underline+
+                       cl-tmux/terminal/types:+attr2-overline+)
+             "0;21;53" "both bits -> ;21;53 in declaration order"))
+      "pen-to-sgr-params-attrs2: ~*~*~A"
+      (attrs2 expected desc)
+    (declare (ignore desc))
+    (expect (string= expected
+                 (cl-tmux/terminal/sgr:%pen-to-sgr-params
+                  cl-tmux/terminal/types:+default-color+
+                  cl-tmux/terminal/types:+default-color+
+                  0 attrs2))))
 
   ;; SGR 0 after setting italic, conceal, and strikethrough zeroes all attr bits.
   (it "sgr-reset-clears-new-attrs"
