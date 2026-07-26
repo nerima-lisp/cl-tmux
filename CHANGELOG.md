@@ -51,6 +51,11 @@ Added / Changed / Deprecated / Removed / Fixed / Security
   name)` shapes — the actual per-item command format tmux's
   choose-window/choose-session menus use, which existing tests never
   triggered past "the menu opens."
+- Closed a third coverage gap: `renderer-format.lisp`'s entire `-2`
+  (force-256-colour) true-colour downsampling path (`%rgb-int-to-256`,
+  `%maybe-downsample-color`, the `*color-downsample-fn*` branch in
+  `%emit-fg`/`%emit-bg`) had zero coverage despite being a real, wired-up
+  CLI flag.
 - Covered `flags-of-command` (`src/reasoning/command-rulebase.lisp`), the
   one query helper in the command-metadata reasoning read-model with no test
   call sites — found by a paredit `unused-definitions` re-audit, which
