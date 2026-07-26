@@ -28,6 +28,23 @@
     (when (and style (plusp (length style)))
       (style-to-sgr (parse-style-string style)))))
 
+(defun %render-row-search-matches (buffer row row-str term w
+                                    cur-row cur-col match-sgr current-sgr
+                                    ox oy)
+  "Overdraw every TERM match in ROW-STR (screen row ROW, already offset by
+   OX/OY) onto BUFFER in MATCH-SGR — CURRENT-SGR when the match spans
+   (CUR-ROW . CUR-COL), the copy-mode cursor position."
+  (dolist (range (%all-match-ranges term row-str))
+    (let* ((start (car range))
+           (end   (min (cdr range) w))
+           (current-p (and (eql cur-row row) cur-col
+                           (<= start cur-col) (< cur-col end)))
+           (sgr   (if current-p (or current-sgr match-sgr) match-sgr)))
+      (move-to buffer (+ oy row) (+ ox start))
+      (%emit-sgr buffer sgr)
+      (write-string (subseq row-str start end) buffer)
+      (reset-attrs buffer))))
+
 (defun %render-copy-search-matches (buffer pane)
   "When PANE's screen is in copy mode with an active search term, overdraw each
    matching span in copy-mode-match-style — the span under the copy cursor in
@@ -48,13 +65,6 @@
             (when match-sgr
               (dotimes (row (screen-height screen))
                 (let ((row-str (%screen-row-display-string screen row)))
-                  (dolist (range (%all-match-ranges term row-str))
-                    (let* ((start (car range))
-                           (end   (min (cdr range) w))
-                           (current-p (and (eql cur-row row) cur-col
-                                           (<= start cur-col) (< cur-col end)))
-                           (sgr   (if current-p (or current-sgr match-sgr) match-sgr)))
-                      (move-to buffer (+ oy row) (+ ox start))
-                      (%emit-sgr buffer sgr)
-                      (write-string (subseq row-str start end) buffer)
-                      (reset-attrs buffer))))))))))))
+                  (%render-row-search-matches buffer row row-str term w
+                                               cur-row cur-col match-sgr current-sgr
+                                               ox oy))))))))))
