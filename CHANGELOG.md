@@ -52,6 +52,13 @@ Added / Changed / Deprecated / Removed / Fixed / Security
 
 ### Changed
 
+- **Deduplicated two more genuine near-copies found by a directory-scoped
+  `paredit inspect similarity` pass** (the whole-tree run is too slow to
+  finish): `copy-mode-toggle-position`/`copy-mode-toggle-rectangle` now
+  share a `define-copy-mode-toggle` macro instead of two byte-identical
+  guard/flip/dirty bodies, and `%option-sgr`/`%copy-match-sgr` collapse
+  into one `%option-style-sgr` (the narrower one becomes a one-line
+  wrapper). No behavior change.
 - **Readability: extracted the 6 most deeply-nested functions in the
   codebase** (per `paredit inspect complexity`'s per-definition nesting
   metric), each split so every dispatch branch has a named helper matching
