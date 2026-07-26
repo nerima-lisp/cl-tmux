@@ -211,6 +211,129 @@
           (expect (= init-offset (screen-copy-offset s)))
           (expect cl-tmux/commands::*copy-mode-isearch-origin* :to-be-falsy)))))
 
+  ;; Submitting a non-empty term (Enter) saves it plus the DIRECTION the
+  ;; incremental search was opened with, so n/N repeat relative to it.
+  ;; Each row: (fn-sym direction).
+  (it "copy-mode-search-incremental-submit-saves-term-and-direction"
+    (dolist (row '((cl-tmux/commands::copy-mode-search-forward-incremental  :forward)
+                   (cl-tmux/commands::copy-mode-search-backward-incremental :backward)))
+      (destructuring-bind (fn-sym direction) row
+        (let ((s (make-screen 10 5)))
+          (setf (screen-copy-mode-p s)  t
+                (screen-copy-cursor  s)  (cons 0 0)
+                (screen-copy-offset  s)  0
+                *prompt* nil
+                cl-tmux/commands::*copy-mode-isearch-origin* nil)
+          (funcall fn-sym s)
+          (funcall (prompt-on-submit *prompt*) "abc")
+          (expect (string= "abc" (cl-tmux/terminal/types:screen-copy-search-term s)))
+          (expect (eq direction (cl-tmux/terminal/types:screen-copy-search-direction s)))
+          (expect cl-tmux/commands::*copy-mode-isearch-origin* :to-be-falsy)))))
+
+  ;; Submitting an empty term (bare Enter) must NOT overwrite a previously
+  ;; saved search term/direction -- this is the "cancel without typing" case.
+  (it "copy-mode-search-incremental-submit-empty-term-leaves-saved-term-untouched"
+    (let ((s (make-screen 10 5)))
+      (setf (screen-copy-mode-p s)  t
+            (screen-copy-cursor  s)  (cons 0 0)
+            (screen-copy-offset  s)  0
+            (cl-tmux/terminal/types:screen-copy-search-term      s) "previous"
+            (cl-tmux/terminal/types:screen-copy-search-direction s) :backward
+            *prompt* nil
+            cl-tmux/commands::*copy-mode-isearch-origin* nil)
+      (cl-tmux/commands::copy-mode-search-forward-incremental s)
+      (funcall (prompt-on-submit *prompt*) "")
+      (expect (string= "previous" (cl-tmux/terminal/types:screen-copy-search-term s)))
+      (expect (eq :backward (cl-tmux/terminal/types:screen-copy-search-direction s)))))
+
+  ;;; ── %copy-mode-isearch-from-origin (C-s/C-r live-update jump) ────────────────
+
+  ;; With no origin saved yet, the function saves the current cursor/offset as
+  ;; the origin and then recurses to perform the actual search from there.
+  (it "copy-mode-isearch-from-origin-saves-origin-when-none-and-searches"
+    (let ((s (make-screen 20 5)))
+      (feed s "xx abc")
+      (setf (screen-copy-mode-p s) t
+            (screen-copy-cursor  s) (cons 0 0)
+            (screen-copy-offset  s) 0
+            cl-tmux/commands::*copy-mode-isearch-origin* nil)
+      (cl-tmux/commands::%copy-mode-isearch-from-origin s "abc" :forward)
+      (expect cl-tmux/commands::*copy-mode-isearch-origin* :to-be-truthy)
+      (expect (equal (cons 0 0) (car cl-tmux/commands::*copy-mode-isearch-origin*)))
+      (expect (= 3 (cdr (screen-copy-cursor s))))))
+
+  ;; An empty TERM restores the cursor/offset to the saved origin (the
+  ;; "nothing typed yet" state) rather than searching.
+  (it "copy-mode-isearch-from-origin-empty-term-restores-origin"
+    (let ((s (make-screen 20 5)))
+      (setf (screen-copy-mode-p s) t
+            (screen-copy-cursor  s) (cons 2 5)
+            (screen-copy-offset  s) 3
+            cl-tmux/commands::*copy-mode-isearch-origin*
+            (cons (cons 2 5) 3))
+      (setf (screen-copy-cursor s) (cons 0 0)
+            (screen-copy-offset s) 0)
+      (cl-tmux/commands::%copy-mode-isearch-from-origin s "" :forward)
+      (expect (equal (cons 2 5) (screen-copy-cursor s)))
+      (expect (= 3 (screen-copy-offset s)))
+      (expect (screen-dirty-p s) :to-be-truthy)))
+
+  ;; A non-empty TERM with :backward jumps from the saved origin backward to
+  ;; the nearest match -- covers the isearch engine's backward branch, which
+  ;; every other isearch test (all :forward) leaves untouched.
+  (it "copy-mode-isearch-from-origin-nonempty-backward-jumps-from-origin"
+    (let ((s (make-screen 20 5)))
+      (feed s "abc xyz abc")
+      (setf (screen-copy-mode-p s) t
+            cl-tmux/commands::*copy-mode-isearch-origin* (cons (cons 0 11) 0)
+            (screen-copy-cursor s) (cons 0 11)
+            (screen-copy-offset s) 0)
+      (cl-tmux/commands::%copy-mode-isearch-from-origin s "abc" :backward)
+      (expect (= 8 (cdr (screen-copy-cursor s))))))
+
+  ;;; ── copy-mode-search-next / copy-mode-search-prev: outside copy mode ────────
+
+  ;; copy-mode-search-next and copy-mode-search-prev are no-ops when not in
+  ;; copy mode, even with a saved search term.
+  (it "copy-mode-search-next-and-prev-noop-outside-copy-mode-table"
+    (dolist (fn '(cl-tmux/commands::copy-mode-search-next
+                  cl-tmux/commands::copy-mode-search-prev))
+      (let ((s (make-screen 20 5)))
+        (setf (screen-copy-mode-p s) nil
+              (screen-copy-cursor  s) (cons 0 3)
+              (cl-tmux/terminal/types:screen-copy-search-term s) "abc")
+        (funcall fn s)
+        (expect (equal (cons 0 3) (screen-copy-cursor s))))))
+
+  ;;; ── copy-mode-search-forward / copy-mode-search-backward: guard clause ──────
+
+  ;; Neither search-forward nor search-backward moves the cursor or saves the
+  ;; term when the screen is not in copy mode.
+  (it "copy-mode-search-forward-and-backward-noop-outside-copy-mode-table"
+    (dolist (fn '(cl-tmux/commands::copy-mode-search-forward
+                  cl-tmux/commands::copy-mode-search-backward))
+      (let ((s (make-screen 20 5)))
+        (feed s "abc")
+        (setf (screen-copy-mode-p s) nil
+              (screen-copy-cursor  s) (cons 0 0))
+        (funcall fn s "abc")
+        (expect (equal (cons 0 0) (screen-copy-cursor s)))
+        (expect (null (cl-tmux/terminal/types:screen-copy-search-term s))))))
+
+  ;; An empty TERM is also a no-op (in copy mode): the guard is
+  ;; `(and copy-mode-p term (plusp (length term)))`, so an empty string must
+  ;; short-circuit before any cursor movement or term-saving happens.
+  (it "copy-mode-search-forward-and-backward-noop-on-empty-term-table"
+    (dolist (fn '(cl-tmux/commands::copy-mode-search-forward
+                  cl-tmux/commands::copy-mode-search-backward))
+      (let ((s (make-screen 20 5)))
+        (feed s "abc")
+        (cl-tmux/commands::copy-mode-enter s)
+        (setf (screen-copy-cursor s) (cons 0 0))
+        (funcall fn s "")
+        (expect (equal (cons 0 0) (screen-copy-cursor s)))
+        (expect (null (cl-tmux/terminal/types:screen-copy-search-term s))))))
+
   ;;; ── copy-mode-next-matching-bracket ─────────────────────────────────────────
 
   ;; Cursor on '(' jumps forward to ')'; cursor on ')' jumps backward to '('.
@@ -299,4 +422,49 @@
       (setf (screen-copy-cursor s) (cons 0 0)
             (screen-copy-offset  s) 0)
       (cl-tmux/commands::copy-mode-next-matching-bracket s)
+      (expect (equal (cons 0 0) (screen-copy-cursor s)))))
+
+  ;; Cursor NOT on a bracket ("x ( y )", cursor on 'x') must find the next
+  ;; bracket forward ('(' at col 2) and then jump to ITS match (')' at col 6)
+  ;; -- every other next-matching-bracket test starts cursor ON a bracket.
+  (it "copy-mode-next-matching-bracket-cursor-not-on-bracket-finds-forward"
+    (let ((s (make-screen 20 5)))
+      (setf (screen-copy-mode-p s) t)
+      (dotimes (i 7)
+        (setf (cl-tmux/terminal/types:screen-cell s i 2)
+              (cl-tmux/terminal/types:make-cell :char (char "x ( y )" i))))
+      (setf (screen-copy-cursor s) (cons 2 0)
+            (screen-copy-offset  s) 0)
+      (cl-tmux/commands::copy-mode-next-matching-bracket s)
+      (expect (= 6 (cdr (screen-copy-cursor s))))))
+
+  ;; Nested brackets matched BACKWARD: cursor on the outer ')' must skip over
+  ;; the inner "(b)" pair and land on the outer '('. The forward direction has
+  ;; an equivalent test above; the backward nesting/depth-tracking path was
+  ;; otherwise never exercised.
+  (it "copy-mode-previous-matching-bracket-nested-brackets"
+    (let ((s (make-screen 20 5)))
+      (setf (screen-copy-mode-p s) t)
+      ;; Write "(a(b)c)" at row 0.
+      (dotimes (i 7)
+        (setf (cl-tmux/terminal/types:screen-cell s i 0)
+              (cl-tmux/terminal/types:make-cell :char (char "(a(b)c)" i))))
+      (setf (screen-copy-cursor s) (cons 0 6)
+            (screen-copy-offset  s) 0)
+      (cl-tmux/commands::copy-mode-previous-matching-bracket s)
+      (expect (= 0 (cdr (screen-copy-cursor s))))))
+
+  ;; A bracket pair spanning two rows matched BACKWARD -- the forward
+  ;; direction has an equivalent cross-row test above; scanning backward
+  ;; across a row boundary was otherwise never exercised.
+  (it "copy-mode-previous-matching-bracket-crosses-row-boundary"
+    (let ((s (make-screen 20 5)))
+      (setf (screen-copy-mode-p s) t)
+      (setf (cl-tmux/terminal/types:screen-cell s 0 0)
+            (cl-tmux/terminal/types:make-cell :char #\())
+      (setf (cl-tmux/terminal/types:screen-cell s 3 1)
+            (cl-tmux/terminal/types:make-cell :char #\)))
+      (setf (screen-copy-cursor s) (cons 1 3)
+            (screen-copy-offset  s) 0)
+      (cl-tmux/commands::copy-mode-previous-matching-bracket s)
       (expect (equal (cons 0 0) (screen-copy-cursor s))))))

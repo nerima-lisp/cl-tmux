@@ -183,13 +183,15 @@
           (expect (string= "xabcy" (prompt-buffer *prompt*)))))))
 
   ;; CSI Up/Down sequences navigate prompt history when the prompt has history.
+  ;; An empty starting buffer is its own prefix filter match-all, exercising the
+  ;; walk itself rather than cl-history-kit's prefix filtering.
   (it "process-byte-prompt-csi-up-down-history"
     (with-fake-session (s)
       (with-clean-prompt
         (let ((state (cl-tmux::make-input-state)))
-          (prompt-start "test" "li"
+          (prompt-start "test" ""
                         (lambda (buf) (declare (ignore buf)) nil)
-                        :history '("list-windows" "new-window"))
+                        :history (%prompt-history-of "new-window" "list-windows"))
           (dolist (byte '(27 91 65))
             (cl-tmux::process-byte s byte state))
           (expect (string= "list-windows" (prompt-buffer *prompt*)))
@@ -201,7 +203,7 @@
           (expect (string= "list-windows" (prompt-buffer *prompt*)))
           (dolist (byte '(27 91 66))
             (cl-tmux::process-byte s byte state))
-          (expect (string= "li" (prompt-buffer *prompt*)))))))
+          (expect (string= "" (prompt-buffer *prompt*)))))))
 
   ;;; ── process-byte: copy-mode w, b, e word navigation ─────────────────────────
 

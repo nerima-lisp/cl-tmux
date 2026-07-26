@@ -21,6 +21,15 @@ Added / Changed / Deprecated / Removed / Fixed / Security
 
 ## [Unreleased]
 
+### Added
+
+- Closed two real SB-COVER branch-coverage gaps found by a src/-only scoped
+  triage: `commands-copy-mode-search.lisp`'s incremental-search (`C-s`/`C-r`)
+  live-jump engine and submit path, and `commands-copy-mode-brackets.lisp`'s
+  cursor-not-on-bracket fallback plus nested/cross-row backward matching.
+  `config.lisp`'s low expression-coverage number was confirmed a load-time
+  artifact (data/`eval-when` forms), not a gap.
+
 ### Changed
 
 - **Sibling dependency bump: `cl-boundary-kit` v0.6.0 → v1.0.0,
