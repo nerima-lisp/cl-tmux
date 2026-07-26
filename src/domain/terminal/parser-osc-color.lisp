@@ -21,6 +21,14 @@
                    (%scale-hex-channel b)))))
     (otherwise nil)))
 
+(defun %scale-rgb-channel (value digits)
+  "Scale VALUE (a hex channel of DIGITS hex digits, 1-4) to an 8-bit integer."
+  (case digits
+    (1 (%scale-hex-channel value))
+    (2 value)
+    (3 (ldb (byte 8 4) value))
+    (4 (ldb (byte 8 8) value))))
+
 (defun %parse-rgb-color (spec)
   "Parse rgb:R/G/B where each channel is 1-4 hex digits."
   (let* ((parts (cl-ppcre:split "/" spec))
@@ -34,16 +42,10 @@
                      parts)))
         (when (every #'integerp channels)
           (destructuring-bind (r g b) channels
-            (labels ((scale (value digits)
-                       (case digits
-                         (1 (%scale-hex-channel value))
-                         (2 value)
-                         (3 (ldb (byte 8 4) value))
-                         (4 (ldb (byte 8 8) value)))))
-              (let ((r (scale r (length (first parts))))
-                    (g (scale g (length (second parts))))
-                    (b (scale b (length (third parts)))))
-                (logior (ash r 16) (ash g 8) b)))))))))
+            (let ((r (%scale-rgb-channel r (length (first parts))))
+                  (g (%scale-rgb-channel g (length (second parts))))
+                  (b (%scale-rgb-channel b (length (third parts)))))
+              (logior (ash r 16) (ash g 8) b))))))))
 
 (defun %parse-osc-color (spec)
   "Parse an X11/xterm colour SPEC to a 24-bit 0xRRGGBB integer, or NIL."
