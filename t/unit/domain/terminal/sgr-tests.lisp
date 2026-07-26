@@ -32,30 +32,30 @@
                (expect (= expected-fg (fg-at s 0 0))))))
 
   ;; SGR 1/2/4/5/7/8/9 each set their respective attribute bit on the written cell.
-  (it "sgr-basic-attrs-set-table"
-    (dolist (c '(("[1mX" 0 "SGR 1 → bold (bit 0)")
-                 ("[2mX" 1 "SGR 2 → dim (bit 1)")
-                 ("[7mX" 2 "SGR 7 → reverse (bit 2)")
-                 ("[4mX" 3 "SGR 4 → underline (bit 3)")
-                 ("[5mX" 4 "SGR 5 → blink (bit 4)")
-                 ("[8mX" 6 "SGR 8 → conceal (bit 6)")
-                 ("[9mX" 7 "SGR 9 → strikethrough (bit 7)")))
-      (destructuring-bind (seq bit desc) c
-        (declare (ignore desc))
-        (with-screen (s 10 2)
-          (feed s (esc seq))
-          (expect (logbitp bit (attrs-at s 0 0)))))))
+  (it-each (("[1mX" 0 "SGR 1 -> bold (bit 0)")
+            ("[2mX" 1 "SGR 2 -> dim (bit 1)")
+            ("[7mX" 2 "SGR 7 -> reverse (bit 2)")
+            ("[4mX" 3 "SGR 4 -> underline (bit 3)")
+            ("[5mX" 4 "SGR 5 -> blink (bit 4)")
+            ("[8mX" 6 "SGR 8 -> conceal (bit 6)")
+            ("[9mX" 7 "SGR 9 -> strikethrough (bit 7)"))
+      "sgr-basic-attrs-set: ~*~*~A"
+      (seq bit desc)
+    (declare (ignore desc))
+    (with-screen (s 10 2)
+      (feed s (esc seq))
+      (expect (logbitp bit (attrs-at s 0 0)))))
 
   ;; SGR 28/29 each clear their respective attribute bit.
-  (it "sgr-attr-clear-table"
-    (dolist (c '(("[8mX" "[28mY" 6 "SGR 28 clears conceal (bit 6)")
-                 ("[9mX" "[29mY" 7 "SGR 29 clears strikethrough (bit 7)")))
-      (destructuring-bind (set-seq clear-seq bit desc) c
-        (declare (ignore desc))
-        (with-screen (s 10 2)
-          (feed s (esc set-seq))
-          (feed s (esc clear-seq))
-          (expect (logbitp bit (attrs-at s 1 0)) :to-be-falsy)))))
+  (it-each (("[8mX" "[28mY" 6 "SGR 28 clears conceal (bit 6)")
+            ("[9mX" "[29mY" 7 "SGR 29 clears strikethrough (bit 7)"))
+      "sgr-attr-clear: ~*~*~*~A"
+      (set-seq clear-seq bit desc)
+    (declare (ignore desc))
+    (with-screen (s 10 2)
+      (feed s (esc set-seq))
+      (feed s (esc clear-seq))
+      (expect (logbitp bit (attrs-at s 1 0)) :to-be-falsy)))
 
   ;; SGR 0 after setting colours and bold restores defaults on the next cell.
   (it "sgr-reset"
