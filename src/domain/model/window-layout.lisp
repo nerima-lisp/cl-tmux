@@ -92,7 +92,8 @@
 ;;; ── %layout-main — unified main-horizontal / main-vertical ──────────────────
 ;;;
 ;;; main-horizontal: first pane top half, rest split bottom half equally (outer :v, inner :h).
-;;; main-vertical:   first pane left half, rest split right half equally stacked (outer :h, inner :v).
+;;; main-vertical:   first pane left half, rest split right half equally stacked
+;;;                  (outer :h, inner :v).
 ;;; The two variants are structurally symmetric: outer-orient / inner-orient swap.
 ;;;
 ;;; A single %layout-main function with an orient argument unifies the two,
@@ -181,6 +182,8 @@
 (define-named-layout-rules
   (:even-horizontal (%layout-even-h window panes width height))
   (:even-vertical   (%layout-even-v window panes width height))
-  (:main-horizontal (%layout-main   window panes width height :v :h main-pane-height other-pane-height))
-  (:main-vertical   (%layout-main   window panes width height :h :v main-pane-width  other-pane-width))
+  (:main-horizontal (%layout-main   window panes width height :v :h
+                                    main-pane-height other-pane-height))
+  (:main-vertical   (%layout-main   window panes width height :h :v
+                                    main-pane-width  other-pane-width))
   (:tiled           (%layout-tiled  window panes n width height)))

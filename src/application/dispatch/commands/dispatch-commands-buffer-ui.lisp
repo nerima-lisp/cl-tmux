@@ -46,7 +46,8 @@
   (with-command-flags+pos (flags positionals args "whxydtcbTesS")
     (let* ((title   (%popup-title-from-flags flags))
            (command (when positionals (format nil "~{~A~^ ~}" positionals)))
-           (width   (%popup-dimension (%popup-width-from-flags flags) *term-cols* +popup-max-width+))
+           (width   (%popup-dimension (%popup-width-from-flags flags) *term-cols*
+                                      +popup-max-width+))
            (height  (%popup-dimension (%popup-height-from-flags flags) *term-rows*
                                       (min +popup-max-height+ (- *term-rows* +popup-margin+))))
            (clamp-w (min width  *term-cols*))

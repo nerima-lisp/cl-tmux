@@ -160,7 +160,8 @@
         :window-bell-flag      (if (%window-has-pending-bell-p window) "!" " ")
         :window-activity-flag  (if (and window (cl-tmux/model:window-activity-flag window)) "#" " ")
         :window-silence-flag   (if (and window (cl-tmux/model:window-silence-flag window)) "~" " ")
-        :window-start-flag     (if (and window session-windows (eq window (first session-windows))) "1" "0")
+        :window-start-flag     (if (and window session-windows
+                                        (eq window (first session-windows))) "1" "0")
         :window-end-flag       (if (and window session-windows
                                         (eq window (first (last session-windows)))) "1" "0")
         :window-last-flag      (if (and window session

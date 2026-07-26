@@ -147,7 +147,8 @@
          (let ((value (%expand-F-flag flags session raw-value)))
            (%with-option-scope session flags target-str name
              (lambda (scope target)
-               (%apply-set-option scope target name value unset-p append-p only-if-unset-p quiet-p)))))))))
+               (%apply-set-option scope target name value
+                                  unset-p append-p only-if-unset-p quiet-p)))))))))
 
 (defun %cmd-set-window-option (session args)
   "set-window-option: like set-option but defaults to WINDOW scope.  Prepends

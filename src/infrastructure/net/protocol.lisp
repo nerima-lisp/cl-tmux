@@ -26,8 +26,12 @@
 (defconstant +msg-detach+  4 "client→server: detach (empty payload)")
 (defconstant +msg-frame+   5 "server→client: a rendered frame (UTF-8 payload)")
 (defconstant +msg-bye+     6 "server→client: server is closing (empty payload)")
-(defconstant +msg-command+ 7 "client→server: a named command with optional -t target; payload = NUL-delimited [target NUL] command-name NUL [args...]")
-(defconstant +msg-reply+   8 "server→client: a forwarded command's text output (UTF-8 payload), for the CLI command client (e.g. display-message -p).")
+(defconstant +msg-command+ 7
+  "client→server: a named command with optional -t target; payload =
+   NUL-delimited [target NUL] command-name NUL [args...]")
+(defconstant +msg-reply+   8
+  "server→client: a forwarded command's text output (UTF-8 payload), for the
+   CLI command client (e.g. display-message -p).")
 
 (defconstant +attach-flag-read-only+ 1
   "Bit in the optional +msg-attach+ flags byte that marks the attaching client as

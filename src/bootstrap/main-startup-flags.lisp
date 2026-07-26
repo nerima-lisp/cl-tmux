@@ -97,7 +97,9 @@
   (cl-cli:make-app
    :name "cl-tmux"
    :summary "A tmux-compatible terminal multiplexer."
-   :auto-help nil ; -h/-V dispatch through run-usage/run-version below, not cl-cli's own help/version machinery, to keep their exact existing output.
+   ;; -h/-V dispatch through run-usage/run-version below, not cl-cli's own
+   ;; help/version machinery, to keep their exact existing output.
+   :auto-help nil
    :global-options
    (list (cl-cli:make-option :name "socket-name"    :short #\L :kind :value)
          (cl-cli:make-option :name "socket-path"    :short #\S :kind :value)

@@ -91,7 +91,8 @@
         ;; No direction, no -s/-t: swap forward (default tmux behaviour).
         (t (swap-pane win :right))))))
 
-(defun %command-prompt-dispatch (session flags template has-template prompt-list num-prompts single-key initial)
+(defun %command-prompt-dispatch (session flags template has-template
+                                 prompt-list num-prompts single-key initial)
   "Run the resolved command-prompt flow: multi-prompt template substitution,
    concatenated -p prompts, template-only, or the plain C-b : prompt — then
    apply the -i/-N/-e post-configuration to the resulting overlay."
@@ -200,7 +201,8 @@
                           (mapcar (lambda (s) (string-trim " " s))
                                   (uiop:split-string prompts-str :separator ","))))
            (num-prompts (length prompt-list)))
-      (%command-prompt-dispatch session flags template has-template prompt-list num-prompts single-key initial))))
+      (%command-prompt-dispatch session flags template has-template
+                                prompt-list num-prompts single-key initial))))
 
 (defun %cmd-last-pane-arg (session args)
   "last-pane [-de] [-t target-window]: jump to the previously active pane.

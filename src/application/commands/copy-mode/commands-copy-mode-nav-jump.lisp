@@ -43,8 +43,10 @@
 (define-jump-to-char-commands
   (copy-mode-jump-forward    :forward  nil "Jump to next CHAR on current line (vi f<char>).")
   (copy-mode-jump-backward   :backward nil "Jump to previous CHAR on current line (vi F<char>).")
-  (copy-mode-jump-to         :forward  t   "Jump to just before next CHAR on current line (vi t<char>).")
-  (copy-mode-jump-to-backward :backward t   "Jump to just after previous CHAR on current line (vi T<char>)."))
+  (copy-mode-jump-to         :forward  t
+   "Jump to just before next CHAR on current line (vi t<char>).")
+  (copy-mode-jump-to-backward :backward t
+   "Jump to just after previous CHAR on current line (vi T<char>)."))
 
 (defun %copy-mode-replay-last-jump (screen reverse-p)
   "Replay the most recent jump-to-char, optionally reversing its direction."

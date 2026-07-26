@@ -8,7 +8,8 @@
   ;; the compiled fasl from its cache.
   (load (merge-pathnames #p"application/dispatch/core/dispatch-command-specs-core.lisp"
                          (merge-pathnames #P"src/"
-                                          (or (ignore-errors (asdf:system-source-directory :cl-tmux))
+                                          (or (ignore-errors
+                                               (asdf:system-source-directory :cl-tmux))
                                               *load-pathname*
                                               *compile-file-pathname*)))))
 

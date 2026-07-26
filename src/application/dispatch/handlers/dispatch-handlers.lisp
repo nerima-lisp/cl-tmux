@@ -17,7 +17,8 @@
 ;;; -- Scoped-options handler macro -------------------------------------------
 ;;;
 ;;; :show-window-options, :show-session-options, and :show-server-options all
-;;; follow the same shape: (show-overlay (with-output-to-string (s) (format s "# SCOPE options") ...)).
+;;; follow the same shape:
+;;;   (show-overlay (with-output-to-string (s) (format s "# SCOPE options") ...)).
 ;;; define-show-options-handler emits one named helper function per scope so the
 ;;; three handlers delegate to a generated function rather than duplicating the body.
 

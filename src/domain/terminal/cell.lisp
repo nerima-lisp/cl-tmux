@@ -85,8 +85,10 @@
      0-255            — palette index (0-7 standard, 8-15 bright, 16-255 extended)
      >= +true-color-flag+ — true-colour RGB: bits 23-16 R, 15-8 G, 7-0 B"
   (char  #\Space :type character)
-  (fg    +default-color+ :type (unsigned-byte 25))  ; see color encoding; +default-color+ = terminal default fg (SGR 39)
-  (bg    +default-color+ :type (unsigned-byte 25))  ; see color encoding; +default-color+ = terminal default bg (SGR 49)
+  ;; see color encoding; +default-color+ = terminal default fg (SGR 39)
+  (fg    +default-color+ :type (unsigned-byte 25))
+  ;; see color encoding; +default-color+ = terminal default bg (SGR 49)
+  (bg    +default-color+ :type (unsigned-byte 25))
   (attrs 0       :type (unsigned-byte 8))   ; bit-field: see +attr-* constants
   ;; Extended attributes: double-underline (bit 0), overline (bit 1)
   (attrs2 0      :type (unsigned-byte 8))

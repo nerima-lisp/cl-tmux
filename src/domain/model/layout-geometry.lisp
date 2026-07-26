@@ -16,11 +16,12 @@
          (second-extent   (- available-cells first-extent)))
     (orient-case orient
       :h (progn
-           (layout-assign (layout-split-first  node)  x                      y  first-extent  height)
-           (layout-assign (layout-split-second node) (+ x first-extent 1)    y  second-extent height))
+           (layout-assign (layout-split-first  node)  x                   y  first-extent  height)
+           (layout-assign (layout-split-second node) (+ x first-extent 1) y  second-extent height))
       :v (progn
            (layout-assign (layout-split-first  node)  x  y                    width  first-extent)
-           (layout-assign (layout-split-second node)  x (+ y first-extent 1)  width  second-extent)))))
+           (layout-assign (layout-split-second node)  x (+ y first-extent 1)
+                          width  second-extent)))))
 
 (defun layout-assign (node x y width height)
   "Walk NODE, updating every leaf's pane geometry to fit the X,Y,WIDTH,HEIGHT rectangle.

@@ -96,7 +96,8 @@
     (cond
       ((null val)        (%dcs-reply nil (format nil "+r~A" hex-name)))
       ((eq val :boolean) (%dcs-reply t   (format nil "+r~A" hex-name)))
-      (t                 (%dcs-reply t   (format nil "+r~A=~A" hex-name (%hex-encode-string val)))))))
+      (t                 (%dcs-reply t   (format nil "+r~A=~A" hex-name
+                                                 (%hex-encode-string val)))))))
 
 (defun %handle-xtgettcap (screen request)
   "Handle an XTGETTCAP request (the payload after \"+q\"): a ';'-separated list of

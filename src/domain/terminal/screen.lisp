@@ -53,7 +53,8 @@
   (alt-cursor-x 0 :type fixnum)            ; cursor column saved on alt-screen entry
   (alt-cursor-y 0 :type fixnum)            ; cursor row saved on alt-screen entry
   ;; DECSC/DECRC saved state, or NIL when nothing saved.  Mirrors tmux input_save_state:
-  ;; (cursor-x cursor-y fg bg attrs attrs2 ul-color g0-charset g1-charset active-g charset origin-mode)
+  ;; (cursor-x cursor-y fg bg attrs attrs2 ul-color g0-charset g1-charset
+  ;;  active-g charset origin-mode)
   (saved-cursor nil :type list)
   ;; Copy / scroll-back mode
   (copy-mode-p  nil  :type boolean)
@@ -77,7 +78,8 @@
   (line-sizes (make-hash-table) :type hash-table)
   (copy-mark    nil  :type list)            ; (row . col) mark position, NIL = no selection
   (copy-mark-offset 0 :type fixnum)         ; copy-offset in effect when copy-mark was set
-  (copy-cursor  nil  :type list)            ; (row . col) cursor position in copy mode, NIL = not in copy mode
+  ;; (row . col) cursor position in copy mode, NIL = not in copy mode
+  (copy-cursor  nil  :type list)
   (copy-selecting nil :type boolean)        ; T when selection is being built
   ;; copy-mode -e: when T, scrolling down to the live bottom (offset 0) auto-exits
   ;; copy mode.  Set by `copy-mode -e`; cleared on copy-mode entry/exit.

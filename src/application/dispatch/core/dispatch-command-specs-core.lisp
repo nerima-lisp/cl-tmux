@@ -8,12 +8,15 @@
                    *load-pathname*
                    *compile-file-pathname*
                    *default-pathname-defaults*))
-         (src (merge-pathnames #P"src/" root)))
-    (load (merge-pathnames #p"application/dispatch/core/dispatch-command-specs-common.lisp" src))
-    (load (merge-pathnames #p"application/dispatch/core/dispatch-command-specs-core-session.lisp" src))
-    (load (merge-pathnames #p"application/dispatch/core/dispatch-command-specs-core-window.lisp" src))
-    (load (merge-pathnames #p"application/dispatch/core/dispatch-command-specs-core-pane.lisp" src))
-    (load (merge-pathnames #p"application/dispatch/core/dispatch-command-specs-core-misc.lisp" src))))
+         (src (merge-pathnames #P"src/" root))
+         ;; Directory hoisted out of the LOADs below so that no source line
+         ;; exceeds 100 columns; a #p"..." literal cannot be split.
+         (core (merge-pathnames #p"application/dispatch/core/" src)))
+    (load (merge-pathnames #p"dispatch-command-specs-common.lisp" core))
+    (load (merge-pathnames #p"dispatch-command-specs-core-session.lisp" core))
+    (load (merge-pathnames #p"dispatch-command-specs-core-window.lisp" core))
+    (load (merge-pathnames #p"dispatch-command-specs-core-pane.lisp" core))
+    (load (merge-pathnames #p"dispatch-command-specs-core-misc.lisp" core))))
 
 (defun %dispatch-command-specs-core-from-entries (entries)
   (%dispatch-command-specs-from-entries entries #'%make-dispatch-command-spec))

@@ -52,7 +52,8 @@
 
 (defun %classify-color-name (lname)
   "Classify a lowercased tmux colour name LNAME into (values KIND PAYLOAD):
-     :colour-n  N        — \"colourN\" prefix, PAYLOAD is the parsed integer N (or NIL if unparseable)
+     :colour-n  N        — \"colourN\" prefix, PAYLOAD is the parsed integer N
+                           (or NIL if unparseable)
      :default   NIL       — the literal \"default\" (leave the terminal/cell default in place)
      :named     SGR-CODE  — a name found in *%color-name-table*, PAYLOAD is its fg SGR code integer
      NIL        NIL       — unrecognised name

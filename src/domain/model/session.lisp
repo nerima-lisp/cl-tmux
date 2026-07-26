@@ -23,8 +23,10 @@
   (window-index-map (make-hash-table :test #'eq) :type hash-table)
   (clients     nil :type list)      ; list of connected client descriptors
   (locked-p    nil :type boolean)   ; T when lock-session has been called
-  (group       nil)                 ; NIL or group-id (string/integer); sessions in same group share windows
-  (start-directory nil)             ; NIL or string: session working dir (new-session/attach-session -c)
+  ;; NIL or group-id (string/integer); sessions in same group share windows
+  (group       nil)
+  ;; NIL or string: session working dir (new-session/attach-session -c)
+  (start-directory nil)
   (environment (make-hash-table :test #'equal))
   (environment-unsets nil :type list)
   ;; Names marked hidden via set-environment -h (tmux ENVIRON_HIDDEN):

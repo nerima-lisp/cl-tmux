@@ -86,7 +86,8 @@
 ;;;   leaf-pane   = (layout-leaf-pane node)
 ;;;   split-first / split-second / split-orient / split-ratio
 
-(defmacro define-layout-fold (name (node-var &rest extra-vars) &key on-null on-leaf on-split docstring)
+(defmacro define-layout-fold (name (node-var &rest extra-vars) &key on-null on-leaf
+                                                                    on-split docstring)
   "Define a multi-argument recursive layout-tree function NAME.
    NODE-VAR is the tree node; EXTRA-VARS are additional parameters.
    ON-LEAF has LEAF-PANE bound; ON-SPLIT has SPLIT-FIRST, SPLIT-SECOND,

@@ -15,7 +15,8 @@
    tmux's automatic buffer names.")
 
 (defun %buffer-limit ()
-  "Return the configured buffer-limit, defaulting to +default-buffer-limit+ when options are not yet initialised."
+  "Return the configured buffer-limit, defaulting to +default-buffer-limit+ when
+   options are not yet initialised."
   (or (ignore-errors (cl-tmux/options:get-option "buffer-limit"))
       +default-buffer-limit+))
 

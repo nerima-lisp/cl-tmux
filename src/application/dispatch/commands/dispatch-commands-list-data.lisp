@@ -5,11 +5,19 @@
 ;;;; Maps canonical command name → cl-tmux's supported usage-flags string.
 ;;;; An empty string means the local scriptable command accepts no arguments.
 
+;;;; Entries whose usage string would push the line past the 100-column limit are
+;;;; assembled with `concatenate' (hence the backquoted table); a string literal
+;;;; cannot be split across source lines without embedding a real newline.  The
+;;;; resulting strings are identical to the single-line originals.
+
 (defparameter *command-usage-table*
-  '(("attach-session"       . "[-dErx] [-c working-directory] [-f flags] [-t target-session]")
+  `(("attach-session"       . "[-dErx] [-c working-directory] [-f flags] [-t target-session]")
     ("bind-key"             . "[-nrN] [-T key-table] [-X] key [note] command [argument ...]")
     ("break-pane"           . "[-abdP] [-F format] [-n window-name] [-s src-pane] [-t dst-window]")
-    ("capture-pane"         . "[-aCeJNpPqS] [-b buffer-name] [-E end-line] [-s src-pane] [-S start-line] [-t target-pane]")
+    ("capture-pane"
+     . ,(concatenate 'string
+                     "[-aCeJNpPqS] [-b buffer-name] [-E end-line] [-s src-pane] "
+                     "[-S start-line] [-t target-pane]"))
     ("choose-buffer"        . "")
     ("choose-client"        . "")
     ("choose-tree"          . "")
@@ -17,16 +25,30 @@
     ("clear-history"        . "[-H] [-t target-pane]")
     ("clear-prompt-history" . "[-T prompt-type]")
     ("clock-mode"           . "[-t target-pane]")
-    ("command-prompt"       . "[-1bFikN] [-I inputs] [-p prompts] [-t target-client] [-T prompt-type] [template]")
+    ("command-prompt"
+     . ,(concatenate 'string
+                     "[-1bFikN] [-I inputs] [-p prompts] [-t target-client] "
+                     "[-T prompt-type] [template]"))
     ("confirm-before"       . "[-b] [-p prompt] [-t target-client] command")
     ("copy-mode"            . "[-eHMuq] [-s src-pane] [-t target-pane]")
     ("customize-mode"       . "[-NZ] [-F format] [-f filter] [-t target-pane]")
     ("delete-buffer"        . "[-b buffer-name]")
     ("detach-client"        . "")
-    ("display-menu"         . "[-O] [-b border-lines] [-c target-client] [-C menu-cursor] [-H selected-style] [-s style] [-S separator-style] [-t target-pane] [-T title] [-x position] [-y position] name key command ...")
+    ("display-menu"
+     . ,(concatenate 'string
+                     "[-O] [-b border-lines] [-c target-client] [-C menu-cursor] "
+                     "[-H selected-style] [-s style] [-S separator-style] "
+                     "[-t target-pane] [-T title] [-x position] [-y position] "
+                     "name key command ..."))
     ("display-message"      . "[-l] [-d delay] [-F format] [-t target-pane] [message]")
     ("display-panes"        . "[-d duration]")
-    ("display-popup"        . "[-BCE] [-b border-lines] [-c target-client] [-d start-directory] [-e environment] [-h height] [-s style] [-S border-style] [-t target-pane] [-T title] [-w width] [-x position] [-y position] [shell-command [argument ...]]")
+    ("display-popup"
+     . ,(concatenate 'string
+                     "[-BCE] [-b border-lines] [-c target-client] "
+                     "[-d start-directory] [-e environment] [-h height] "
+                     "[-s style] [-S border-style] [-t target-pane] [-T title] "
+                     "[-w width] [-x position] [-y position] "
+                     "[shell-command [argument ...]]"))
     ("find-window"          . "[-CimnNrT] [-F format] [-t target-pane] match-string")
     ("has-session"          . "[-t target-session]")
     ("if-shell"             . "[-bF] [-t target-pane] shell-command command [command]")
@@ -51,8 +73,16 @@
     ("lock-session"         . "[-at] [-t target-session]")
     ("move-pane"            . "[-bdfhv] [-l size] [-s src-pane] [-t dst-pane]")
     ("move-window"          . "[-abrdk] [-s src-window] [-t dst-window]")
-    ("new-session"          . "[-AdEP] [-c start-directory] [-e environment] [-F format] [-n window-name] [-s session-name] [-t target-session] [-x width] [-y height] [shell-command [argument ...]]")
-    ("new-window"           . "[-abdkPS] [-c start-directory] [-e environment] [-F format] [-n window-name] [-t target-window] [shell-command [argument ...]]")
+    ("new-session"
+     . ,(concatenate 'string
+                     "[-AdEP] [-c start-directory] [-e environment] [-F format] "
+                     "[-n window-name] [-s session-name] [-t target-session] "
+                     "[-x width] [-y height] [shell-command [argument ...]]"))
+    ("new-window"
+     . ,(concatenate 'string
+                     "[-abdkPS] [-c start-directory] [-e environment] [-F format] "
+                     "[-n window-name] [-t target-window] "
+                     "[shell-command [argument ...]]"))
     ("next-layout"          . "[-t target-window]")
     ("next-window"          . "[-a] [-t target-session]")
     ("paste-buffer"         . "[-dpr] [-b buffer-name] [-s separator] [-t target-pane]")
@@ -64,8 +94,14 @@
     ("rename-window"        . "[-t target-window] new-name")
     ("resize-pane"          . "[-DLMRUZ] [-t target-pane] [-x width] [-y height] [adjustment]")
     ("resize-window"        . "[-aADLRU] [-t target-window] [-x width] [-y height] [adjustment]")
-    ("respawn-pane"         . "[-k] [-c start-directory] [-e environment] [-t target-pane] [shell-command [argument ...]]")
-    ("respawn-window"       . "[-k] [-c start-directory] [-e environment] [-t target-window] [shell-command [argument ...]]")
+    ("respawn-pane"
+     . ,(concatenate 'string
+                     "[-k] [-c start-directory] [-e environment] [-t target-pane] "
+                     "[shell-command [argument ...]]"))
+    ("respawn-window"
+     . ,(concatenate 'string
+                     "[-k] [-c start-directory] [-e environment] [-t target-window] "
+                     "[shell-command [argument ...]]"))
     ("rotate-window"        . "[-DU] [-t target-window]")
     ("run-shell"            . "[-bCE] [-c start-directory] [shell-command [argument ...]]")
     ("save-buffer"          . "[-a] [-b buffer-name] path")
@@ -88,7 +124,10 @@
     ("show-session-options" . "[-gvA] [-t target-session] [option]")
     ("show-server-options"  . "[-gvA] [option]")
     ("source-file"          . "[-Fnqv] [path ...]")
-    ("split-window"         . "[-bdfhIvPZ] [-c start-directory] [-e environment] [-F format] [-l size] [-t target-pane] [shell-command [argument ...]]")
+    ("split-window"
+     . ,(concatenate 'string
+                     "[-bdfhIvPZ] [-c start-directory] [-e environment] [-F format] "
+                     "[-l size] [-t target-pane] [shell-command [argument ...]]"))
     ("start-server"         . "")
     ("suspend-client"       . "[-t target-client]")
     ("swap-pane"            . "[-DU] [-s src-pane] [-t dst-pane]")

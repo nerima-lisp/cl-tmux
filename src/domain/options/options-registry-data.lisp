@@ -8,6 +8,25 @@
 ;;;; mirrors this project's convention for large data blocks (see
 ;;;; commands-keys-data.lisp) and keeps options.lisp itself as pure macro/logic.
 
+;;; ── Oversized option defaults ────────────────────────────────────────────────
+;;;
+;;; tmux's copy-mode-position-format default is a single 200+ character format
+;;; string, which cannot sit on one source line within the 100-column limit.  It is
+;;; assembled with CONCATENATE (splitting a string literal across source lines would
+;;; embed a real newline and change the value); the pieces below join to exactly the
+;;; single-line original.  Binding it once also keeps the three references the
+;;; define-option-table expansion makes pointing at one shared string.
+
+(defparameter +default-copy-mode-position-format+
+  (concatenate 'string
+               "#[align=right]#{t/p:top_line_time}"
+               "#{?#{e|>:#{top_line_time},0}, ,}"
+               "[#{copy_position}/#{copy_position_limit}]"
+               "#{?search_timed_out, (timed out),"
+               "#{?search_count, (#{search_count}#{?search_count_partial,+,} results),}}")
+  "tmux default for the copy-mode-position-format option: the copy-mode position
+   indicator (top-line time, position/limit, and search-result counts).")
+
 ;;; Registered options
 
 (define-tmux-options
@@ -105,7 +124,8 @@
   ;; for set/show-options fidelity.
   ("assume-paste-time"        :integer 1)
   ("message-style"            :string  "")
-  ("update-environment"       :string  "DISPLAY SSH_ASKPASS SSH_AUTH_SOCK SSH_CONNECTION WINDOWID XAUTHORITY")
+  ("update-environment"       :string
+   "DISPLAY SSH_ASKPASS SSH_AUTH_SOCK SSH_CONNECTION WINDOWID XAUTHORITY")
   ;; Display options
   ("display-time"             :integer 750)    ; ms to show messages / pane numbers
   ("display-panes-time"       :integer 1000)   ; ms to show pane numbers (display-panes)
@@ -113,7 +133,8 @@
   ("display-panes-active-colour" :string "red")
   ;; Resize and timing
   ("repeat-time"              :integer 500)    ; ms window for repeatable bindings
-  ("initial-repeat-time"      :integer 0)      ; ms window for the FIRST repeat; 0 = use repeat-time (tmux 3.5+)
+  ;; ms window for the FIRST repeat; 0 = use repeat-time (tmux 3.5+)
+  ("initial-repeat-time"      :integer 0)
   ("double-click-time"        :integer 500)    ; ms window for double/triple mouse clicks
   ("lock-after-time"          :integer 0)      ; 0 = disabled
   ;; Terminal settings
@@ -134,7 +155,9 @@
   ("other-pane-height"        :integer 0)
   ;; Status bar extras
   ("status-keys"              :string  "emacs")  ; emacs or vi
-  ("mode-keys"                :string  "emacs")  ; emacs or vi copy-mode keys (tmux default emacs; vi-autodetected from $VISUAL/$EDITOR at startup)
+  ;; emacs or vi copy-mode keys (tmux default emacs; vi-autodetected from
+  ;; $VISUAL/$EDITOR at startup)
+  ("mode-keys"                :string  "emacs")
   ("status-left-style"        :string  "")
   ("status-right-style"       :string  "")
   ;; Pane border status line (top / bottom / off)
@@ -150,7 +173,7 @@
   ("copy-mode-current-line-number-style" :string "")
   ("copy-mode-current-match-style" :string "bg=magenta")
   ("copy-mode-match-style"    :string  "bg=green")
-  ("copy-mode-position-format" :string  "#[align=right]#{t/p:top_line_time}#{?#{e|>:#{top_line_time},0}, ,}[#{copy_position}/#{copy_position_limit}]#{?search_timed_out, (timed out),#{?search_count, (#{search_count}#{?search_count_partial,+,} results),}}")
+  ("copy-mode-position-format" :string  +default-copy-mode-position-format+)
   ("copy-mode-position-style" :string  "#{E:mode-style}")
   ("copy-mode-selection-style" :string  "#{E:mode-style}")
   ("copy-mode-mark-style"     :string  "bg=red,fg=black")

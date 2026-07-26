@@ -46,5 +46,6 @@
                        (copy-mode-exit screen)))))))))
 
 (define-copy-to-buffer-commands
-  (copy-mode-copy-end-of-line col "Copy from the current cursor column to end of line; stay in copy mode.")
+  (copy-mode-copy-end-of-line col
+   "Copy from the current cursor column to end of line; stay in copy mode.")
   (copy-mode-copy-line        0   "Copy the full current line (all columns); stay in copy mode."))

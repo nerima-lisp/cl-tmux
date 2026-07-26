@@ -10,6 +10,9 @@
                        (uiop:pathname-directory-pathname *load-pathname*))
                   (and *compile-file-pathname*
                        (uiop:pathname-directory-pathname *compile-file-pathname*))
-                  *default-pathname-defaults*)))
-    (load (merge-pathnames #P"application/dispatch/commands/dispatch-commands-option-pane-window.lisp" src))
-    (load (merge-pathnames #P"application/dispatch/commands/dispatch-commands-option-pane-pane.lisp" src))))
+                  *default-pathname-defaults*))
+         ;; Directory hoisted out of the two LOADs below so that neither source
+         ;; line exceeds 100 columns; a #P"..." literal cannot be split.
+         (dir (merge-pathnames #P"application/dispatch/commands/" src)))
+    (load (merge-pathnames #P"dispatch-commands-option-pane-window.lisp" dir))
+    (load (merge-pathnames #P"dispatch-commands-option-pane-pane.lisp" dir))))

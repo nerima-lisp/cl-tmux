@@ -73,9 +73,10 @@
    (window-status-{bell,activity,last}-style).
    The format/style options are resolved PER WINDOW via get-option-for-context
    (pane→window→global→default), so e.g. `set-window-option -t :2
-   window-status-current-style fg=red` styles only that window's tab.  A non-active window with a pending bell,
-   unseen activity, or that is the last (previously active) window picks up the
-   corresponding alert style (bell > activity > last > normal).
+   window-status-current-style fg=red` styles only that window's tab.  A
+   non-active window with a pending bell, unseen activity, or that is the last
+   (previously active) window picks up the corresponding alert style
+   (bell > activity > last > normal).
    window-status-separator stays global — it sits between windows and has no
    single owning window."
   (let ((separator (cl-tmux/options:get-option "window-status-separator" " ")))

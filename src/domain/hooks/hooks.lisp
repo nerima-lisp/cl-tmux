@@ -40,26 +40,39 @@ Uses the safe SBCL idiom to avoid string-constant redefinition errors."
   (+hook-after-kill-pane+        "after-kill-pane"        "Fired after a pane is killed")
   (+hook-after-kill-window+      "after-kill-window"      "Fired after a window is killed")
   (+hook-after-split-window+     "after-split-window"     "Fired after a window is split")
-  (+hook-client-attached+        "client-attached"        "Fired when a client attaches to the server")
-  (+hook-client-detached+        "client-detached"        "Fired when a client detaches from the server")
-  (+hook-alert-bell+             "alert-bell"             "Fired when a BEL character is received in a pane")
-  (+hook-alert-activity+         "alert-activity"         "Fired when monitor-activity detects activity in a window")
-  (+hook-alert-silence+          "alert-silence"          "Fired when monitor-silence detects silence in a window")
+  (+hook-client-attached+        "client-attached"
+   "Fired when a client attaches to the server")
+  (+hook-client-detached+        "client-detached"
+   "Fired when a client detaches from the server")
+  (+hook-alert-bell+             "alert-bell"
+   "Fired when a BEL character is received in a pane")
+  (+hook-alert-activity+         "alert-activity"
+   "Fired when monitor-activity detects activity in a window")
+  (+hook-alert-silence+          "alert-silence"
+   "Fired when monitor-silence detects silence in a window")
   (+hook-pane-focus-in+          "pane-focus-in"          "Fired when a pane gains focus")
   (+hook-pane-focus-out+         "pane-focus-out"         "Fired when a pane loses focus")
   (+hook-after-select-pane+      "after-select-pane"      "Fired after the select-pane command")
   (+hook-after-select-window+    "after-select-window"    "Fired after the select-window command")
-  (+hook-session-window-changed+ "session-window-changed"  "Fired when a session's active window changes")
-  (+hook-window-pane-changed+    "window-pane-changed"     "Fired when the active pane in a window changes")
+  (+hook-session-window-changed+ "session-window-changed"
+   "Fired when a session's active window changes")
+  (+hook-window-pane-changed+    "window-pane-changed"
+   "Fired when the active pane in a window changes")
   (+hook-window-renamed+         "window-renamed"         "Fired when a window is renamed")
   (+hook-session-renamed+        "session-renamed"        "Fired when a session is renamed")
   (+hook-after-resize-pane+      "after-resize-pane"      "Fired after a pane is resized")
-  (+hook-client-resized+         "client-resized"         "Fired when the client terminal is resized")
-  (+hook-window-linked+          "window-linked"          "Fired when a window is linked into a session")
-  (+hook-window-unlinked+        "window-unlinked"        "Fired when a window is unlinked from a session")
-  (+hook-session-closed+         "session-closed"         "Fired when a session is destroyed (kill-session)")
-  (+hook-pane-output+            "pane-output"            "Fired when a pane receives PTY output (args: pane bytes)")
-  (+hook-pane-died+              "pane-died"              "Fired when a pane's program exits and remain-on-exit keeps the pane visible"))
+  (+hook-client-resized+         "client-resized"
+   "Fired when the client terminal is resized")
+  (+hook-window-linked+          "window-linked"
+   "Fired when a window is linked into a session")
+  (+hook-window-unlinked+        "window-unlinked"
+   "Fired when a window is unlinked from a session")
+  (+hook-session-closed+         "session-closed"
+   "Fired when a session is destroyed (kill-session)")
+  (+hook-pane-output+            "pane-output"
+   "Fired when a pane receives PTY output (args: pane bytes)")
+  (+hook-pane-died+              "pane-died"
+   "Fired when a pane's program exits and remain-on-exit keeps the pane visible"))
 
 (defvar *hook-registry* (make-hash-table :test #'equal)
   "Maps event-name (string) to a list of callback functions.

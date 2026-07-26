@@ -233,7 +233,8 @@
                    (lambda (cmd)
                      (if-shell cmd
                                (lambda () (%overlayf "[if-shell] ~A: ok" cmd))
-                               :else-fn (lambda () (%overlayf "[if-shell] ~A: non-zero exit" cmd))))))
+                               :else-fn (lambda ()
+                                          (%overlayf "[if-shell] ~A: non-zero exit" cmd))))))
 
 (defun %has-session-prompt ()
   "Prompt for a session name and show whether it exists."

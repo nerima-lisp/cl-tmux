@@ -67,7 +67,8 @@
   `(progn
      ,@(mapcar
         (lambda (spec)
-          (destructuring-bind (name label std-base bright-base palette-prefix tc-prefix default-val) spec
+          (destructuring-bind (name label std-base bright-base
+                               palette-prefix tc-prefix default-val) spec
             `(defun ,name (stream n)
                ,(format nil
                   "Emit the ANSI SGR ~A colour code for value N to STREAM.~%~

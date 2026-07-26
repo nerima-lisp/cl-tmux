@@ -96,24 +96,42 @@
         ;; layer keeps no dependency on the umbrella package.
         :client-key-table     (%synthesized-client-key-table pane-scr)
         :pane-mode            (%if-copy-mode pane-scr "copy-mode")
-        :scroll-position      (%if-copy-mode pane-scr (format nil "~D" (cl-tmux/terminal:screen-copy-offset pane-scr)))
-        :copy-position        (%if-copy-mode pane-scr (format nil "~D" (cl-tmux/terminal:screen-copy-offset pane-scr)))
-        :copy-position-limit  (%if-copy-mode pane-scr (format nil "~D" (length (cl-tmux/terminal:screen-scrollback pane-scr))))
-        :selection-active     (%copy-mode-flag pane-scr (cl-tmux/terminal:screen-copy-selecting pane-scr))
-        :selection-present    (%copy-mode-flag pane-scr (cl-tmux/terminal:screen-copy-selecting pane-scr))
-        :copy-cursor-x        (%if-copy-mode pane-scr (format nil "~D" (cdr (cl-tmux/terminal:screen-copy-cursor pane-scr))))
-        :copy-cursor-y        (%if-copy-mode pane-scr (format nil "~D" (car (cl-tmux/terminal:screen-copy-cursor pane-scr))))
+        :scroll-position
+        (%if-copy-mode pane-scr
+                       (format nil "~D" (cl-tmux/terminal:screen-copy-offset pane-scr)))
+        :copy-position
+        (%if-copy-mode pane-scr
+                       (format nil "~D" (cl-tmux/terminal:screen-copy-offset pane-scr)))
+        :copy-position-limit
+        (%if-copy-mode pane-scr
+                       (format nil "~D" (length (cl-tmux/terminal:screen-scrollback pane-scr))))
+        :selection-active
+        (%copy-mode-flag pane-scr (cl-tmux/terminal:screen-copy-selecting pane-scr))
+        :selection-present
+        (%copy-mode-flag pane-scr (cl-tmux/terminal:screen-copy-selecting pane-scr))
+        :copy-cursor-x
+        (%if-copy-mode pane-scr
+                       (format nil "~D" (cdr (cl-tmux/terminal:screen-copy-cursor pane-scr))))
+        :copy-cursor-y
+        (%if-copy-mode pane-scr
+                       (format nil "~D" (car (cl-tmux/terminal:screen-copy-cursor pane-scr))))
         :history-size         (format nil "~D"
                                       (if pane-scr
                                           (length (cl-tmux/terminal:screen-scrollback pane-scr))
                                           0))
         ;; Terminal-state flags (tmux exposes the pane's mode bits directly).
-        :cursor-flag          (if (and pane-scr (cl-tmux/terminal:screen-cursor-visible pane-scr)) "1" "0")
-        :insert-flag          (if (and pane-scr (cl-tmux/terminal:screen-insert-mode pane-scr)) "1" "0")
-        :wrap-flag            (if (and pane-scr (cl-tmux/terminal:screen-autowrap pane-scr)) "1" "0")
-        :origin-flag          (if (and pane-scr (cl-tmux/terminal:screen-origin-mode pane-scr)) "1" "0")
-        :keypad-cursor-flag   (if (and pane-scr (cl-tmux/terminal:screen-app-cursor-keys pane-scr)) "1" "0")
-        :alternate-on         (if (and pane-scr (cl-tmux/terminal:screen-alt-cells pane-scr)) "1" "0")
+        :cursor-flag          (if (and pane-scr (cl-tmux/terminal:screen-cursor-visible pane-scr))
+                                  "1" "0")
+        :insert-flag          (if (and pane-scr (cl-tmux/terminal:screen-insert-mode pane-scr))
+                                  "1" "0")
+        :wrap-flag            (if (and pane-scr (cl-tmux/terminal:screen-autowrap pane-scr))
+                                  "1" "0")
+        :origin-flag          (if (and pane-scr (cl-tmux/terminal:screen-origin-mode pane-scr))
+                                  "1" "0")
+        :keypad-cursor-flag   (if (and pane-scr (cl-tmux/terminal:screen-app-cursor-keys pane-scr))
+                                  "1" "0")
+        :alternate-on         (if (and pane-scr (cl-tmux/terminal:screen-alt-cells pane-scr))
+                                  "1" "0")
         :scroll-region-upper  (if pane-scr
                                   (format nil "~D" (cl-tmux/terminal:screen-scroll-top pane-scr))
                                   "")
@@ -121,14 +139,28 @@
                                   (format nil "~D" (cl-tmux/terminal:screen-scroll-bottom pane-scr))
                                   "")
         ;; Mouse reporting flags (screen-mouse-mode: 0 off, 1/2/3 = ?1000/?1002/?1003).
-        :mouse-any-flag       (if (and pane-scr (plusp (cl-tmux/terminal:screen-mouse-mode pane-scr))) "1" "0")
-        :mouse-standard-flag  (if (and pane-scr (= 1 (cl-tmux/terminal:screen-mouse-mode pane-scr))) "1" "0")
-        :mouse-button-flag    (if (and pane-scr (= 2 (cl-tmux/terminal:screen-mouse-mode pane-scr))) "1" "0")
-        :mouse-all-flag       (if (and pane-scr (= 3 (cl-tmux/terminal:screen-mouse-mode pane-scr))) "1" "0")
-        :mouse-sgr-flag       (if (and pane-scr (cl-tmux/terminal:screen-mouse-sgr-mode pane-scr)) "1" "0")
+        :mouse-any-flag       (if (and pane-scr
+                                       (plusp (cl-tmux/terminal:screen-mouse-mode pane-scr)))
+                                  "1" "0")
+        :mouse-standard-flag  (if (and pane-scr
+                                       (= 1 (cl-tmux/terminal:screen-mouse-mode pane-scr)))
+                                  "1" "0")
+        :mouse-button-flag    (if (and pane-scr
+                                       (= 2 (cl-tmux/terminal:screen-mouse-mode pane-scr)))
+                                  "1" "0")
+        :mouse-all-flag       (if (and pane-scr
+                                       (= 3 (cl-tmux/terminal:screen-mouse-mode pane-scr)))
+                                  "1" "0")
+        :mouse-sgr-flag       (if (and pane-scr
+                                       (cl-tmux/terminal:screen-mouse-sgr-mode pane-scr))
+                                  "1" "0")
         ;; Copy-mode search / selection details.
-        :pane-search-string   (or (and pane-scr (cl-tmux/terminal:screen-copy-search-term pane-scr)) "")
-        :rectangle-toggle     (if (and pane-scr (cl-tmux/terminal:screen-copy-rect-select-p pane-scr)) "1" "0")
+        :pane-search-string   (or (and pane-scr
+                                       (cl-tmux/terminal:screen-copy-search-term pane-scr))
+                                  "")
+        :rectangle-toggle     (if (and pane-scr
+                                       (cl-tmux/terminal:screen-copy-rect-select-p pane-scr))
+                                  "1" "0")
         :selection-start-x    (let ((m (and pane-scr (cl-tmux/terminal:screen-copy-mark pane-scr))))
                                 (if m (format nil "~D" (cdr m)) ""))
         :selection-start-y    (let ((m (and pane-scr (cl-tmux/terminal:screen-copy-mark pane-scr))))

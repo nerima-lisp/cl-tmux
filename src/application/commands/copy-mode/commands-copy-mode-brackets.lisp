@@ -163,4 +163,6 @@
   "Jump backward to the opener matching the current or previous close bracket.
    Cursor on a close bracket scans backward from it.  Otherwise the previous
    close bracket is found first, then matched backward."
-  (%copy-mode-bracket-jump screen #'%copy-mode-match-previous-closing-bracket-at #'%copy-mode-match-previous-closing-bracket))
+  (%copy-mode-bracket-jump screen
+                           #'%copy-mode-match-previous-closing-bracket-at
+                           #'%copy-mode-match-previous-closing-bracket))
