@@ -59,6 +59,12 @@ Added / Changed / Deprecated / Removed / Fixed / Security
   guard/flip/dirty bodies, and `%option-sgr`/`%copy-match-sgr` collapse
   into one `%option-style-sgr` (the narrower one becomes a one-line
   wrapper). No behavior change.
+- Extended that similarity sweep to every remaining src/ subsystem
+  directory: `%cmd-bind-arg`/`%cmd-unbind-arg` now share a
+  `define-config-directive-command` macro, and `window-operations.lisp`'s
+  `%build-spine-tree` — a fully redundant duplicate of `layout.lisp`'s
+  `%build-flat-tree :h` (their only difference, an explicit `1/2` ratio,
+  was already `make-layout-split`'s default) — is deleted outright.
 - **Readability: extracted the 6 most deeply-nested functions in the
   codebase** (per `paredit inspect complexity`'s per-definition nesting
   metric), each split so every dispatch branch has a named helper matching
