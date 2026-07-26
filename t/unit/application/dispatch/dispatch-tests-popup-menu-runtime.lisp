@@ -111,4 +111,82 @@
       (let ((cl-tmux::*active-menu*
               (make-menu :title "t" :items (list (cons "a" :ka)) :selected-index 0)))
         (cl-tmux::dispatch-command s :menu-dismiss nil)
-        (expect (null cl-tmux::*active-menu*))))))
+        (expect (null cl-tmux::*active-menu*)))))
+
+  ;; ── :menu-select / %execute-menu-cmd cmd-shape dispatch ─────────────────────
+  ;;
+  ;; %execute-menu-cmd's cmd shapes beyond the plain keyword already covered by
+  ;; dispatch-menu-select-executes-selected-command (dispatch-tests-commands-c.lisp)
+  ;; — string, list-encoded :select-window/:switch-client, the case's `otherwise`
+  ;; fallthrough, and display-menu -O keep-open — previously had no dedicated test.
+
+  ;; :menu-select with a string-command item runs it via %run-command-line.
+  (it "dispatch-menu-select-string-cmd-runs-command-line"
+    (with-fake-session (s)
+      (let ((*overlay* nil)
+            (cl-tmux::*active-menu*
+              (make-menu :title "t" :items (list (cons "hi" "display-message from-menu"))
+                        :selected-index 0)))
+        (cl-tmux::dispatch-command s :menu-select nil)
+        (assert-overlay-contains "from-menu" *overlay*
+                                 "dispatch-menu-select-string-cmd-runs-command-line"))))
+
+  ;; :menu-select with a (:select-window ID) item — the choose-window menu's
+  ;; per-item command shape — selects that window by id.
+  (it "dispatch-menu-select-list-select-window-switches-window"
+    (with-fake-session (s :nwindows 2)
+      (let* ((target (second (session-windows s)))
+             (cl-tmux::*active-menu*
+               (make-menu :title "t"
+                          :items (list (cons "w1" (list :select-window
+                                                        (window-id target))))
+                          :selected-index 0)))
+        (cl-tmux::dispatch-command s :menu-select nil)
+        (expect (eq target (session-active-window s))))))
+
+  ;; :menu-select with a (:switch-client NAME) item — the choose-session menu's
+  ;; per-item command shape — switches the current session.
+  (it "dispatch-menu-select-list-switch-client-switches-session"
+    (with-loop-state
+      (with-empty-registry
+        (let* ((s0 (make-fake-session :nwindows 1))
+               (s1 (make-fake-session :nwindows 1)))
+          (setf (cl-tmux::session-name s0) "0"
+                (cl-tmux::session-name s1) "work"
+                (cl-tmux::session-last-active s0) 10
+                (cl-tmux::session-last-active s1) 0
+                cl-tmux::*server-sessions* (list (cons "0" s0)
+                                                 (cons "work" s1))
+                cl-tmux::*active-menu*
+                (make-menu :title "t"
+                           :items (list (cons "work" (list :switch-client "work")))
+                           :selected-index 0))
+          (cl-tmux::dispatch-command s0 :menu-select nil)
+          (expect (eq s1 (cl-tmux::server-current-session)))))))
+
+  ;; :menu-select with a keyword-headed list item that is NEITHER :select-window
+  ;; nor :switch-client falls through the case's `otherwise` arm to
+  ;; %run-command-tokens (rather than being silently dropped or erroring) — here
+  ;; that resolves to nothing (a keyword is never a valid arg-command or
+  ;; named-command lookup key, both of which are string-keyed), surfacing the
+  ;; same "unknown command" overlay %dispatch-named-command shows elsewhere.
+  (it "dispatch-menu-select-list-otherwise-falls-through-to-run-command-tokens"
+    (with-fake-session (s)
+      (let ((*overlay* nil))
+        (setf cl-tmux::*active-menu*
+              (make-menu :title "t"
+                         :items (list (cons "bogus" (list :bogus-menu-cmd)))
+                         :selected-index 0))
+        (cl-tmux::dispatch-command s :menu-select nil)
+        (assert-overlay-contains "unknown command" *overlay*
+                                 "dispatch-menu-select-list-otherwise-falls-through-to-run-command-tokens"))))
+
+  ;; display-menu -O (keep-open) keeps the menu open across a selection instead
+  ;; of closing it — the inverse of the default-close behaviour above.
+  (it "dispatch-menu-select-keep-open-leaves-menu-active"
+    (with-fake-session (s :nwindows 2)
+      (let ((cl-tmux::*active-menu*
+              (make-menu :title "t" :items (list (cons "next" :next-window))
+                        :selected-index 0 :keep-open t)))
+        (cl-tmux::dispatch-command s :menu-select nil)
+        (expect (not (null cl-tmux::*active-menu*)))))))

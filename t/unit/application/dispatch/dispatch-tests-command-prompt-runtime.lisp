@@ -128,4 +128,32 @@
   ;; %run-command-line with blank input does not signal an error.
   (it "run-command-line-empty-is-noop"
     (with-fake-session (s)
-      (finishes (cl-tmux::%run-command-line s "   ")))))
+      (finishes (cl-tmux::%run-command-line s "   "))))
+
+  ;;; ── %run-command-line semicolon-separated command chaining ───────────────────
+  ;;;
+  ;;; tmux's classic multi-command line (e.g. a bound key sending
+  ;;; "next-window ; display-message done" as one line) is split by
+  ;;; %split-on-semicolons and each segment dispatched in order — previously only
+  ;;; exercised through the static `bind` directive parser
+  ;;; (config-bind-directive-tests.lisp), never through a runtime command line.
+
+  ;; A single " ; " between two commands runs BOTH, in order.
+  (it "run-command-line-semicolon-runs-both-commands"
+    (with-fake-session (s :nwindows 2)
+      (let ((*overlay* nil))
+        (cl-tmux::%run-command-line s "next-window ; display-message done")
+        (expect (eq (second (session-windows s)) (session-active-window s)))
+        (assert-overlay-contains "done" *overlay*
+                                 "run-command-line-semicolon-runs-both-commands"))))
+
+  ;; Three semicolon-separated commands all run, in order — the dolist loop over
+  ;; %split-on-semicolons segments is not special-cased to exactly two.
+  (it "run-command-line-semicolon-chain-runs-three-commands"
+    (with-fake-session (s :nwindows 1)
+      (let ((*overlay* nil))
+        (cl-tmux::%run-command-line
+         s "rename-window one ; rename-window two ; display-message chained-ok")
+        (expect (string= "two" (window-name (session-active-window s))))
+        (assert-overlay-contains "chained-ok" *overlay*
+                                 "run-command-line-semicolon-chain-runs-three-commands")))))

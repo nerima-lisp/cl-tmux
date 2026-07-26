@@ -20,6 +20,7 @@
 /coverage/
 /coverage-report/
 /*-coverage-report/
+/coverage-report-*/
 *.coverage
 coverage.dat
 /__snapshots__/
