@@ -240,4 +240,50 @@
     (expect (search expected (cell-attrs-string fg bg 0))))
 
   ;; ── render-cell-attrs all attributes table ───────────────────────────────────
+
+  ;; ── %rgb-int-to-256 / %maybe-downsample-color / *color-downsample-fn* ───────
+  ;;
+  ;; Real tmux's -2 flag forces 256-colour output even when the caller sends
+  ;; true-colour cell values; %apply-global-cli-invocation (main-startup.lisp)
+  ;; wires that up by setting *color-downsample-fn* to #'%rgb-int-to-256, which
+  ;; %emit-fg/%emit-bg (via %maybe-downsample-color) consult before classifying
+  ;; a true-colour value. Reference downsample values below match cl-tty-kit's
+  ;; own rgb-to-256 test table (t/color-test.lisp).
+
+  ;; %rgb-int-to-256 downsamples a packed true-colour int (bit 24 set) to the
+  ;; correct xterm 256-palette index. Each case is (packed-int expected desc).
+  (it-each ((#.(logior #x1000000 (ash 0   16) (ash 0   8) 0)   16  "black")
+            (#.(logior #x1000000 (ash 255 16) (ash 255 8) 255) 231 "white")
+            (#.(logior #x1000000 (ash 0   16) (ash 0   8) 255) 21  "blue")
+            (#.(logior #x1000000 (ash 128 16) (ash 128 8) 128) 244 "grey"))
+      "rgb-int-to-256: ~*~*~A"
+      (n expected desc)
+    (declare (ignore desc))
+    (expect (= expected (cl-tmux/renderer:%rgb-int-to-256 n))))
+
+  ;; %maybe-downsample-color returns N unchanged when *color-downsample-fn* is
+  ;; NIL (the default), for both true-colour and non-true-colour N.
+  (it "maybe-downsample-color-nil-fn-returns-unchanged"
+    (let ((cl-tmux/renderer:*color-downsample-fn* nil))
+      (expect (= 42 (cl-tmux/renderer::%maybe-downsample-color 42)))
+      (expect (= (logior #x1000000 255)
+                (cl-tmux/renderer::%maybe-downsample-color (logior #x1000000 255))))))
+
+  ;; %maybe-downsample-color only applies *color-downsample-fn* to true-colour
+  ;; values (bit 24 set); a non-true-colour N is returned unchanged even when
+  ;; a downsample function is bound.
+  (it "maybe-downsample-color-applies-fn-only-to-truecolor"
+    (let ((cl-tmux/renderer:*color-downsample-fn* (lambda (n) (declare (ignore n)) 99)))
+      (expect (= 99 (cl-tmux/renderer::%maybe-downsample-color (logior #x1000000 1))))
+      (expect (= 5  (cl-tmux/renderer::%maybe-downsample-color 5)))))
+
+  ;; End-to-end: with *color-downsample-fn* bound to #'%rgb-int-to-256 (as
+  ;; %apply-global-cli-invocation wires it for -2), render-cell-attrs emits the
+  ;; downsampled 256-colour SGR form (;38;5;N) instead of raw true-colour
+  ;; (;38;2;R;G;B) for a true-colour fg value.
+  (it "render-cell-attrs-downsamples-truecolor-fg-when-fn-bound"
+    (let ((cl-tmux/renderer:*color-downsample-fn* #'cl-tmux/renderer:%rgb-int-to-256))
+      (let ((out (cell-attrs-string (logior #x1000000 (ash 0 16) (ash 0 8) 255) 0 0)))
+        (expect (search ";38;5;21" out))
+        (expect (not (search ";38;2;" out))))))
   )
