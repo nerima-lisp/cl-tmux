@@ -23,12 +23,11 @@ Added / Changed / Deprecated / Removed / Fixed / Security
 
 ### Added
 
-- **Raised test abstraction: every `dolist`-over-a-case-table `it` in
-  `sgr-tests.lisp` now uses cl-weave's `it-each`**, so each of the file's 24
-  cases runs and reports as its own independently-named test instead of
-  hiding inside 7 opaque blocks — the `desc` field each case already
-  carried, previously `(declare (ignore desc))`'d as dead weight, now names
-  the generated test.
+- **Raised test abstraction: 15 `dolist`-over-a-case-table `it`s across 6
+  files now use cl-weave's `it-each`**, so 77 cases run and report as
+  independently-named tests instead of hiding inside opaque blocks — the
+  `desc` field each case already carried, previously `(declare (ignore
+  desc))`'d as dead weight, now names the generated test.
 - **Adopted [cl-history-kit](https://github.com/nerima-lisp/cl-history-kit)
   v1.0.0** as an eighth dogfooded sibling library, replacing the hand-rolled
   list-and-cursor walk behind `:command-prompt`'s Up/Down recall
