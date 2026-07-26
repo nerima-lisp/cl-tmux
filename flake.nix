@@ -42,10 +42,10 @@
       flake = false;
     };
     cl-boundary-kit = {
-      # v0.6.0 is cl-boundary-kit's newest tag. Its .asd already reads 1.0.0,
-      # but the v1.0.0 tag does not exist yet; pinning to a tag that is not
-      # published would break `nix flake lock` here. Bump when it is cut.
-      url = "github:nerima-lisp/cl-boundary-kit/v0.6.0";
+      # v1.0.0: first stable release, no exported symbol/protocol/behavior
+      # changes from 0.6.0 (upstream release notes) — just an example-bootstrap
+      # fix and a semver-stability commitment.
+      url = "github:nerima-lisp/cl-boundary-kit/v1.0.0";
       flake = false;
     };
     # Transitive only: cl-boundary-kit depends on cl-log-kit, and siblings are
@@ -68,7 +68,9 @@
       flake = false;
     };
     cl-process-kit = {
-      url = "github:nerima-lisp/cl-process-kit/v1.0.0";
+      # v1.0.1: packaging-only fix (a stale cl-log-kit tag reference in
+      # upstream's own flake.nix); no source change, API identical to v1.0.0.
+      url = "github:nerima-lisp/cl-process-kit/v1.0.1";
       flake = false;
     };
 

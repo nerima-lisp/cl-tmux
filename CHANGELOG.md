@@ -21,6 +21,19 @@ Added / Changed / Deprecated / Removed / Fixed / Security
 
 ## [Unreleased]
 
+### Changed
+
+- **Sibling dependency bump: `cl-boundary-kit` v0.6.0 → v1.0.0,
+  `cl-process-kit` v1.0.0 → v1.0.1.** Both are behavior-preserving per
+  upstream release notes — `cl-boundary-kit` 1.0.0 is a stability-policy
+  commitment with no exported-symbol/protocol changes, and `cl-process-kit`
+  1.0.1 is a packaging-only fix (a stale transitive tag reference) with no
+  source change. Verified with the real sandboxed `nix flake check`, not just
+  the interactive dev-shell suite. The other 6 dogfooded siblings
+  (`cl-cli`, `cl-dataflow`, `cl-parser-kit`, `cl-prolog`, `cl-tty-kit`,
+  `cl-weave`) are already pinned to their current newest tags, so there was
+  nothing left to bump there.
+
 ## [0.1.0] - 2026-07-26
 
 ### Added

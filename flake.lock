@@ -3,16 +3,16 @@
     "cl-boundary-kit": {
       "flake": false,
       "locked": {
-        "lastModified": 1784980104,
-        "narHash": "sha256-TVaLVsz0/Sqp3Xlfzimbk31dEAupPyXtvVOG/+ER2co=",
+        "lastModified": 1785007911,
+        "narHash": "sha256-wfG8DV7pSYyWDmEGgIxP4i9sM1MS6FqPWHj52dUpFQ0=",
         "owner": "nerima-lisp",
         "repo": "cl-boundary-kit",
-        "rev": "472a38dfbd33792587b2b1f652c53256a189029f",
+        "rev": "d4c47739556d405e7d8ead2dc43a6580f5fe281d",
         "type": "github"
       },
       "original": {
         "owner": "nerima-lisp",
-        "ref": "v0.6.0",
+        "ref": "v1.0.0",
         "repo": "cl-boundary-kit",
         "type": "github"
       }
@@ -88,16 +88,16 @@
     "cl-process-kit": {
       "flake": false,
       "locked": {
-        "lastModified": 1784999791,
-        "narHash": "sha256-qZPv2yLDeN2jmPj/1w+5qYj9L47s+ezHQg+Al8zwiLE=",
+        "lastModified": 1785012035,
+        "narHash": "sha256-6vy6K+ZUYt9zcu3IUSohRjYNT1jMX/xtXJX3CewsUpA=",
         "owner": "nerima-lisp",
         "repo": "cl-process-kit",
-        "rev": "9f305d62a962044dcd8fae79e932ed1fc02dcf9c",
+        "rev": "359d127e84d1e876e253419953253a34db033070",
         "type": "github"
       },
       "original": {
         "owner": "nerima-lisp",
-        "ref": "v1.0.0",
+        "ref": "v1.0.1",
         "repo": "cl-process-kit",
         "type": "github"
       }
