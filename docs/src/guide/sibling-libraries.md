@@ -35,7 +35,7 @@ Its regression suite (`cl-tmux/weave`) uses
 `around-each` fixtures, a property test, and cl-prolog's own `deftest-queries`
 bridge — and runs as the `weave` flake check.
 
-## The other five
+## The other seven
 
 - [cl-cli](https://github.com/nerima-lisp/cl-cli) parses the top-level
   `cl-tmux [flags] [command [flags]]` global flags
@@ -71,10 +71,21 @@ bridge — and runs as the `weave` flake check.
   hung command never orphans a shell. `run-shell` / `if-shell` deliberately
   stay on cl-boundary-kit, which supplies the injectable test double
   (`make-test-process-boundary`) that cl-process-kit has no equivalent for.
+- [cl-history-kit](https://github.com/nerima-lisp/cl-history-kit) replaced the
+  hand-rolled list-and-cursor walk behind `:command-prompt`'s Up/Down recall
+  (`runtime-history.lisp`, `prompt.lisp`). Storage, capacity, and navigation
+  are now cl-history-kit's: `history-add`/`history-entries` for the store,
+  `history-merge` to carry entries across a capacity change when
+  `prompt-history-limit` is set at runtime, and `history-previous`/
+  `history-next` for recall. This is a deliberate behavior change from real
+  tmux: cl-history-kit's recall is **prefix-filtered** (the buffer at the
+  start of a walk becomes both its match filter and its restore origin,
+  zsh-style), where tmux's own Up/Down is an unfiltered raw walk. Chosen for
+  the better editing ergonomics over strict Up/Down parity.
 
 ## External dependencies
 
-Beyond the six siblings and cl-weave, cl-tmux depends on four libraries from
+Beyond the eight siblings and cl-weave, cl-tmux depends on four libraries from
 outside the organization: `cffi`, `bordeaux-threads`, `babel` and `cl-ppcre`.
 It is the only `nerima-lisp` repository that does. The rationale for each is
 recorded per line in `cl-tmux.asd` and in `flake.nix`; the short version is

@@ -126,12 +126,13 @@
                 :context desc)
               (expect (eq s0 (cl-tmux::server-current-session)))))))))
 
-  ;; :clear-prompt-history sets *prompt-history* to NIL.
+  ;; :clear-prompt-history empties *prompt-history*.
   (it "dispatch-clear-prompt-history-empties-history"
     (with-fake-session (s)
-      (let ((cl-tmux::*prompt-history* (list "prev-cmd")))
+      (let ((cl-tmux::*prompt-history* (history-kit:make-history)))
+        (history-kit:history-add cl-tmux::*prompt-history* "prev-cmd")
         (cl-tmux::dispatch-command s :clear-prompt-history nil)
-        (expect (null cl-tmux::*prompt-history*)))))
+        (expect (history-kit:history-empty-p cl-tmux::*prompt-history*)))))
 
   ;; :detach-all-clients sets *running* to NIL and returns :detach.
   (it "dispatch-detach-all-clients-stops-running"

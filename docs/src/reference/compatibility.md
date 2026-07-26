@@ -55,6 +55,13 @@ is deliberately different, and where the remaining risk lives.
   (which uses `sb-ext:run-program :pty t`) rather than `forkpty(3)`, so the
   slave path is not exposed (reported as an empty string where tmux would
   report a device path).
+- **`:command-prompt` history recall is prefix-filtered, not a raw walk.**
+  Real tmux's Up/Down cycles the command-prompt history list unfiltered,
+  ignoring whatever has been typed. cl-tmux delegates recall to
+  [cl-history-kit](https://github.com/nerima-lisp/cl-history-kit), whose
+  `history-previous`/`history-next` treat the buffer at the start of a walk as
+  a prefix filter (zsh-style) — chosen deliberately for the editing ergonomics
+  over strict parity. See [Sibling libraries](../guide/sibling-libraries.md).
 
 ## Known remaining risk
 

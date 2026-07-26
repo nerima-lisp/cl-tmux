@@ -36,12 +36,11 @@
   (numeric-only nil :type boolean)
   ;; command-prompt -e: the prompt closes when the client loses focus.
   (close-on-focus-out nil :type boolean)
-  ;; Optional command history, newest first.  HISTORY-INDEX is NIL until the user
-  ;; starts navigating with Up/Down; HISTORY-ORIGINAL preserves the in-progress
-  ;; input so Down can return to it after walking older entries.
-  (history nil :type list)
-  (history-index nil :type (or null fixnum))
-  (history-original "" :type string))
+  ;; Optional command history: a history-kit:history store, or NIL when this
+  ;; prompt has no recall (e.g. rename-window, search).  Navigation state (the
+  ;; walk cursor and the preserved in-progress input) lives inside the store
+  ;; itself, owned by cl-history-kit — see prompt-history-prev/next below.
+  (history nil))
 
 (defvar *prompt* nil
   "The active PROMPT, or NIL when not prompting.
@@ -62,16 +61,15 @@
    used by incremental search to jump to the nearest match while the user types.
    ON-CANCEL is a no-argument function called when the prompt is dismissed by
    ESC / C-c — used by incremental search to restore the pre-search cursor.
-   HISTORY, when supplied, is a newest-first list of strings navigated with
-   prompt-history-prev / prompt-history-next."
+   HISTORY, when supplied, is a history-kit:history store navigated with
+   prompt-history-prev / prompt-history-next (prefix-filtered recall)."
   (setf *prompt* (make-prompt :label label :buffer initial
                                :cursor-index (length initial)
                                :on-submit on-submit
                                :on-change  on-change
                                :on-cancel  on-cancel
                                :single-key single-key
-                               :history history
-                               :history-original initial)))
+                               :history history)))
 
 ;;; -- Change notification helper ----------------------------------------------
 
@@ -85,9 +83,10 @@
 ;;; -- Buffer editing -----------------------------------------------------------
 
 (defun %prompt-reset-history-navigation (p)
-  "Treat the current buffer as a fresh in-progress input after manual edits."
-  (setf (prompt-history-index p) nil
-        (prompt-history-original p) (prompt-buffer p)))
+  "Abandon any in-progress history walk after a manual edit, so the next
+   prompt-history-prev starts a fresh walk filtered on the edited buffer."
+  (when (prompt-history p)
+    (history-kit:history-reset-navigation (prompt-history p))))
 
 (defun %buffer-delete (buffer from to)
   "Return BUFFER with characters [FROM, TO) removed."
@@ -131,33 +130,28 @@
         (prompt-cursor-index p) (length buffer)))
 
 (defun prompt-history-prev ()
-  "Replace the active prompt buffer with the previous history entry.
-   History is expected newest first, matching *prompt-history*."
+  "Step the active prompt's history walk one match further back and show it.
+   The buffer at the start of the walk becomes both the walk's prefix filter
+   and the origin restored by prompt-history-next (cl-history-kit's
+   history-previous); a no-op when there is no older match or no history."
   (with-active-prompt (p)
     (let ((history (prompt-history p)))
       (when history
-        (let* ((current-index (prompt-history-index p))
-               (next-index (if current-index
-                               (min (1- (length history)) (1+ current-index))
-                               0)))
-          (unless current-index
-            (setf (prompt-history-original p) (prompt-buffer p)))
-          (setf (prompt-history-index p) next-index)
-          (%prompt-set-buffer-at-end p (nth next-index history))))))
+        (let ((match (history-kit:history-previous history (prompt-buffer p))))
+          (when match
+            (%prompt-set-buffer-at-end p match))))))
   (prompt-notify-change))
 
 (defun prompt-history-next ()
-  "Move toward newer history, or restore the in-progress input after newest."
+  "Step the active prompt's history walk one match toward the newest, or
+   restore the in-progress input after the newest match (cl-history-kit's
+   history-next); a no-op when no walk is in progress."
   (with-active-prompt (p)
-    (let ((current-index (prompt-history-index p)))
-      (when current-index
-        (if (plusp current-index)
-            (let ((next-index (1- current-index)))
-              (setf (prompt-history-index p) next-index)
-              (%prompt-set-buffer-at-end p (nth next-index (prompt-history p))))
-            (progn
-              (setf (prompt-history-index p) nil)
-              (%prompt-set-buffer-at-end p (prompt-history-original p)))))))
+    (let ((history (prompt-history p)))
+      (when history
+        (let ((result (history-kit:history-next history)))
+          (when result
+            (%prompt-set-buffer-at-end p result))))))
   (prompt-notify-change))
 
 ;;; -- Cursor navigation -- declarative table ----------------------------------

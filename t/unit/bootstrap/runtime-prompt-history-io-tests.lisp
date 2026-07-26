@@ -13,23 +13,23 @@
                           (get-universal-time))))
         (unwind-protect
              (progn
-               (let ((cl-tmux::*prompt-history* nil))
+               (let ((cl-tmux::*prompt-history* (history-kit:make-history)))
                  (cl-tmux/options:set-option "history-file" path)
                  (cl-tmux::add-prompt-history "first")
                  (cl-tmux::add-prompt-history "second"))
                ;; Fresh in-memory history; loading from the file restores both.
-               (let ((cl-tmux::*prompt-history* nil))
+               (let ((cl-tmux::*prompt-history* (history-kit:make-history)))
                  (cl-tmux::load-prompt-history)
-                 (expect (equal '("second" "first") cl-tmux::*prompt-history*))))
+                 (expect (equal '("second" "first") (%prompt-history-texts)))))
           (ignore-errors (delete-file path))))))
 
   ;; With history-file unset (default ""), history stays in memory and add does not error.
   (it "prompt-history-no-file-is-in-memory-only"
     (with-fresh-options
-      (let ((cl-tmux::*prompt-history* nil))
+      (let ((cl-tmux::*prompt-history* (history-kit:make-history)))
         (expect (null (cl-tmux::%prompt-history-path)))
         (cl-tmux::add-prompt-history "x")
-        (expect (equal '("x") cl-tmux::*prompt-history*)))))
+        (expect (equal '("x") (%prompt-history-texts))))))
 
   ;; save-prompt-history writes *prompt-history* (newest-first in memory) to the
   ;; history-file oldest-first, so a later load-prompt-history restores the
@@ -42,7 +42,7 @@
         (unwind-protect
              (progn
                (cl-tmux/options:set-option "history-file" path)
-               (let ((cl-tmux::*prompt-history* '("newest" "middle" "oldest")))
+               (let ((cl-tmux::*prompt-history* (%prompt-history-of "oldest" "middle" "newest")))
                  (cl-tmux::save-prompt-history))
                (with-open-file (s path :direction :input)
                  (expect (string= "oldest" (read-line s)))
@@ -54,7 +54,7 @@
   ;; history-file is unset.
   (it "save-prompt-history-no-op-when-history-file-unset"
     (with-isolated-options ("history-file" "")
-      (let ((cl-tmux::*prompt-history* '("a" "b")))
+      (let ((cl-tmux::*prompt-history* (%prompt-history-of "b" "a")))
         (finishes (cl-tmux::save-prompt-history)
                   "save-prompt-history must not error with history-file unset"))))
 
@@ -62,16 +62,16 @@
   ;; than signalling.
   (it "save-prompt-history-swallows-io-errors"
     (with-isolated-options ("history-file" "/nonexistent-dir-xyz/hist.txt")
-      (let ((cl-tmux::*prompt-history* '("a")))
+      (let ((cl-tmux::*prompt-history* (%prompt-history-of "a")))
         (finishes (cl-tmux::save-prompt-history)
                   "save-prompt-history must swallow I/O errors from an invalid path"))))
 
-  ;; %read-history-lines reads non-empty lines from a stream and returns them newest-first.
-  (it "read-history-lines-returns-lines-reversed"
+  ;; %read-history-lines reads non-empty lines from a stream, oldest first (file order).
+  (it "read-history-lines-returns-lines-in-file-order"
     (let ((content (format nil "line1~%line2~%line3~%")))
       (with-input-from-string (stream content)
         (let ((result (cl-tmux::%read-history-lines stream)))
-          (expect (equal '("line3" "line2" "line1") result))))))
+          (expect (equal '("line1" "line2" "line3") result))))))
 
   ;; %read-history-lines skips empty lines in the stream.
   (it "read-history-lines-skips-empty-lines"

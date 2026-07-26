@@ -38,13 +38,19 @@
              entry)))))
 
 ;;; -- Prompt history ----------------------------------------------------------
+;;;
+;;; Storage, capacity, and (prefix-filtered) recall navigation are delegated
+;;; entirely to cl-history-kit; this file only adds tmux's `prompt-history-limit`
+;;; option and `history-file` persistence on top of it.
 
 (defconstant +max-prompt-history+ 100
-  "Maximum number of entries retained in *prompt-history*.")
+  "Default command-prompt history capacity when the prompt-history-limit option
+   is unset (tmux default 100).")
 
-(defvar *prompt-history* nil
-  "A list of strings — the most recent command-prompt inputs, newest first.
-   Populated by the :command-prompt handler; shown by :show-prompt-history.")
+(defvar *prompt-history* (history-kit:make-history :capacity +max-prompt-history+)
+  "A history-kit:history store of the most recent command-prompt inputs.
+   Populated by the :command-prompt handler; shown by :show-prompt-history;
+   navigated by prompt-history-prev / prompt-history-next.")
 
 (defun %prompt-history-path ()
   "The configured history-file path (a non-empty string) or NIL when unset —
@@ -66,8 +72,8 @@
     (ignore-errors
       (with-open-file (s path :direction :output :if-exists :supersede
                               :if-does-not-exist :create)
-        (dolist (entry (reverse *prompt-history*))
-          (write-line entry s))))))
+        (dolist (entry (reverse (history-kit:history-entries *prompt-history*)))
+          (write-line (history-kit:history-entry-text entry) s))))))
 
 (defun %effective-prompt-history-limit ()
   "The effective command-prompt history cap: the `prompt-history-limit` option
@@ -75,34 +81,41 @@
   (%option-or-default (cl-tmux/options:get-option "prompt-history-limit")
                       +max-prompt-history+))
 
+(defun %ensure-prompt-history-capacity ()
+  "Resize *prompt-history* to the effective prompt-history-limit, when that
+   differs from its current capacity, by merging its entries into a
+   freshly-capacitated store.  cl-history-kit fixes capacity at creation, so a
+   capacity change (via `set-option prompt-history-limit`) has no direct setter
+   — history-merge is the sanctioned way to carry entries across stores."
+  (let ((limit (%effective-prompt-history-limit)))
+    (unless (= limit (history-kit:history-capacity *prompt-history*))
+      (setf *prompt-history*
+            (history-kit:history-merge (history-kit:make-history :capacity limit)
+                                        *prompt-history*)))))
+
 (defun %read-history-lines (stream)
-  "Read all non-empty lines from STREAM and return them newest-first (reversed).
-   The file stores entries oldest-first; reversing during read yields newest-first
-   in memory.  Pure stream reader — no global state mutation."
-  (let ((entries nil))
-    (loop for line = (read-line stream nil nil) while line
-          do (when (plusp (length line)) (push line entries)))
-    entries))
+  "Read all non-empty lines from STREAM, oldest first (matching file order)."
+  (loop for line = (read-line stream nil nil) while line
+        when (plusp (length line)) collect line))
 
 (defun load-prompt-history ()
-  "Load *prompt-history* from the history-file (one entry per line, oldest first),
-   newest-first in memory, capped at +max-prompt-history+.  No-op when the option
-   is unset or the file is unreadable."
+  "Load *prompt-history* from the history-file (one entry per line, oldest
+   first), capped at the effective prompt-history-limit.  No-op when the
+   option is unset or the file is unreadable."
   (%with-prompt-history-path (path)
     (when (probe-file path)
       (ignore-errors
         (with-open-file (stream path :direction :input :if-does-not-exist nil)
           (when stream
-            (let ((entries (%read-history-lines stream))
-                  (limit   (%effective-prompt-history-limit)))
-              (setf *prompt-history*
-                    (subseq entries 0 (min (length entries) limit))))))))))
+            (%ensure-prompt-history-capacity)
+            (dolist (line (%read-history-lines stream))
+              (history-kit:history-add *prompt-history* line))))))))
 
 (defun add-prompt-history (entry)
-  "Prepend ENTRY to *prompt-history*, capping at the prompt-history-limit option,
-   and persist to the history-file when that option is set."
+  "Record ENTRY as the newest *prompt-history* entry, honoring the effective
+   prompt-history-limit, and persist to the history-file when that option is
+   set."
   (when (and (stringp entry) (plusp (length entry)))
-    (push entry *prompt-history*)
-    (let ((limit (%effective-prompt-history-limit)))
-      (setf *prompt-history* (%cap-list *prompt-history* limit)))
+    (%ensure-prompt-history-capacity)
+    (history-kit:history-add *prompt-history* entry)
     (save-prompt-history)))

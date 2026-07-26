@@ -145,11 +145,12 @@
       (expect (eq :ran (with-active-prompt (p) p :ran)))
       (expect (eq *prompt* (with-active-prompt (p) p)))))
 
-  ;; History navigation walks newest-first entries and Down restores current input.
+  ;; History navigation walks newest-first entries and Down restores current
+  ;; input.  An empty starting buffer is its own prefix filter match-all, so
+  ;; this exercises the walk itself, not cl-history-kit's filtering.
   (it "prompt-history-prev-next-restores-in-progress-input"
     (with-clean-prompt
-      (prompt-start "p" "li" (make-noop-submit)
-                    :history '("list-windows" "new-window"))
+      (prompt-start "p" "" (make-noop-submit) :history (%prompt-history-of "new-window" "list-windows"))
       (prompt-history-prev)
       (expect (string= "list-windows" (prompt-buffer *prompt*)))
       (prompt-history-prev)
@@ -157,18 +158,21 @@
       (prompt-history-next)
       (expect (string= "list-windows" (prompt-buffer *prompt*)))
       (prompt-history-next)
-      (expect (string= "li" (prompt-buffer *prompt*)))
-      (expect (= 2 (prompt-cursor-index *prompt*)))))
+      (expect (string= "" (prompt-buffer *prompt*)))
+      (expect (= 0 (prompt-cursor-index *prompt*)))))
 
-  ;; Editing a recalled history entry makes future Up navigation start from that edit.
+  ;; Editing a recalled entry starts a fresh, independently-filtered walk: cl-history-kit's
+  ;; history-previous re-derives both the prefix filter and the restore origin from the
+  ;; buffer at the moment the new walk begins, not from before the edit.
   (it "prompt-history-edit-resets-navigation-base"
     (with-clean-prompt
-      (prompt-start "p" "" (make-noop-submit)
-                    :history '("list-windows" "new-window"))
+      (prompt-start "p" "" (make-noop-submit) :history (%prompt-history-of "new-window" "list-windows"))
       (prompt-history-prev)
-      (prompt-input #\s)
-      (expect (string= "list-windowss" (prompt-buffer *prompt*)))
+      (expect (string= "list-windows" (prompt-buffer *prompt*)))
+      (dotimes (i (length "list-windows")) (prompt-backspace))
+      (prompt-input #\n)
+      (expect (string= "n" (prompt-buffer *prompt*)))
+      (prompt-history-prev)
+      (expect (string= "new-window" (prompt-buffer *prompt*)))
       (prompt-history-next)
-      (expect (string= "list-windowss" (prompt-buffer *prompt*)))
-      (prompt-history-prev)
-      (expect (string= "list-windows" (prompt-buffer *prompt*))))))
+      (expect (string= "n" (prompt-buffer *prompt*))))))

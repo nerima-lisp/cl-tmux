@@ -51,6 +51,23 @@
         "type": "github"
       }
     },
+    "cl-history-kit": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1784987799,
+        "narHash": "sha256-lZU7ESwnMWNCHp8ELmSVG8ZBe8Xu6j90mFm2ZMMpzHA=",
+        "owner": "nerima-lisp",
+        "repo": "cl-history-kit",
+        "rev": "fbb96b497aa82657c37c291ffbc4071d7d76a6dd",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nerima-lisp",
+        "ref": "v1.0.0",
+        "repo": "cl-history-kit",
+        "type": "github"
+      }
+    },
     "cl-log-kit": {
       "flake": false,
       "locked": {
@@ -259,6 +276,7 @@
         "cl-boundary-kit": "cl-boundary-kit",
         "cl-cli": "cl-cli",
         "cl-dataflow": "cl-dataflow",
+        "cl-history-kit": "cl-history-kit",
         "cl-log-kit": "cl-log-kit",
         "cl-parser-kit": "cl-parser-kit",
         "cl-process-kit": "cl-process-kit",

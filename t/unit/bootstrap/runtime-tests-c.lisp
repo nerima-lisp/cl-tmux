@@ -49,10 +49,10 @@
   ;; add-prompt-history caps *prompt-history* at the prompt-history-limit option.
   (it "add-prompt-history-caps-at-prompt-history-limit"
     (with-isolated-options ("prompt-history-limit" 4)
-      (let ((cl-tmux::*prompt-history* nil))
+      (let ((cl-tmux::*prompt-history* (history-kit:make-history)))
         (dotimes (i 9)
           (cl-tmux::add-prompt-history (format nil "cmd-~D" i)))
-        (expect (= 4 (length cl-tmux::*prompt-history*))))))
+        (expect (= 4 (history-kit:history-count cl-tmux::*prompt-history*))))))
 
   ;; add-message-log prepends: the most recently added entry is first.
   (it "add-message-log-newest-first"

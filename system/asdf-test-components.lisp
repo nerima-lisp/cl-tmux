@@ -18,6 +18,7 @@
       (:file "helpers-network-listener")
       (:file "helpers-net-protocol")
       (:file "helpers-options")
+      (:file "helpers-prompt-history")
       (:file "helpers-process-fixtures")
       (:file "helpers-screen-assertions")
       (:file "helpers-loop-fixtures")

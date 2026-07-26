@@ -23,6 +23,14 @@ Added / Changed / Deprecated / Removed / Fixed / Security
 
 ### Added
 
+- **Adopted [cl-history-kit](https://github.com/nerima-lisp/cl-history-kit)
+  v1.0.0** as an eighth dogfooded sibling library, replacing the hand-rolled
+  list-and-cursor walk behind `:command-prompt`'s Up/Down recall
+  (`runtime-history.lisp`, `prompt.lisp`). See
+  [Sibling libraries](docs/src/guide/sibling-libraries.md) for what moved and
+  why, and [Compatibility](docs/src/reference/compatibility.md) for the
+  resulting, deliberate deviation from tmux's own unfiltered Up/Down walk
+  (cl-history-kit's recall is prefix-filtered, zsh-style).
 - Closed two real SB-COVER branch-coverage gaps found by a src/-only scoped
   triage: `commands-copy-mode-search.lisp`'s incremental-search (`C-s`/`C-r`)
   live-jump engine and submit path, and `commands-copy-mode-brackets.lisp`'s

@@ -30,7 +30,8 @@
                :cl-dataflow      ; copy-mode lifecycle state machine (src/dataflow)
                :cl-parser-kit    ; commands-tokenizer combinator rewrite
                :cl-tty-kit       ; true-color -> 256/16 downsampling (renderer-format)
-               :cl-process-kit)  ; timeout-guarded subprocess run (SIGTERM->SIGKILL, pgid-isolated)
+               :cl-process-kit   ; timeout-guarded subprocess run (SIGTERM->SIGKILL, pgid-isolated)
+               :cl-history-kit)  ; command-prompt history store + recall navigation (runtime-history)
   :components
   ((:module "src"
     :serial t

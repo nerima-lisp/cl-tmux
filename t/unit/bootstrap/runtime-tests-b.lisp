@@ -27,41 +27,41 @@
 
   ;;; ── add-prompt-history ────────────────────────────────────────────────────────
 
-  ;; add-prompt-history prepends a non-empty string to *prompt-history*.
+  ;; add-prompt-history records a non-empty string as the newest *prompt-history* entry.
   (it "add-prompt-history-prepends-string"
-    (let ((cl-tmux::*prompt-history* nil))
+    (let ((cl-tmux::*prompt-history* (history-kit:make-history)))
       (cl-tmux::add-prompt-history "first")
-      (expect (= 1 (length cl-tmux::*prompt-history*)))
-      (expect (string= "first" (first cl-tmux::*prompt-history*)))))
+      (expect (= 1 (history-kit:history-count cl-tmux::*prompt-history*)))
+      (expect (string= "first" (first (%prompt-history-texts))))))
 
   ;; add-prompt-history ignores empty strings — they are not added.
   (it "add-prompt-history-ignores-empty-string"
-    (let ((cl-tmux::*prompt-history* nil))
+    (let ((cl-tmux::*prompt-history* (history-kit:make-history)))
       (cl-tmux::add-prompt-history "")
-      (expect (null cl-tmux::*prompt-history*))))
+      (expect (history-kit:history-empty-p cl-tmux::*prompt-history*))))
 
   ;; add-prompt-history ignores non-string inputs (stringp guard).
   (it "add-prompt-history-ignores-non-string"
-    (let ((cl-tmux::*prompt-history* nil))
+    (let ((cl-tmux::*prompt-history* (history-kit:make-history)))
       (cl-tmux::add-prompt-history 42)
       (cl-tmux::add-prompt-history nil)
-      (expect (null cl-tmux::*prompt-history*))))
+      (expect (history-kit:history-empty-p cl-tmux::*prompt-history*))))
 
   ;; add-prompt-history caps *prompt-history* at +max-prompt-history+.
   (it "add-prompt-history-caps-at-max"
-    (let ((cl-tmux::*prompt-history* nil)
+    (let ((cl-tmux::*prompt-history* (history-kit:make-history))
           (limit cl-tmux::+max-prompt-history+))
       (dotimes (i (+ limit 5))
         (cl-tmux::add-prompt-history (format nil "entry-~D" i)))
-      (expect (= limit (length cl-tmux::*prompt-history*)))))
+      (expect (= limit (history-kit:history-count cl-tmux::*prompt-history*)))))
 
-  ;; add-prompt-history prepends: newest entry is first.
+  ;; add-prompt-history records: newest entry is first.
   (it "add-prompt-history-newest-first"
-    (let ((cl-tmux::*prompt-history* nil))
+    (let ((cl-tmux::*prompt-history* (history-kit:make-history)))
       (cl-tmux::add-prompt-history "alpha")
       (cl-tmux::add-prompt-history "beta")
-      (expect (string= "beta" (first cl-tmux::*prompt-history*)))
-      (expect (string= "alpha" (second cl-tmux::*prompt-history*)))))
+      (expect (string= "beta" (first (%prompt-history-texts))))
+      (expect (string= "alpha" (second (%prompt-history-texts))))))
 
   ;;; ── wait-for-channel (bounded blocking path) ─────────────────────────────────
 

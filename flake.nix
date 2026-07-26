@@ -73,6 +73,13 @@
       url = "github:nerima-lisp/cl-process-kit/v1.0.1";
       flake = false;
     };
+    cl-history-kit = {
+      # Bounded command-history store + prefix-filtered recall navigation,
+      # replacing the hand-rolled list-and-cursor *prompt-history* walk in
+      # runtime-history.lisp / prompt.lisp.
+      url = "github:nerima-lisp/cl-history-kit/v1.0.0";
+      flake = false;
+    };
 
     treefmt-nix = {
       url = "github:numtide/treefmt-nix";
@@ -93,6 +100,7 @@
       cl-parser-kit,
       cl-tty-kit,
       cl-process-kit,
+      cl-history-kit,
       treefmt-nix,
       ...
     }:
@@ -153,6 +161,7 @@
         cl-parser-kit
         cl-tty-kit
         cl-process-kit
+        cl-history-kit
       ];
 
       # Colon-separated source roots, read by run-tests.lisp. Keeping the list

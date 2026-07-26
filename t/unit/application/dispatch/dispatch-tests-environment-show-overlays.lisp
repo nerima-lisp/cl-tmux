@@ -99,7 +99,7 @@
   (it "dispatch-show-prompt-history-empty-shows-overlay"
     (with-fake-session (s)
       (let ((*overlay* nil)
-            (cl-tmux::*prompt-history* nil))
+            (cl-tmux::*prompt-history* (history-kit:make-history)))
         (cl-tmux::dispatch-command s :show-prompt-history nil)
         (assert-overlay-active ":show-prompt-history must open an overlay")
         (assert-overlay-contains "no prompt history" *overlay*
@@ -108,8 +108,11 @@
   ;; :show-prompt-history with entries lists them.
   (it "dispatch-show-prompt-history-populated-shows-entries"
     (with-fake-session (s)
-      (let ((*overlay* nil)
-            (cl-tmux::*prompt-history* (list "list-windows" "next-window")))
+      (let* ((history (history-kit:make-history))
+             (*overlay* nil)
+             (cl-tmux::*prompt-history* history))
+        (history-kit:history-add history "list-windows")
+        (history-kit:history-add history "next-window")
         (cl-tmux::dispatch-command s :show-prompt-history nil)
         (assert-overlay-active ":show-prompt-history must open an overlay")
         (assert-overlay-contains "list-windows" *overlay*

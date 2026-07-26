@@ -87,11 +87,12 @@
   ;; ── Prompt history ───────────────────────────────────────────────────────
   (:show-prompt-history
    (show-overlay
-    (if *prompt-history*
+    (if (history-kit:history-empty-p *prompt-history*)
+        "(no prompt history)"
         (with-output-to-string (s)
           (format s "prompt history~%")
-          (dolist (entry (reverse *prompt-history*))
-            (format s "  ~A~%" entry)))
-        "(no prompt history)")))
+          (dolist (entry (reverse (history-kit:history-entry-texts
+                                    (history-kit:history-entries *prompt-history*))))
+            (format s "  ~A~%" entry))))))
   (:clear-prompt-history
-   (setf *prompt-history* nil)))
+   (history-kit:history-clear *prompt-history*)))
