@@ -397,6 +397,10 @@
           test = {
             type = "app";
             program = "${test}/bin/cl-tmux-test";
+            meta = {
+              description = "Run cl-tmux's test suite (CL_TMUX_TEST_SYSTEM selects which one)";
+              mainProgram = "cl-tmux-test";
+            };
           };
         }
       );
