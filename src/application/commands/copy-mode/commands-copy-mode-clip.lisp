@@ -123,14 +123,10 @@
 
 ;;; ── Rectangle-select toggle ─────────────────────────────────────────────────
 
-(defun copy-mode-toggle-rectangle (screen)
+(define-copy-mode-toggle copy-mode-toggle-rectangle screen-copy-rect-select-p
   "Toggle rectangle-select mode for SCREEN.
    When toggled on, yank uses the rectangular region instead of stream selection.
-   Marks the screen dirty."
-  (when (screen-copy-mode-p screen)
-    (setf (screen-copy-rect-select-p screen)
-          (not (screen-copy-rect-select-p screen))
-          (screen-dirty-p screen) t)))
+   Marks the screen dirty.")
 
 ;;; ── Append selection ────────────────────────────────────────────────────────
 ;;;

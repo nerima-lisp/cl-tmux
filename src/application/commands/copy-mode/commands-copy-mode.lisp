@@ -181,13 +181,19 @@
            (mark (%nearest-prompt-mark screen here :after)))
       (when mark (%copy-mode-jump-to-absolute screen mark)))))
 
-(defun copy-mode-toggle-position (screen)
+(defmacro define-copy-mode-toggle (name accessor docstring)
+  "Define NAME as a send-keys -X toggle command: flips boolean ACCESSOR on
+   SCREEN when copy-mode is active, and marks the screen dirty.  Every
+   toggle command shares this exact guard/flip/dirty shape."
+  `(defun ,name (screen)
+     ,docstring
+     (when (screen-copy-mode-p screen)
+       (setf (,accessor screen) (not (,accessor screen))
+             (screen-dirty-p screen) t))))
+
+(define-copy-mode-toggle copy-mode-toggle-position screen-copy-hide-position
   "send-keys -X toggle-position: toggle the position-indicator overlay
-   visibility for this copy-mode session (the -H hide flag flipped)."
-  (when (screen-copy-mode-p screen)
-    (setf (screen-copy-hide-position screen)
-          (not (screen-copy-hide-position screen))
-          (screen-dirty-p screen) t)))
+   visibility for this copy-mode session (the -H hide flag flipped).")
 
 (defun copy-mode-stop-selection (screen)
   "send-keys -X stop-selection: stop EXTENDING the selection but keep the mark
