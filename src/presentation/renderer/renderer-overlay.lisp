@@ -31,10 +31,9 @@
 
 (defun %option-sgr (option-name)
   "Return the SGR attribute string for OPTION-NAME (e.g. \"popup-border-style\"),
-   or NIL when the option is absent or empty."
-  (let ((s (cl-tmux/options:get-option option-name "")))
-    (when (and s (plusp (length s)))
-      (style-to-sgr (parse-style-string s)))))
+   or NIL when the option is absent or empty.  %option-style-sgr with an
+   empty default (renderer-pane-search.lisp, which loads first)."
+  (%option-style-sgr option-name ""))
 
 (defun %render-box-border-top (stream origin-x origin-y box-width title
                                &optional (tl #\┌) (tr #\┐) (h #\─) sgr)

@@ -21,9 +21,10 @@
             collect (cons pos (+ pos tlen))
             do (setf start (+ pos (max 1 tlen))))))
 
-(defun %copy-match-sgr (option-name default)
-  "SGR string for the copy-mode-(current-)match-style OPTION-NAME, or NIL when the
-   option is empty.  Parses the tmux style string via the renderer style pipeline."
+(defun %option-style-sgr (option-name default)
+  "SGR attribute string for the tmux style option OPTION-NAME (falling back to
+   DEFAULT when unset), or NIL when the resolved style string is empty.
+   Parses the tmux style string via the renderer style pipeline."
   (let ((style (cl-tmux/options:get-option option-name default)))
     (when (and style (plusp (length style)))
       (style-to-sgr (parse-style-string style)))))
@@ -53,8 +54,8 @@
     (when (and screen (screen-copy-mode-p screen))
       (let ((term (screen-copy-search-term screen)))
         (when (and term (plusp (length term)))
-          (let* ((match-sgr   (%copy-match-sgr "copy-mode-match-style" "bg=green"))
-                 (current-sgr  (%copy-match-sgr "copy-mode-current-match-style"
+          (let* ((match-sgr   (%option-style-sgr "copy-mode-match-style" "bg=green"))
+                 (current-sgr  (%option-style-sgr "copy-mode-current-match-style"
                                                 "bg=magenta"))
                  (cursor       (screen-copy-cursor screen))
                  (cur-row      (and (consp cursor) (car cursor)))
