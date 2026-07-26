@@ -117,37 +117,36 @@
       (expect (logbitp 0 (attrs-at s 1 0)))))
 
   ;; apply-sgr 38;5;N/48;5;N sets fg/bg to the 256-colour palette index N.
-  (it "sgr-256color-apply-sgr-table"
-    (dolist (c '((38 cl-tmux/terminal/types:screen-cur-fg 200 "256-color fg=200")
-                 (48 cl-tmux/terminal/types:screen-cur-bg  42 "256-color bg=42")))
-      (destructuring-bind (code accessor n desc) c
-        (declare (ignore desc))
-        (with-screen (s 10 2)
-          (cl-tmux/terminal/sgr:apply-sgr s (list code 5 n))
-          (expect (= n (funcall accessor s)))))))
+  (it-each ((38 cl-tmux/terminal/types:screen-cur-fg 200 "256-color fg=200")
+            (48 cl-tmux/terminal/types:screen-cur-bg  42 "256-color bg=42"))
+      "sgr-256color-apply-sgr: ~*~*~*~A"
+      (code accessor n desc)
+    (declare (ignore desc))
+    (with-screen (s 10 2)
+      (cl-tmux/terminal/sgr:apply-sgr s (list code 5 n))
+      (expect (= n (funcall accessor s)))))
 
   ;; apply-sgr 38;2;R;G;B and 48;2;R;G;B encode true-colour fg/bg (bit 24 = truecolor flag).
-  (it "sgr-truecolor-apply-sgr-table"
-    (dolist (c (list
-                (list '(38 2 255 128 0) 'cl-tmux/terminal/types:screen-cur-fg
-                      (logior #x1000000 (ash 255 16) (ash 128 8) 0) "truecolor fg 255;128;0")
-                (list '(48 2 0 128 255) 'cl-tmux/terminal/types:screen-cur-bg
-                      (logior #x1000000 (ash 0 16) (ash 128 8) 255) "truecolor bg 0;128;255")))
-      (destructuring-bind (params accessor expected desc) c
-        (declare (ignore desc))
-        (with-screen (s 10 2)
-          (cl-tmux/terminal/sgr:apply-sgr s params)
-          (expect (= expected (funcall accessor s)))))))
+  (it-each (((38 2 255 128 0) cl-tmux/terminal/types:screen-cur-fg
+             #.(logior #x1000000 (ash 255 16) (ash 128 8) 0) "truecolor fg 255;128;0")
+            ((48 2 0 128 255) cl-tmux/terminal/types:screen-cur-bg
+             #.(logior #x1000000 (ash 0 16) (ash 128 8) 255) "truecolor bg 0;128;255"))
+      "sgr-truecolor-apply-sgr: ~*~*~*~A"
+      (params accessor expected desc)
+    (declare (ignore desc))
+    (with-screen (s 10 2)
+      (cl-tmux/terminal/sgr:apply-sgr s params)
+      (expect (= expected (funcall accessor s)))))
 
   ;; ESC[38;5;N m and ESC[48;5;N m set fg/bg 256-colour indices via the terminal emulator.
-  (it "sgr-256color-emulator-table"
-    (dolist (c '(("[38;5;200mX" fg-at 200 "256-color fg=200 via ESC[38;5;200m")
-                 ("[48;5;42mX"  bg-at  42 "256-color bg=42  via ESC[48;5;42m")))
-      (destructuring-bind (seq cell-fn n desc) c
-        (declare (ignore desc))
-        (with-screen (s 10 2)
-          (feed s (esc seq))
-          (expect (= n (funcall cell-fn s 0 0)))))))
+  (it-each (("[38;5;200mX" fg-at 200 "256-color fg=200 via ESC[38;5;200m")
+            ("[48;5;42mX"  bg-at  42 "256-color bg=42  via ESC[48;5;42m"))
+      "sgr-256color-emulator: ~*~*~*~A"
+      (seq cell-fn n desc)
+    (declare (ignore desc))
+    (with-screen (s 10 2)
+      (feed s (esc seq))
+      (expect (= n (funcall cell-fn s 0 0)))))
 
   ;; SGR 38;2;0;0;0 encodes true-black: bit 24 set, R=G=B=0.
   (it "sgr-truecolor-black"
