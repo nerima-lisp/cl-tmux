@@ -66,6 +66,35 @@
           ((window-activity-flag window)            activity-style)
           ((eq window (session-last-window session)) last-style)))))
 
+(defun %render-window-tab (session window active-window window-stream)
+  "Write WINDOW's status-bar tab label (format-expanded, per-window styled,
+   with any inline #[attr] blocks resolved) to WINDOW-STREAM.  ACTIVE-WINDOW
+   selects window-status-current-format/-style over the plain variants."
+  (let* ((context  (cl-tmux/format:format-context-from-window session window))
+         (active-p (eq window active-window))
+         (fmt      (cl-tmux/options:get-option-for-context
+                    (if active-p "window-status-current-format" "window-status-format")
+                    :window window))
+         ;; Style honors alert state (bell/activity/last) for non-active windows.
+         (style    (%window-status-style session window active-p))
+         (label    (cl-tmux/format:expand-format fmt context)))
+    ;; Apply the per-window style, then expand any inline #[attr] blocks
+    ;; embedded in the label.  Within a window label, #[default] reverts to
+    ;; the window's own style (or the status default when it is unstyled).
+    ;; STYLED-P is true when we emitted a wrapper SGR or the label injected
+    ;; one, so the trailing reset keeps colour from bleeding into the
+    ;; separator / next window.
+    (let* ((sgr-code (when (and style (plusp (length style)))
+                       (%status-sgr-from-style style)))
+           (expanded (%status-expand-style-blocks
+                      label (or sgr-code +sgr-default-status+)))
+           (styled-p (or sgr-code (not (eq expanded label)))))
+      (when sgr-code
+        (%emit-sgr window-stream sgr-code))
+      (write-string expanded window-stream)
+      (when styled-p
+        (reset-attrs window-stream)))))
+
 (defun %status-window-list-styled (session active-window)
   "Window-tab string with current-style applied to the active window entry.
    Uses window-status-format, window-status-current-format, window-status-separator,
@@ -85,30 +114,7 @@
         (dolist (window (cl-tmux/model:session-windows-in-index-order session))
           (unless first-p (write-string separator window-stream))
           (setf first-p nil)
-          (let* ((context  (cl-tmux/format:format-context-from-window session window))
-                 (active-p (eq window active-window))
-                 (fmt      (cl-tmux/options:get-option-for-context
-                            (if active-p "window-status-current-format" "window-status-format")
-                            :window window))
-                 ;; Style honors alert state (bell/activity/last) for non-active windows.
-                 (style    (%window-status-style session window active-p))
-                 (label    (cl-tmux/format:expand-format fmt context)))
-            ;; Apply the per-window style, then expand any inline #[attr] blocks
-            ;; embedded in the label.  Within a window label, #[default] reverts to
-            ;; the window's own style (or the status default when it is unstyled).
-            ;; STYLED-P is true when we emitted a wrapper SGR or the label injected
-            ;; one, so the trailing reset keeps colour from bleeding into the
-            ;; separator / next window.
-            (let* ((sgr-code (when (and style (plusp (length style)))
-                               (%status-sgr-from-style style)))
-                   (expanded (%status-expand-style-blocks
-                              label (or sgr-code +sgr-default-status+)))
-                   (styled-p (or sgr-code (not (eq expanded label)))))
-              (when sgr-code
-                (%emit-sgr window-stream sgr-code))
-              (write-string expanded window-stream)
-              (when styled-p
-                (reset-attrs window-stream)))))))))
+          (%render-window-tab session window active-window window-stream))))))
 
 (defun %status-left-text (session active-window active-pane)
   "Left portion of the status bar: prompt text or session/window/pane info.
@@ -268,3 +274,4 @@
     (loop for index from 1 below lines
           for row = (if bottom-p (- main-row index) (+ main-row index))
           do (render-extra-status-line stream session terminal-cols row index))))
+
