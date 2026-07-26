@@ -82,4 +82,21 @@
                  (expect (null (cl-tmux::%stale-socket-p path)))
               (cl-tmux/net:close-socket listener)
               (ignore-errors (delete-file path))))
-          (expect t :to-be-truthy)))))
+          (expect t :to-be-truthy))))
+
+  ;;; -- ensure-server-running -----------------------------------------------
+
+  ;; %ensure-server-running signals an error when the launch-and-poll attempt
+  ;; never produces a socket (a crashed or never-started background server),
+  ;; rather than returning silently as if it had succeeded — a real user
+  ;; would otherwise see `new-session -d` "succeed" with no server running.
+  (it "ensure-server-running-signals-when-socket-never-appears"
+    (with-stubbed-fdefinition
+        ((cl-tmux::%launch-server-and-poll-when-live
+          (lambda (&rest args) (declare (ignore args)) nil)))
+      (let ((cl-tmux::*socket-path-override*
+              "/nonexistent-dir-xyz/cl-tmux-never-appears.sock")
+            (cl-tmux::*socket-name-override* nil))
+        (signals error
+          (cl-tmux::%ensure-server-running "test-session")
+          "must signal when the socket never appears after launch-and-poll")))))

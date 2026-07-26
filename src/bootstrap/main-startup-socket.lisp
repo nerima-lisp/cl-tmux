@@ -45,7 +45,12 @@
    Uses sb-ext:run-program with *posix-argv* to spawn a separate process.
    Only enters the polling loop when run-program succeeded.
    Polls every +server-socket-poll-interval-seconds+ for up to
-   +server-socket-poll-max-iterations+ iterations for the socket to appear."
+   +server-socket-poll-max-iterations+ iterations for the socket to appear.
+   Signals an ERROR when the socket still does not exist afterward — the
+   spawned server crashed, never started, or is simply slow — rather than
+   returning silently as if it had succeeded (main's top-level handler-case
+   turns this into a clean one-line message and exit 1, the same as any
+   other startup error)."
   (let* ((socket-path (socket-path session-name))
          (exe         (first sb-ext:*posix-argv*))
          (args        (append (%global-socket-flag-args)
@@ -56,7 +61,10 @@
       ;; Guard: run-program may fail in test environments or when the
       ;; binary is not yet on PATH.  Only poll if the spawn succeeded.
       ;; :wait nil means non-blocking, so run-program returns after starting the child.
-      (%launch-server-and-poll-when-live socket-path exe args))))
+      (%launch-server-and-poll-when-live socket-path exe args))
+    (unless (probe-file socket-path)
+      (error "server failed to start (timed out waiting for socket at ~A)"
+             socket-path))))
 
 (defun %socket-file-session-name (path)
   "Extract the cl-tmux session/server name from a socket PATH, or NIL."
