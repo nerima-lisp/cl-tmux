@@ -138,6 +138,21 @@
             (write-string (if (stringp result) result (%format-arith-result result prec))
                           out)))))))
 
+(defun %expand-brace-conditional (content context out)
+  "Expand #{?COND,TRUE,FALSE} — CONTENT is the full brace content, still
+   carrying its leading '?'.  COND is resolved via a nested #{...} expansion
+   when it itself contains one, otherwise via a plain context lookup; the
+   chosen branch (TRUE or FALSE) is then expanded and written to OUT."
+  (multiple-value-bind (cond-str true-str false-str)
+      (%split-conditional (subseq content 1))
+    (let ((resolved (if (search "#{" cond-str)
+                        (expand-format cond-str context)
+                        (let ((ctx-val (getf context (%variable-to-keyword cond-str))))
+                          (if ctx-val (princ-to-string ctx-val) cond-str)))))
+      (write-string
+       (expand-format (if (%truthy-p resolved) true-str false-str) context)
+       out))))
+
 (defun %expand-brace (template start context out)
   "Expand #{...} content starting at START (just past the '{').
    Writes to OUT and returns the index just past the closing '}'.
@@ -153,15 +168,7 @@
                   (char= (char content 1) #\|))
              (%expand-arithmetic-brace content context out))
             ((and (plusp (length content)) (char= (char content 0) #\?))
-             (multiple-value-bind (cond-str true-str false-str)
-                 (%split-conditional (subseq content 1))
-               (let ((resolved (if (search "#{" cond-str)
-                                   (expand-format cond-str context)
-                                   (let ((ctx-val (getf context (%variable-to-keyword cond-str))))
-                                     (if ctx-val (princ-to-string ctx-val) cond-str)))))
-                 (write-string
-                  (expand-format (if (%truthy-p resolved) true-str false-str) context)
-                  out))))
+             (%expand-brace-conditional content context out))
             ((find #\: content)
              (let* ((colon (position #\: content))
                     (mod   (subseq content 0 colon))
@@ -169,3 +176,4 @@
                (%expand-brace-modifier mod rest content context out)))
             (t (write-string (%lookup context (%variable-to-keyword content)) out)))
           (1+ close)))))
+
