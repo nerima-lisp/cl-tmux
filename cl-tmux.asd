@@ -1,3 +1,11 @@
+;;; This form comes FIRST, before any other form. ASDF binds *package* to
+;;; ASDF-USER only for a file it loads itself; read any other way — a REPL
+;;; `load`, an editor evaluating the buffer, flake.nix parsing :version — the
+;;; file is read in whatever package happens to be current, and an unqualified
+;;; `defsystem` then fails to read at all. Saying it makes the file
+;;; self-contained. See PACKAGE_STANDARD.md "asd の書き方".
+(in-package #:asdf-user)
+
 #.(progn
     (load (merge-pathnames "system/asdf-test-components.lisp" *load-truename*))
     nil)
