@@ -112,18 +112,19 @@
       ...
     }:
     let
-      # Both of these platforms are actually verified: x86_64-linux by the CI
-      # runner, aarch64-darwin by `nix flake check` on the development machine.
-      # aarch64-linux and x86_64-darwin are deliberately NOT declared — nothing
-      # runs them, and a flake should not advertise a platform it never builds.
-      # See ADR-0078.
+      # x86_64-linux and nothing else. The only platform this project is
+      # actually gated on is the CI runner, and a flake should not advertise a
+      # platform it never builds. aarch64-darwin was declared until the
+      # 2026-08-01 revision on the strength of `nix flake check` being run on a
+      # development machine; running it by hand is not a gate, so the promise
+      # was withdrawn along with aarch64-linux and x86_64-darwin. Development
+      # happens on Linux. See PACKAGE_STANDARD.md "systems".
       #
       # Plain nixpkgs.lib.genAttrs, not flake-utils' eachDefaultSystem: the
       # latter derives the system list from a hardcoded default set, which is
       # exactly the "declared but unverified" situation above.
       systems = [
         "x86_64-linux"
-        "aarch64-darwin"
       ];
       forAllSystems = nixpkgs.lib.genAttrs systems;
 
@@ -331,6 +332,34 @@
               license = pkgs.lib.licenses.mit;
             };
           };
+
+          # `nix build .#coverage-report` — a hermetic sb-cover report, for CI
+          # to upload as an artifact without a local SBCL checkout. Mirrors
+          # cl-tty-kit's package of the same name (scripts/coverage.lisp is
+          # this project's counterpart to its scripts/coverage.lisp). Runs in
+          # the same writable-copy-of-$self shape as mkTestCheck below, which
+          # is proven to run the full suite cleanly inside the Nix sandbox —
+          # unlike an interactive `nix develop` shell, where this exact suite
+          # is known to hang (a real PTY/tty artifact of that environment, not
+          # a suite bug; see the devShell cl-tmux-coverage helper below, which
+          # calls this same script for local use once that hang is a non-issue
+          # for the caller).
+          coverage-report =
+            pkgs.runCommand "cl-tmux-coverage-report"
+              {
+                nativeBuildInputs = [ sbclWithDeps ];
+                CL_TMUX_SIBLING_REGISTRY = siblingRegistry;
+              }
+              ''
+                export HOME="$TMPDIR/home"
+                mkdir -p "$HOME"
+                cp -r ${self} ./src-tree
+                chmod -R u+w ./src-tree
+                cd ./src-tree
+                timeout 2700 sbcl --script scripts/coverage.lisp ./coverage-report
+                mkdir -p "$out"
+                cp -R ./coverage-report/. "$out/"
+              '';
         }
       );
 
@@ -438,23 +467,13 @@
               }
               export -f cl-tmux-sbcl
 
-              # cl-weave's :coverage support (SBCL sb-cover underneath) only
-              # instruments code compiled AFTER sb-cover:store-coverage-data is
-              # declared, so the policy restriction must run before cl-tmux is
-              # loaded at all — running cl-weave:run-all with :coverage t
-              # against an already-loaded (or fasl-cached) image silently
-              # instruments nothing and reports a misleading 100%
-              # (coverage-percentage treats a 0/0 total as 100.0). This wraps
-              # the correct order: require sb-cover, restrict the policy, THEN
-              # load and run.
+              # Delegates to scripts/coverage.lisp — the single source of
+              # truth for the sb-cover instrumentation-order recipe (also used
+              # by `nix build .#coverage-report`, which runs it hermetically
+              # inside the Nix sandbox rather than this interactive shell).
               cl-tmux-coverage() {
                 local report_dir="''${1:-./coverage-report}/"
-                cl-tmux-sbcl --non-interactive \
-                  --eval "(require :sb-cover)" \
-                  --eval "(sb-ext:restrict-compiler-policy 'sb-cover:store-coverage-data 3)" \
-                  --eval "(asdf:load-system \"cl-tmux/test\")" \
-                  --eval "(cl-weave:run-all :reporter :spec :max-workers 1 :coverage t :coverage-reset t :coverage-report-directory \"$report_dir\")" \
-                  --eval "(sb-ext:exit :code 0)"
+                sbcl --script scripts/coverage.lisp "$report_dir"
                 echo "Coverage report: $report_dir" "cover-index.html"
               }
               export -f cl-tmux-coverage
