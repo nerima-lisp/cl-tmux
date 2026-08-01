@@ -423,8 +423,12 @@
   ;; single (:module "t" ...) rooted at the standard test directory.
   :components #.(symbol-value (find-symbol "*CL-TMUX-TEST-COMPONENTS*" :cl-user))
   ;; Run with: (asdf:test-system "cl-tmux")
+  ;; Not HOST-KIT:SYMBOL-CALL: a .asd is read before :depends-on is ever
+  ;; consulted, so a CL-HOST-KIT-prefixed token here would be a read-time
+  ;; PACKAGE-DOES-NOT-EXIST error regardless of what the system depends on.
+  ;; FIND-SYMBOL/FIND-PACKAGE/FUNCALL are CL, always present.
   :perform (test-op (op c)
-             (host-kit:symbol-call :cl-tmux/test :run-tests)))
+             (funcall (find-symbol "RUN-TESTS" (find-package "CL-TMUX/TEST")))))
 
 ;; The Prolog-backed reasoning read-model now lives in the core `cl-tmux'
 ;; system (src/reasoning/, with cl-prolog a core dependency); it powers
@@ -453,7 +457,7 @@
                (:file "entry"))
   :perform (test-op (op c)
              (declare (ignore op c))
-             (unless (host-kit:symbol-call :cl-tmux/weave-tests :run-weave-tests)
+             (unless (funcall (find-symbol "RUN-WEAVE-TESTS" (find-package "CL-TMUX/WEAVE-TESTS")))
                (error "cl-tmux cl-weave suite failed."))))
 
 ;; cl-weave regression suite for the cl-dataflow copy-mode lifecycle
@@ -476,5 +480,5 @@
                (:file "entry"))
   :perform (test-op (op c)
              (declare (ignore op c))
-             (unless (host-kit:symbol-call :cl-tmux/dataflow-tests :run-dataflow-tests)
+             (unless (funcall (find-symbol "RUN-DATAFLOW-TESTS" (find-package "CL-TMUX/DATAFLOW-TESTS")))
                (error "cl-tmux cl-dataflow suite failed."))))
