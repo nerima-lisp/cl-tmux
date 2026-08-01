@@ -59,8 +59,8 @@
     (when (plusp (length child-out))
       ;; pgrep returns one PID per line; take the first
       (let ((first-cpid (string-trim " \t\r"
-                                     (first (uiop:split-string child-out
-                                                               :separator '(#\Newline))))))
+                                     (first (host-kit:split-string child-out
+                                                                   :separator '(#\Newline))))))
         (when (and (plusp (length first-cpid))
                    (every #'digit-char-p first-cpid))
           (let ((name (%run-format-probe (list "ps" "-o" "comm=" "-p" first-cpid)
@@ -72,7 +72,7 @@
    by lsof -Fn).  lsof -Fn prints file-name lines as 'nPATH'; this function returns
    the PATH part of the first such line whose character after 'n' is non-empty.
    Returns NIL when no suitable line is found."
-  (dolist (line (uiop:split-string lsof-output :separator '(#\Newline)) nil)
+  (dolist (line (host-kit:split-string lsof-output :separator '(#\Newline)) nil)
     (when (and (> (length line) 1) (char= (char line 0) #\n))
       (let ((path (subseq line 1)))
         (when (plusp (length path))

@@ -39,7 +39,8 @@
                :cl-parser-kit    ; commands-tokenizer combinator rewrite
                :cl-tty-kit       ; true-color -> 256/16 downsampling (renderer-format)
                :cl-process-kit   ; timeout-guarded subprocess run (SIGTERM->SIGKILL, pgid-isolated)
-               :cl-history-kit)  ; command-prompt history store + recall navigation (runtime-history)
+               :cl-history-kit   ; command-prompt history store + recall navigation (runtime-history)
+               :cl-host-kit)     ; env/pathname/string host operations (2026-08-01 uiop migration)
   :components
   ((:module "src"
     :serial t
@@ -423,7 +424,7 @@
   :components #.(symbol-value (find-symbol "*CL-TMUX-TEST-COMPONENTS*" :cl-user))
   ;; Run with: (asdf:test-system "cl-tmux")
   :perform (test-op (op c)
-             (symbol-call :cl-tmux/test :run-tests)))
+             (host-kit:symbol-call :cl-tmux/test :run-tests)))
 
 ;; The Prolog-backed reasoning read-model now lives in the core `cl-tmux'
 ;; system (src/reasoning/, with cl-prolog a core dependency); it powers
@@ -452,7 +453,7 @@
                (:file "entry"))
   :perform (test-op (op c)
              (declare (ignore op c))
-             (unless (uiop:symbol-call :cl-tmux/weave-tests :run-weave-tests)
+             (unless (host-kit:symbol-call :cl-tmux/weave-tests :run-weave-tests)
                (error "cl-tmux cl-weave suite failed."))))
 
 ;; cl-weave regression suite for the cl-dataflow copy-mode lifecycle
@@ -475,5 +476,5 @@
                (:file "entry"))
   :perform (test-op (op c)
              (declare (ignore op c))
-             (unless (uiop:symbol-call :cl-tmux/dataflow-tests :run-dataflow-tests)
+             (unless (host-kit:symbol-call :cl-tmux/dataflow-tests :run-dataflow-tests)
                (error "cl-tmux cl-dataflow suite failed."))))

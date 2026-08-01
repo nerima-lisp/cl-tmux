@@ -47,7 +47,7 @@
   (:set-environment
    (prompt-nonempty "set-env NAME VALUE"
                     (lambda (input)
-                      (let* ((parts (uiop:split-string input :separator " "))
+                      (let* ((parts (host-kit:split-string input :separator " "))
                              (name  (first parts))
                              (value (format nil "~{~A~^ ~}" (rest parts))))
                         (when (and name (plusp (length name)))

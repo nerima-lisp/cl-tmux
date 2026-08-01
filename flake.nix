@@ -87,6 +87,12 @@
       url = "github:nerima-lisp/cl-history-kit/v1.0.0";
       flake = false;
     };
+    cl-host-kit = {
+      # env/pathname/string host operations, replacing direct uiop: calls
+      # (2026-08-01 org-wide uiop->cl-host-kit migration).
+      url = "github:nerima-lisp/cl-host-kit/v0.2.1";
+      flake = false;
+    };
 
     treefmt-nix = {
       url = "github:numtide/treefmt-nix";
@@ -108,6 +114,7 @@
       cl-tty-kit,
       cl-process-kit,
       cl-history-kit,
+      cl-host-kit,
       treefmt-nix,
       ...
     }:
@@ -170,6 +177,7 @@
         cl-tty-kit
         cl-process-kit
         cl-history-kit
+        cl-host-kit
       ];
 
       # Colon-separated source roots, read by run-tests.lisp. Keeping the list

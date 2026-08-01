@@ -7,9 +7,9 @@
   (let* ((root (ignore-errors (asdf:system-source-directory :cl-tmux)))
          (src (or (and root (merge-pathnames #P"src/" root))
                   (and *load-pathname*
-                       (uiop:pathname-directory-pathname *load-pathname*))
+                       (host-kit:pathname-directory-pathname *load-pathname*))
                   (and *compile-file-pathname*
-                       (uiop:pathname-directory-pathname *compile-file-pathname*))
+                       (host-kit:pathname-directory-pathname *compile-file-pathname*))
                   *default-pathname-defaults*))
          ;; Directory hoisted out of the two LOADs below so that neither source
          ;; line exceeds 100 columns; a #P"..." literal cannot be split.

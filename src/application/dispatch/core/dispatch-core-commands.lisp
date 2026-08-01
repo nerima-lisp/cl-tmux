@@ -161,7 +161,7 @@
   "Open a prompt labelled PROMPT-LABEL; on submit parse 'name value' and call set-option."
   (prompt-nonempty prompt-label
                    (lambda (input)
-                     (let* ((parts (uiop:split-string input :separator " "))
+                     (let* ((parts (host-kit:split-string input :separator " "))
                             (name  (first parts))
                             (value (second parts)))
                        (when (and name value)

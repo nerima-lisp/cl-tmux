@@ -19,7 +19,7 @@
 (defun %non-empty-overlay-lines (text)
   "Split TEXT into overlay rows and drop empty lines."
   (remove-if (lambda (line) (zerop (length line)))
-             (uiop:split-string text :separator '(#\Newline))))
+             (host-kit:split-string text :separator '(#\Newline))))
 
 (defmacro with-list-overlay-rows ((rows display-p) rows-form &body body)
   "Bind ROWS and DISPLAY-P from ROWS-FORM and run BODY when display is needed."

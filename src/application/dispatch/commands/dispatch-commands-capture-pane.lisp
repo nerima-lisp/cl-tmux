@@ -29,7 +29,7 @@
    absent end = the visible bottom."
   (if (and (null start) (null end))
       content
-      (let* ((lines (uiop:split-string content :separator '(#\Newline)))
+      (let* ((lines (host-kit:split-string content :separator '(#\Newline)))
              ;; The final row terpri leaves one trailing empty pseudo-line.
              (lines (if (and lines (string= (first (last lines)) ""))
                         (butlast lines)

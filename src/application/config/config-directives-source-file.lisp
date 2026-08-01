@@ -6,7 +6,7 @@
   "Expand a shell glob PATH to sorted regular-file namestrings."
   (if (find-if (lambda (c) (member c '(#\* #\? #\[) :test #'char=)) path)
       (sort (loop for p in (ignore-errors (directory (pathname path)))
-                  unless (ignore-errors (uiop:directory-pathname-p p))
+                  unless (ignore-errors (host-kit:directory-pathname-p p))
                     collect (namestring p))
             #'string<)
       (list path)))

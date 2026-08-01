@@ -73,14 +73,14 @@
                                :process proc)))
       (let* ((shell (or cl-tmux/config:*default-shell* "/bin/sh"))
              (new-proc
-               (uiop:launch-program (list shell "-c" command)
-                                    :input (if pane-output-to-command-p :stream nil)
-                                    :output (if command-output-to-pane-p :stream nil)
-                                    :error-output nil))
+               (process-kit:spawn shell (list "-c" command)
+                                  :input (if pane-output-to-command-p :stream nil)
+                                  :output (if command-output-to-pane-p :stream nil)
+                                  :error nil))
              (new-input (and pane-output-to-command-p
-                             (uiop:process-info-input new-proc)))
+                             (process-kit:process-stdin new-proc)))
              (new-output (and command-output-to-pane-p
-                              (uiop:process-info-output new-proc))))
+                              (process-kit:process-output new-proc))))
         (setf proc new-proc
               input-stream new-input
               output-stream new-output
@@ -97,15 +97,15 @@
   "Return true when PROCESS exits before the pipe-pane close timeout."
   (when process
     (%with-timeout-cleanup (+pipe-pane-close-timeout+ (constantly nil))
-      (uiop:wait-process process)
+      (process-kit:process-wait process)
       t)))
 
 (defun %terminate-pipe-process (process)
   "Reap a pipe-pane subprocess, terminating it only if it ignores stdin EOF."
   (when (and process (not (%wait-pipe-process process)))
     (ignore-errors
-      (when (uiop:process-alive-p process)
-        (uiop:terminate-process process)))
+      (when (process-kit:process-alive-p process)
+        (process-kit:process-terminate process)))
     (%wait-pipe-process process)))
 
 (defun %pipe-pane-cleanup (pane &key input-stream output-stream output-thread process)

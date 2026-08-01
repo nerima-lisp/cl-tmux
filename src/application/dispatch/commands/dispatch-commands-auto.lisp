@@ -170,7 +170,7 @@
     (declare (ignore positionals))
     (let ((spec (%flag-value flags #\f)))
       (when spec
-        (dolist (flag (uiop:split-string spec :separator ","))
+        (dolist (flag (host-kit:split-string spec :separator ","))
           (let ((name (string-trim " " flag)))
             (cond
               ((zerop (length name)))

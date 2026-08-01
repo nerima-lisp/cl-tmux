@@ -15,7 +15,7 @@
   (:bind-key
    (prompt-nonempty "bind key: "
                     (lambda (input)
-                      (let* ((parts   (uiop:split-string input :separator " "))
+                      (let* ((parts   (host-kit:split-string input :separator " "))
                              (key-tok (and (first parts)
                                           (cl-tmux/config::%parse-key-token (first parts))))
                              (cmd-str (second parts))

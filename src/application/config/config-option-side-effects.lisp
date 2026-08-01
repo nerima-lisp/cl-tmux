@@ -111,7 +111,7 @@
        (when (%nonempty-string-p value)
          (setf cl-tmux/model:*update-environment*
                (remove-if (lambda (s) (zerop (length s)))
-                          (uiop:split-string value :separator '(#\Space))))))))
+                          (host-kit:split-string value :separator '(#\Space))))))))
 
 ;;; ── set-hook directive ────────────────────────────────────────────────────────
 

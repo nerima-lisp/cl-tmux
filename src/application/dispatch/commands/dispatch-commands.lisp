@@ -199,7 +199,7 @@
            (has-template (plusp (length template)))
            (prompt-list (when prompts-str
                           (mapcar (lambda (s) (string-trim " " s))
-                                  (uiop:split-string prompts-str :separator ","))))
+                                  (host-kit:split-string prompts-str :separator ","))))
            (num-prompts (length prompt-list)))
       (%command-prompt-dispatch session flags template has-template
                                 prompt-list num-prompts single-key initial))))
