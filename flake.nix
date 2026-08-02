@@ -14,17 +14,17 @@
     # `inputs.nixpkgs.follows`: without it each drags in its own nixpkgs,
     # inflating flake.lock and rebuilding the same derivations twice.
     cl-weave = {
-      url = "github:nerima-lisp/cl-weave/v1.0.0";
+      url = "github:nerima-lisp/cl-weave/v1.1.4";
       inputs.nixpkgs.follows = "nixpkgs";
       # cl-weave's own flake still declares its paredit-cli dev input under the
       # pre-migration owner; pin it to the org (and to a tag) so no takeokunn/*
       # rev survives in our lock. paredit-cli is a transitive dev tool only and
       # is never linked into cl-tmux.
-      inputs.paredit-cli.url = "github:nerima-lisp/paredit-cli/v1.0.0";
+      inputs.paredit-cli.url = "github:nerima-lisp/paredit-cli/v1.4.0";
     };
 
     cl-prolog = {
-      url = "github:nerima-lisp/cl-prolog/v1.0.1";
+      url = "github:nerima-lisp/cl-prolog/v1.3.0";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
@@ -38,59 +38,128 @@
     # same goal `follows` serves for the two flake inputs above, reached a
     # different way, not an omission.
     cl-cli = {
-      url = "github:nerima-lisp/cl-cli/v1.0.1";
+      url = "github:nerima-lisp/cl-cli/v1.2.0";
       flake = false;
     };
     cl-boundary-kit = {
       # v1.0.0: first stable release, no exported symbol/protocol/behavior
       # changes from 0.6.0 (upstream release notes) — just an example-bootstrap
       # fix and a semver-stability commitment.
-      url = "github:nerima-lisp/cl-boundary-kit/v1.0.0";
+      url = "github:nerima-lisp/cl-boundary-kit/v2.0.1";
       flake = false;
     };
     # Transitive only: cl-boundary-kit depends on cl-log-kit, and siblings are
     # consumed as source, so the source has to be on the registry even though
     # nothing in cl-tmux.asd names it. Not a direct dependency of cl-tmux.
     cl-log-kit = {
-      url = "github:nerima-lisp/cl-log-kit/v1.0.0";
+      url = "github:nerima-lisp/cl-log-kit/v2.0.1";
       flake = false;
     };
     cl-dataflow = {
-      url = "github:nerima-lisp/cl-dataflow/v1.0.0";
+      url = "github:nerima-lisp/cl-dataflow/v1.1.1";
       flake = false;
     };
     cl-parser-kit = {
-      url = "github:nerima-lisp/cl-parser-kit/v1.0.0";
+      url = "github:nerima-lisp/cl-parser-kit/v1.0.3";
       flake = false;
     };
     cl-tty-kit = {
-      # v1.0.2: fixes *raw-mode-tcsetattr-function* never being installed on
-      # SBCL (a duplicate defvar shadowed the platform-specific initial
-      # value) — found via cl-tmux's own default invocation crashing every
-      # time it entered raw mode. Load-bearing for cl-tmux, not cosmetic.
-      # (v1.0.1 has the same fix but its own release workflow failed on a
-      # stale test constant; that tag is left as-is per this org's
-      # tags-never-move convention, and v1.0.2 corrects it.)
-      url = "github:nerima-lisp/cl-tty-kit/v1.0.2";
+      # v1.1.0: adds set-terminal-size (ioctl TIOCSWINSZ), which replaces
+      # cl-tmux's own cffi ioctl call in pty.lisp. That call used a FIXED
+      # prototype for a variadic syscall, which misfires on the arm64 ABI, so
+      # pane resize was a silent no-op on Apple Silicon; cl-tty-kit goes
+      # through sb-unix:unix-ioctl, which marshals the pointer correctly.
+      #
+      # (v1.0.2 was the previous pin, for the raw-mode fix: a duplicate defvar
+      # shadowed *raw-mode-tcsetattr-function*'s platform-specific initial
+      # value, crashing cl-tmux every time it entered raw mode. Still present.)
+      url = "github:nerima-lisp/cl-tty-kit/v1.2.0";
       flake = false;
     };
     cl-process-kit = {
-      # v1.0.1: packaging-only fix (a stale cl-log-kit tag reference in
+      # !!! PIN IS STALE — THIS FLAKE CANNOT BUILD UNTIL IT IS ADVANCED !!!
+      #
+      # src/infrastructure/pty/pty.lisp now calls process-kit:wait-for-input,
+      # added by src/fd-readiness.lisp. That file is UNCOMMITTED in
+      # cl-process-kit's working tree as of 2026-08-01: the newest tag is
+      # v2.0.0 and neither it nor v1.0.1 exports select-fds/wait-for-input
+      # (verified with `git show <tag>:src/package.lisp`).
+      #
+      # Advance this to the first tag that ships fd-readiness.lisp — and note
+      # that means crossing the v2.0.0 MAJOR boundary, so upstream's breaking
+      # changes must be reviewed against cl-tmux's existing process-kit:run /
+      # spawn / process-* call sites at the same time, not just this one.
+      #
+      # v1.0.1 was a packaging-only fix (a stale cl-log-kit tag reference in
       # upstream's own flake.nix); no source change, API identical to v1.0.0.
-      url = "github:nerima-lisp/cl-process-kit/v1.0.1";
+      url = "github:nerima-lisp/cl-process-kit/v3.1.0";
       flake = false;
     };
     cl-history-kit = {
       # Bounded command-history store + prefix-filtered recall navigation,
       # replacing the hand-rolled list-and-cursor *prompt-history* walk in
       # runtime-history.lisp / prompt.lisp.
-      url = "github:nerima-lisp/cl-history-kit/v1.0.0";
+      url = "github:nerima-lisp/cl-history-kit/v1.0.2";
+      flake = false;
+    };
+    cl-concurrent-kit = {
+      # Replaces bordeaux-threads: threads, locks, condition variables and a
+      # preemptive WITH-TIMEOUT, each a thin wrapper over SB-THREAD/SB-EXT.
+      #
+      # !!! PIN IS PROVISIONAL — VERIFY BEFORE RELYING ON CI !!!
+      #
+      # cl-tmux needs WITH-TIMEOUT (src/timeout.lisp) and the LOCK deftype, both
+      # of which were added on 2026-08-01 and are UNCOMMITTED in
+      # cl-concurrent-kit's working tree. No tag ships them yet. Advance this to
+      # the first tag that does; until then this flake cannot build, for the same
+      # reason the cl-process-kit and cl-host-kit pins above cannot.
+      url = "github:nerima-lisp/cl-concurrent-kit/v0.3.0";
+      flake = false;
+    };
+    cl-regex-kit = {
+      # Replaces cl-ppcre: a from-scratch Thompson-NFA + Pike-VM engine.
+      #
+      # !!! PIN IS PROVISIONAL — VERIFY BEFORE RELYING ON CI !!!
+      #
+      # Two things cl-tmux depends on are UNCOMMITTED in cl-regex-kit's working
+      # tree as of 2026-08-02 and are in NO tag:
+      #   * :template-syntax :backslash (src/api-replace.lisp), without which
+      #     every user's #{s/PAT/REP/} emits the replacement template literally.
+      #   * the src/pike-vm-capture.lisp fix for a misplaced paren at HEAD
+      #     ab36bda that made SCAN always return NIL.
+      # Advance this to the first tag carrying BOTH.
+      #
+      # Depends on cl-parser-kit, which is already an input above; siblings are
+      # consumed as source, so that one checkout serves both.
+      url = "github:nerima-lisp/cl-regex-kit/v0.3.0";
+      flake = false;
+    };
+    cl-codec-kit = {
+      # From-scratch, babel-API-compatible codec: the 71 string<->octet call
+      # sites in src/ and t/ name cl-codec-kit:string-to-octets /
+      # octets-to-string directly. Briefly routed through cl-host-kit instead;
+      # re-pointed here on 2026-08-02 so the codec is named at its own call
+      # sites rather than through a host-ops package.
+      #
+      # `:depends-on ()` — depth 0, so this input pulls in nothing else.
+      # cl-tty-kit and cl-process-kit (both already inputs above) consume it
+      # too, so one checkout serves all three.
+      url = "github:nerima-lisp/cl-codec-kit/v0.4.0";
       flake = false;
     };
     cl-host-kit = {
-      # env/pathname/string host operations, replacing direct uiop: calls
-      # (2026-08-01 org-wide uiop->cl-host-kit migration).
-      url = "github:nerima-lisp/cl-host-kit/v0.2.1";
+      # Pathname/string host operations, replacing direct uiop: calls
+      # (2026-08-01 org-wide uiop->cl-host-kit migration). Still used for
+      # split-string and the pathname-directory-pathname/directory-pathname-p
+      # helpers.
+      #
+      # This pin was marked STALE while cl-tmux's octet conversion went through
+      # this package's own string/octet wrappers, which exist only in the
+      # uncommitted src/text-encoding.lisp and in no tag. Those call sites now
+      # go to cl-codec-kit, and v0.2.1 does export split-string,
+      # pathname-directory-pathname and directory-pathname-p (verified with
+      # `git show v0.2.1:src/package.lisp`), so the pin is current again.
+      url = "github:nerima-lisp/cl-host-kit/v0.2.5";
       flake = false;
     };
 
@@ -114,6 +183,9 @@
       cl-tty-kit,
       cl-process-kit,
       cl-history-kit,
+      cl-concurrent-kit,
+      cl-regex-kit,
+      cl-codec-kit,
       cl-host-kit,
       treefmt-nix,
       ...
@@ -135,15 +207,13 @@
       ];
       forAllSystems = nixpkgs.lib.genAttrs systems;
 
-      # allowBroken is required for the Quicklisp-packaged Lisp libraries below:
-      # nixpkgs marks several sbcl-* packages broken on darwin even though they
-      # are pure Lisp and load fine. Scoped to this flake's own instantiation.
-      pkgsFor =
-        system:
-        import nixpkgs {
-          inherit system;
-          config.allowBroken = true;
-        };
+      # No config.allowBroken. It was here for the Quicklisp-packaged Lisp
+      # libraries this flake used to pull in — nixpkgs marks several sbcl-*
+      # packages broken on darwin even though they are pure Lisp and load fine.
+      # With bordeaux-threads and cl-ppcre gone, no sbcl-* package is referenced
+      # at all, so the exemption would only be hiding a genuinely broken package
+      # from us. Restore it only alongside a specific package that needs it.
+      pkgsFor = system: import nixpkgs { inherit system; };
 
       # Single source of truth for the version: the `:version` form in
       # cl-tmux.asd. A release only ever edits the .asd, and every Nix package
@@ -177,6 +247,9 @@
         cl-tty-kit
         cl-process-kit
         cl-history-kit
+        cl-concurrent-kit
+        cl-regex-kit
+        cl-codec-kit
         cl-host-kit
       ];
 
@@ -189,21 +262,22 @@
         repo: ''--eval "(push (truename \"${repo}/\") asdf:*central-registry*)"''
       ) siblingRepos;
 
-      # SBCL with every Quicklisp-packaged library the code depends on.
+      # Plain SBCL, with NO Quicklisp-packaged libraries wrapped around it.
       #
-      # These four are the org's only sanctioned external (non-org) runtime
-      # dependencies; DEPENDENCY_POLICY.md records why each is required and
-      # cl-tmux.asd carries the same rationale per line. They are grandfathered
-      # in because cl-tmux is the sole L4 application package — nothing in the
-      # org depends on it, so an upstream break cannot propagate. Do not remove
-      # one to "reduce dependencies"; each covers a gap SBCL does not.
-      runtimeDeps =
-        ps: with ps; [
-          cffi # select(2)/ioctl(2), the libc calls sb-posix does not expose
-          bordeaux-threads # portable threads + locks for per-pane PTY readers
-          babel # string<->octet encoding for UTF-8 PTY and socket traffic
-          cl-ppcre # regex engine behind the #{m/r:...} and #{s///:} format modifiers
-        ];
+      # There is nothing left to wrap: cl-tmux has no external (non-org)
+      # dependencies. Every name in cl-tmux.asd's :depends-on is a nerima-lisp
+      # sibling, and siblings are consumed as SOURCE via siblingRegistry above,
+      # not through nixpkgs Lisp packaging.
+      #
+      # The four that used to be here, and where each went:
+      #   cffi             -> cl-process-kit / cl-tty-kit / sb-posix (2026-08-01)
+      #   babel            -> cl-host-kit                            (2026-08-01)
+      #   bordeaux-threads -> cl-concurrent-kit                      (2026-08-02)
+      #   cl-ppcre         -> cl-regex-kit                            (2026-08-02)
+      #
+      # If a `pkgs.sbcl.withPackages` ever comes back here, cl-tmux.asd's
+      # :depends-on must gain the matching external name in the same commit —
+      # a mismatch between the two fails only at load time.
 
       # treefmt drives `nix fmt` and the `checks.<system>.formatting` gate.
       # Scope is Nix only: nixfmt is a low-diff formatter, whereas YAML
@@ -226,12 +300,12 @@
         system: name: testSystem:
         let
           pkgs = pkgsFor system;
-          sbclWithDeps = pkgs.sbcl.withPackages runtimeDeps;
+          sbcl = pkgs.sbcl;
         in
         pkgs.runCommand name
           {
             nativeBuildInputs = [
-              sbclWithDeps
+              sbcl
               pkgs.coreutils
             ];
             CL_TMUX_SIBLING_REGISTRY = siblingRegistry;
@@ -252,7 +326,7 @@
         system:
         let
           pkgs = pkgsFor system;
-          sbclWithDeps = pkgs.sbcl.withPackages runtimeDeps;
+          sbcl = pkgs.sbcl;
         in
         rec {
           cl-tmux = pkgs.stdenv.mkDerivation {
@@ -261,7 +335,7 @@
             src = self;
 
             nativeBuildInputs = [ pkgs.makeWrapper ];
-            buildInputs = [ sbclWithDeps ];
+            buildInputs = [ sbcl ];
 
             buildPhase = ''
               runHook preBuild
@@ -271,7 +345,7 @@
               # save-lisp-and-die without :executable avoids the macOS-specific
               # issue where embedded-core binaries fail to find sbcl.core at
               # runtime.
-              ${sbclWithDeps}/bin/sbcl \
+              ${sbcl}/bin/sbcl \
                 --no-sysinit \
                 --no-userinit \
                 --eval "(require :asdf)" \
@@ -295,7 +369,7 @@
               # Wrap sbcl so users just call "cl-tmux".
               # --noinform is a C-runtime option; it must precede --core.
               # --no-sysinit/userinit are Lisp options; they follow --core.
-              makeWrapper ${sbclWithDeps}/bin/sbcl $out/bin/cl-tmux \
+              makeWrapper ${sbcl}/bin/sbcl $out/bin/cl-tmux \
                 --add-flags "--noinform --core $out/lib/cl-tmux/cl-tmux.core --no-sysinit --no-userinit"
               runHook postInstall
             '';
@@ -355,7 +429,7 @@
           coverage-report =
             pkgs.runCommand "cl-tmux-coverage-report"
               {
-                nativeBuildInputs = [ sbclWithDeps ];
+                nativeBuildInputs = [ sbcl ];
                 CL_TMUX_SIBLING_REGISTRY = siblingRegistry;
               }
               ''
@@ -404,12 +478,12 @@
         system:
         let
           pkgs = pkgsFor system;
-          sbclWithDeps = pkgs.sbcl.withPackages runtimeDeps;
+          sbcl = pkgs.sbcl;
 
           test = pkgs.writeShellApplication {
             name = "cl-tmux-test";
             runtimeInputs = [
-              sbclWithDeps
+              sbcl
               pkgs.coreutils
             ];
             text = ''
@@ -453,11 +527,11 @@
         system:
         let
           pkgs = pkgsFor system;
-          sbclWithDeps = pkgs.sbcl.withPackages runtimeDeps;
+          sbcl = pkgs.sbcl;
         in
         {
           default = pkgs.mkShell {
-            packages = [ sbclWithDeps ];
+            packages = [ sbcl ];
             CL_TMUX_SIBLING_REGISTRY = siblingRegistry;
             shellHook = ''
               # Registers the central-registry entries the checks use, so an

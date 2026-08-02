@@ -3,16 +3,16 @@
     "cl-boundary-kit": {
       "flake": false,
       "locked": {
-        "lastModified": 1785007911,
-        "narHash": "sha256-wfG8DV7pSYyWDmEGgIxP4i9sM1MS6FqPWHj52dUpFQ0=",
+        "lastModified": 1785657708,
+        "narHash": "sha256-DieHj+VkI/S98vflHzfLZgJgATJGePT7QS9ElQkpiGU=",
         "owner": "nerima-lisp",
         "repo": "cl-boundary-kit",
-        "rev": "d4c47739556d405e7d8ead2dc43a6580f5fe281d",
+        "rev": "9d85a1530ae6b1be3a6e83173b1c7d7817e2d203",
         "type": "github"
       },
       "original": {
         "owner": "nerima-lisp",
-        "ref": "v1.0.0",
+        "ref": "v2.0.1",
         "repo": "cl-boundary-kit",
         "type": "github"
       }
@@ -20,33 +20,67 @@
     "cl-cli": {
       "flake": false,
       "locked": {
-        "lastModified": 1785002244,
-        "narHash": "sha256-Yt5PdWA/hHBR0KA7zpogvFpUUQ2QyKDyynwtSGDHNAI=",
+        "lastModified": 1785655973,
+        "narHash": "sha256-cNmbSsw2GwKNGkD8OEh4ZLw8vRv9pU4a13uKWgbQlXU=",
         "owner": "nerima-lisp",
         "repo": "cl-cli",
-        "rev": "59c0f4fad14178047d0d0ac4f19c2e6ff8362f31",
+        "rev": "80b1433f5e09331bbf57b133e2f0ed9e38d443bc",
         "type": "github"
       },
       "original": {
         "owner": "nerima-lisp",
-        "ref": "v1.0.1",
+        "ref": "v1.2.0",
         "repo": "cl-cli",
+        "type": "github"
+      }
+    },
+    "cl-codec-kit": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1785657119,
+        "narHash": "sha256-73/PTRu9neWZNGC3L6bL7ltWt0CtORHNDS4zzf4uH2U=",
+        "owner": "nerima-lisp",
+        "repo": "cl-codec-kit",
+        "rev": "8570a6c16dcc0bc0f4774749a0f9f1d0520696c2",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nerima-lisp",
+        "ref": "v0.4.0",
+        "repo": "cl-codec-kit",
+        "type": "github"
+      }
+    },
+    "cl-concurrent-kit": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1785663008,
+        "narHash": "sha256-zChJOROZOumc4lxpigU9Zqvt4TL1roJK+5F8buyZbtw=",
+        "owner": "nerima-lisp",
+        "repo": "cl-concurrent-kit",
+        "rev": "85f015330b3acf4ca4566cf9e8eb72c571611b26",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nerima-lisp",
+        "ref": "v0.3.0",
+        "repo": "cl-concurrent-kit",
         "type": "github"
       }
     },
     "cl-dataflow": {
       "flake": false,
       "locked": {
-        "lastModified": 1784997635,
-        "narHash": "sha256-rsDn/kjFD8XTjLgr36nsnsvlT032/QuiMCI+SCmf+mU=",
+        "lastModified": 1785657612,
+        "narHash": "sha256-uvbaAJ6Q3f9VSRfe71ASckDfLWobpD8VdPsmSeIkWO0=",
         "owner": "nerima-lisp",
         "repo": "cl-dataflow",
-        "rev": "1ad6da80d166f3f8329a5bb670ec6cc0e923f6c3",
+        "rev": "e3297e6c0ee5812de73bb71d19763140dcd39356",
         "type": "github"
       },
       "original": {
         "owner": "nerima-lisp",
-        "ref": "v1.0.0",
+        "ref": "v1.1.1",
         "repo": "cl-dataflow",
         "type": "github"
       }
@@ -54,16 +88,16 @@
     "cl-history-kit": {
       "flake": false,
       "locked": {
-        "lastModified": 1784987799,
-        "narHash": "sha256-lZU7ESwnMWNCHp8ELmSVG8ZBe8Xu6j90mFm2ZMMpzHA=",
+        "lastModified": 1785657058,
+        "narHash": "sha256-zHX0OIUAI5wQEXMtCXa+7rD9n7qOESsIbxz4xnQ2RQc=",
         "owner": "nerima-lisp",
         "repo": "cl-history-kit",
-        "rev": "fbb96b497aa82657c37c291ffbc4071d7d76a6dd",
+        "rev": "5aaea0d31054ad49aea4f680da5ec8091bdc3bc6",
         "type": "github"
       },
       "original": {
         "owner": "nerima-lisp",
-        "ref": "v1.0.0",
+        "ref": "v1.0.2",
         "repo": "cl-history-kit",
         "type": "github"
       }
@@ -71,16 +105,16 @@
     "cl-host-kit": {
       "flake": false,
       "locked": {
-        "lastModified": 1785433376,
-        "narHash": "sha256-sivxc+tzylWHzkRhIn6yAj8CFCTsoG+gFx7B2q6aBT4=",
+        "lastModified": 1785662299,
+        "narHash": "sha256-XzvvQ6MsRFYQNYe757mIbzSlBUy8l6Jv0aReFpuxPyo=",
         "owner": "nerima-lisp",
         "repo": "cl-host-kit",
-        "rev": "e1b5bd199c93bc083e8dee58d0a70c233d1d9e86",
+        "rev": "7dc003d5ba176080796d775f6c8c4f75a5d56107",
         "type": "github"
       },
       "original": {
         "owner": "nerima-lisp",
-        "ref": "v0.2.1",
+        "ref": "v0.2.5",
         "repo": "cl-host-kit",
         "type": "github"
       }
@@ -88,33 +122,103 @@
     "cl-log-kit": {
       "flake": false,
       "locked": {
-        "lastModified": 1784998499,
-        "narHash": "sha256-MY41YW9Lw2ZaB7cctcvl4vIXXGrsOF/tXPbl4mn3ix8=",
+        "lastModified": 1785658987,
+        "narHash": "sha256-O7Ja+BmbXQXYZs8/c1EaHyWK+NBkPWMR9NkGx+hLsAw=",
         "owner": "nerima-lisp",
         "repo": "cl-log-kit",
-        "rev": "53d1d81309e446afc805e0fe081628089223248b",
+        "rev": "c4986211b742520663c39db7bdfabee8645969ff",
         "type": "github"
       },
       "original": {
         "owner": "nerima-lisp",
-        "ref": "v1.0.0",
+        "ref": "v2.0.1",
         "repo": "cl-log-kit",
+        "type": "github"
+      }
+    },
+    "cl-nix-forge": {
+      "inputs": {
+        "nixpkgs": [
+          "cl-prolog",
+          "nixpkgs"
+        ],
+        "treefmt-nix": "treefmt-nix"
+      },
+      "locked": {
+        "lastModified": 1785347314,
+        "narHash": "sha256-eSnOllc5L+DuP5TrPGPQUzMzfN8HA88x326EzZvo7V4=",
+        "owner": "nerima-lisp",
+        "repo": "cl-nix-forge",
+        "rev": "53f26644d8cc40f5e677cedb00dd10ca5726d25a",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nerima-lisp",
+        "ref": "v0.4.0",
+        "repo": "cl-nix-forge",
+        "type": "github"
+      }
+    },
+    "cl-nix-forge_2": {
+      "inputs": {
+        "nixpkgs": [
+          "cl-prolog",
+          "cl-weave",
+          "nixpkgs"
+        ],
+        "treefmt-nix": "treefmt-nix_2"
+      },
+      "locked": {
+        "lastModified": 1785343250,
+        "narHash": "sha256-D270XDkMhwxKpS7M3hkmICogce5Ms0gi3miMJVGOoOo=",
+        "owner": "nerima-lisp",
+        "repo": "cl-nix-forge",
+        "rev": "b028786a70d883e82ecc9f6b858ebc669daaec41",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nerima-lisp",
+        "ref": "v0.3.0",
+        "repo": "cl-nix-forge",
+        "type": "github"
+      }
+    },
+    "cl-nix-forge_3": {
+      "inputs": {
+        "nixpkgs": [
+          "cl-weave",
+          "nixpkgs"
+        ],
+        "treefmt-nix": "treefmt-nix_6"
+      },
+      "locked": {
+        "lastModified": 1785347314,
+        "narHash": "sha256-eSnOllc5L+DuP5TrPGPQUzMzfN8HA88x326EzZvo7V4=",
+        "owner": "nerima-lisp",
+        "repo": "cl-nix-forge",
+        "rev": "53f26644d8cc40f5e677cedb00dd10ca5726d25a",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nerima-lisp",
+        "ref": "v0.4.0",
+        "repo": "cl-nix-forge",
         "type": "github"
       }
     },
     "cl-parser-kit": {
       "flake": false,
       "locked": {
-        "lastModified": 1784998474,
-        "narHash": "sha256-rqY2m2oCJX2/wVRQ98pNYxH5+QUPfuDqEyiK89D+h+g=",
+        "lastModified": 1785656543,
+        "narHash": "sha256-VhN+gWAo594jpg350TrBgp//bJQRDOtDNYIa1zB144U=",
         "owner": "nerima-lisp",
         "repo": "cl-parser-kit",
-        "rev": "8316a9c9a4d39bc95cd2a7d33738750a12314ccc",
+        "rev": "b887d3b053d24df4568fcff2f3e3ee47d839db22",
         "type": "github"
       },
       "original": {
         "owner": "nerima-lisp",
-        "ref": "v1.0.0",
+        "ref": "v1.0.3",
         "repo": "cl-parser-kit",
         "type": "github"
       }
@@ -122,62 +226,82 @@
     "cl-process-kit": {
       "flake": false,
       "locked": {
-        "lastModified": 1785012035,
-        "narHash": "sha256-6vy6K+ZUYt9zcu3IUSohRjYNT1jMX/xtXJX3CewsUpA=",
+        "lastModified": 1785656921,
+        "narHash": "sha256-el0+udOUZE9KZPbgWN1HWTYe/6g94LKSO3oJs4jfS1Y=",
         "owner": "nerima-lisp",
         "repo": "cl-process-kit",
-        "rev": "359d127e84d1e876e253419953253a34db033070",
+        "rev": "7454fc16370402f434c960f54ee161a1de7641af",
         "type": "github"
       },
       "original": {
         "owner": "nerima-lisp",
-        "ref": "v1.0.1",
+        "ref": "v3.1.0",
         "repo": "cl-process-kit",
         "type": "github"
       }
     },
     "cl-prolog": {
       "inputs": {
+        "cl-nix-forge": "cl-nix-forge",
         "cl-weave": "cl-weave",
         "nixpkgs": [
           "nixpkgs"
         ],
-        "paredit-cli": "paredit-cli"
+        "paredit-cli": "paredit-cli",
+        "treefmt-nix": "treefmt-nix_5"
       },
       "locked": {
-        "lastModified": 1785003722,
-        "narHash": "sha256-cL5wNd5TDZEIFxvhbBGTFYZOL+YB+boUBPK0yRV66r8=",
+        "lastModified": 1785656951,
+        "narHash": "sha256-szDf+Sg5RDex/VC/2h9tt9TQYyxwOgPjTR4PpKB9To8=",
         "owner": "nerima-lisp",
         "repo": "cl-prolog",
-        "rev": "a1352cee259b5476193255f21d8e56630f9893a9",
+        "rev": "c78f2c34792d01b653721d6b12427f98ef4235d7",
         "type": "github"
       },
       "original": {
         "owner": "nerima-lisp",
-        "ref": "v1.0.1",
+        "ref": "v1.3.0",
         "repo": "cl-prolog",
+        "type": "github"
+      }
+    },
+    "cl-regex-kit": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1785657461,
+        "narHash": "sha256-LrkoyjywOJe41VBljKpxklZ0EDu+Nm90BGCRf/Ydwh0=",
+        "owner": "nerima-lisp",
+        "repo": "cl-regex-kit",
+        "rev": "9a2aec907bfd08556bc4ab6e319010a61d34a107",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nerima-lisp",
+        "ref": "v0.3.0",
+        "repo": "cl-regex-kit",
         "type": "github"
       }
     },
     "cl-tty-kit": {
       "flake": false,
       "locked": {
-        "lastModified": 1785063147,
-        "narHash": "sha256-s0/IFznByykL9Cehqo3S+PsKnr9GdCnkZWXwYSnPjAw=",
+        "lastModified": 1785660128,
+        "narHash": "sha256-AxapnzmyyQslpebFltmN9Qsbx0ojnT0todJV6C/5zVM=",
         "owner": "nerima-lisp",
         "repo": "cl-tty-kit",
-        "rev": "6c3798bab86337cf95c3b1c6969f1c73378e431e",
+        "rev": "f9fbaa0e6d28a58b1084966f7f10f45ab5b0ada2",
         "type": "github"
       },
       "original": {
         "owner": "nerima-lisp",
-        "ref": "v1.0.2",
+        "ref": "v1.2.0",
         "repo": "cl-tty-kit",
         "type": "github"
       }
     },
     "cl-weave": {
       "inputs": {
+        "cl-nix-forge": "cl-nix-forge_2",
         "nixpkgs": [
           "cl-prolog",
           "nixpkgs"
@@ -185,52 +309,70 @@
         "paredit-cli": [
           "cl-prolog",
           "paredit-cli"
-        ]
+        ],
+        "treefmt-nix": "treefmt-nix_3"
       },
       "locked": {
-        "lastModified": 1784975289,
-        "narHash": "sha256-Je74eEojj79RuBQpVF8vSygjlSEhjnmMq8abgyB4sGc=",
+        "lastModified": 1785376209,
+        "narHash": "sha256-Grh5JozH3XA3yAbkm6HoWgSeVYRecfEj1GwmglehdNg=",
         "owner": "nerima-lisp",
         "repo": "cl-weave",
-        "rev": "41020b897003fc1e3097cd62643f83ee8334c3be",
+        "rev": "16a35617a3c3d173ce7b3d1bd63b77b6d85bbd70",
         "type": "github"
       },
       "original": {
         "owner": "nerima-lisp",
-        "ref": "v1.0.0",
+        "ref": "v1.1.0",
         "repo": "cl-weave",
         "type": "github"
       }
     },
     "cl-weave_2": {
       "inputs": {
+        "cl-nix-forge": "cl-nix-forge_3",
         "nixpkgs": [
           "nixpkgs"
         ],
-        "paredit-cli": "paredit-cli_2"
+        "paredit-cli": "paredit-cli_2",
+        "treefmt-nix": "treefmt-nix_8"
       },
       "locked": {
-        "lastModified": 1784975289,
-        "narHash": "sha256-Je74eEojj79RuBQpVF8vSygjlSEhjnmMq8abgyB4sGc=",
+        "lastModified": 1785662484,
+        "narHash": "sha256-GFChZBI8RbOnov3WCTT2jw0H/kBqYK0ig6i7ltzjnyU=",
         "owner": "nerima-lisp",
         "repo": "cl-weave",
-        "rev": "41020b897003fc1e3097cd62643f83ee8334c3be",
+        "rev": "a8a094226480b92a3789e7e48a2af5faa2e36326",
         "type": "github"
       },
       "original": {
         "owner": "nerima-lisp",
-        "ref": "v1.0.0",
+        "ref": "v1.1.4",
         "repo": "cl-weave",
+        "type": "github"
+      }
+    },
+    "crane": {
+      "locked": {
+        "lastModified": 1784564969,
+        "narHash": "sha256-TkTWNhJV/8Wk3czlbz4bwHZkFCaCHPsOy+oJe4PUiXg=",
+        "owner": "ipetkov",
+        "repo": "crane",
+        "rev": "7930f6c291de6f83c257839d434592aa085f290a",
+        "type": "github"
+      },
+      "original": {
+        "owner": "ipetkov",
+        "repo": "crane",
         "type": "github"
       }
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1784796856,
-        "narHash": "sha256-wWFrV5/Qbm+lyt5x20E/bSbfJiGKMo4RCxZV8cl/WZI=",
+        "lastModified": 1785571196,
+        "narHash": "sha256-KoTsyMQqnXQZq8deCEnu4QkyldkwH/bpMMhUcfMdGIw=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "e2587caef70cea85dd97d7daab492899902dbf5d",
+        "rev": "148bab9c1c3c53136ecb44a6ea356a0ed5b39b06",
         "type": "github"
       },
       "original": {
@@ -247,31 +389,7 @@
           "nixpkgs"
         ],
         "rust-overlay": "rust-overlay",
-        "treefmt-nix": "treefmt-nix"
-      },
-      "locked": {
-        "lastModified": 1784862675,
-        "narHash": "sha256-KfxEsl6TSDZwFhIyA2QP3BX+jLw6qJWEz/uMPDkYnKI=",
-        "owner": "nerima-lisp",
-        "repo": "paredit-cli",
-        "rev": "e321bbac6d25b181eaf286697d9761cc3e874091",
-        "type": "github"
-      },
-      "original": {
-        "owner": "nerima-lisp",
-        "ref": "v0.7.0",
-        "repo": "paredit-cli",
-        "type": "github"
-      }
-    },
-    "paredit-cli_2": {
-      "inputs": {
-        "nixpkgs": [
-          "cl-weave",
-          "nixpkgs"
-        ],
-        "rust-overlay": "rust-overlay_2",
-        "treefmt-nix": "treefmt-nix_2"
+        "treefmt-nix": "treefmt-nix_4"
       },
       "locked": {
         "lastModified": 1785001695,
@@ -288,10 +406,37 @@
         "type": "github"
       }
     },
+    "paredit-cli_2": {
+      "inputs": {
+        "crane": "crane",
+        "nixpkgs": [
+          "cl-weave",
+          "nixpkgs"
+        ],
+        "rust-overlay": "rust-overlay_2",
+        "treefmt-nix": "treefmt-nix_7"
+      },
+      "locked": {
+        "lastModified": 1785644478,
+        "narHash": "sha256-kqu9BDf8JqVe+Qo08ahOOuqpbqSto5RlQRhHoKw40d8=",
+        "owner": "nerima-lisp",
+        "repo": "paredit-cli",
+        "rev": "9f8db23ddd496ef6773e040454832eeafc60aeea",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nerima-lisp",
+        "ref": "v1.4.0",
+        "repo": "paredit-cli",
+        "type": "github"
+      }
+    },
     "root": {
       "inputs": {
         "cl-boundary-kit": "cl-boundary-kit",
         "cl-cli": "cl-cli",
+        "cl-codec-kit": "cl-codec-kit",
+        "cl-concurrent-kit": "cl-concurrent-kit",
         "cl-dataflow": "cl-dataflow",
         "cl-history-kit": "cl-history-kit",
         "cl-host-kit": "cl-host-kit",
@@ -299,10 +444,11 @@
         "cl-parser-kit": "cl-parser-kit",
         "cl-process-kit": "cl-process-kit",
         "cl-prolog": "cl-prolog",
+        "cl-regex-kit": "cl-regex-kit",
         "cl-tty-kit": "cl-tty-kit",
         "cl-weave": "cl-weave_2",
         "nixpkgs": "nixpkgs",
-        "treefmt-nix": "treefmt-nix_3"
+        "treefmt-nix": "treefmt-nix_9"
       }
     },
     "rust-overlay": {
@@ -353,6 +499,73 @@
       "inputs": {
         "nixpkgs": [
           "cl-prolog",
+          "cl-nix-forge",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1784369104,
+        "narHash": "sha256-47cxbcZODibHv3rELFQ9vZly0vUNkND/atn/U7HLeb0=",
+        "owner": "numtide",
+        "repo": "treefmt-nix",
+        "rev": "df3c0640565d04a0261253cdd89fce78ec50168a",
+        "type": "github"
+      },
+      "original": {
+        "owner": "numtide",
+        "repo": "treefmt-nix",
+        "type": "github"
+      }
+    },
+    "treefmt-nix_2": {
+      "inputs": {
+        "nixpkgs": [
+          "cl-prolog",
+          "cl-weave",
+          "cl-nix-forge",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1784369104,
+        "narHash": "sha256-47cxbcZODibHv3rELFQ9vZly0vUNkND/atn/U7HLeb0=",
+        "owner": "numtide",
+        "repo": "treefmt-nix",
+        "rev": "df3c0640565d04a0261253cdd89fce78ec50168a",
+        "type": "github"
+      },
+      "original": {
+        "owner": "numtide",
+        "repo": "treefmt-nix",
+        "type": "github"
+      }
+    },
+    "treefmt-nix_3": {
+      "inputs": {
+        "nixpkgs": [
+          "cl-prolog",
+          "cl-weave",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1784369104,
+        "narHash": "sha256-47cxbcZODibHv3rELFQ9vZly0vUNkND/atn/U7HLeb0=",
+        "owner": "numtide",
+        "repo": "treefmt-nix",
+        "rev": "df3c0640565d04a0261253cdd89fce78ec50168a",
+        "type": "github"
+      },
+      "original": {
+        "owner": "numtide",
+        "repo": "treefmt-nix",
+        "type": "github"
+      }
+    },
+    "treefmt-nix_4": {
+      "inputs": {
+        "nixpkgs": [
+          "cl-prolog",
           "paredit-cli",
           "nixpkgs"
         ]
@@ -371,7 +584,50 @@
         "type": "github"
       }
     },
-    "treefmt-nix_2": {
+    "treefmt-nix_5": {
+      "inputs": {
+        "nixpkgs": [
+          "cl-prolog",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1784369104,
+        "narHash": "sha256-47cxbcZODibHv3rELFQ9vZly0vUNkND/atn/U7HLeb0=",
+        "owner": "numtide",
+        "repo": "treefmt-nix",
+        "rev": "df3c0640565d04a0261253cdd89fce78ec50168a",
+        "type": "github"
+      },
+      "original": {
+        "owner": "numtide",
+        "repo": "treefmt-nix",
+        "type": "github"
+      }
+    },
+    "treefmt-nix_6": {
+      "inputs": {
+        "nixpkgs": [
+          "cl-weave",
+          "cl-nix-forge",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1784369104,
+        "narHash": "sha256-47cxbcZODibHv3rELFQ9vZly0vUNkND/atn/U7HLeb0=",
+        "owner": "numtide",
+        "repo": "treefmt-nix",
+        "rev": "df3c0640565d04a0261253cdd89fce78ec50168a",
+        "type": "github"
+      },
+      "original": {
+        "owner": "numtide",
+        "repo": "treefmt-nix",
+        "type": "github"
+      }
+    },
+    "treefmt-nix_7": {
       "inputs": {
         "nixpkgs": [
           "cl-weave",
@@ -393,9 +649,10 @@
         "type": "github"
       }
     },
-    "treefmt-nix_3": {
+    "treefmt-nix_8": {
       "inputs": {
         "nixpkgs": [
+          "cl-weave",
           "nixpkgs"
         ]
       },
@@ -405,6 +662,26 @@
         "owner": "numtide",
         "repo": "treefmt-nix",
         "rev": "df3c0640565d04a0261253cdd89fce78ec50168a",
+        "type": "github"
+      },
+      "original": {
+        "owner": "numtide",
+        "repo": "treefmt-nix",
+        "type": "github"
+      }
+    },
+    "treefmt-nix_9": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1785360170,
+        "narHash": "sha256-XE1lKgQ3eIO3E7zWryqcRsax+mYXod/5RHBn4YaR9YE=",
+        "owner": "numtide",
+        "repo": "treefmt-nix",
+        "rev": "d1187f8bc71fb8aab02395869ec3f5c1920f75c0",
         "type": "github"
       },
       "original": {
