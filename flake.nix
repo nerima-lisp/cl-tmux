@@ -191,19 +191,17 @@
       ...
     }:
     let
-      # x86_64-linux and nothing else. The only platform this project is
-      # actually gated on is the CI runner, and a flake should not advertise a
-      # platform it never builds. aarch64-darwin was declared until the
-      # 2026-08-01 revision on the strength of `nix flake check` being run on a
-      # development machine; running it by hand is not a gate, so the promise
-      # was withdrawn along with aarch64-linux and x86_64-darwin. Development
-      # happens on Linux. See PACKAGE_STANDARD.md "systems".
-      #
-      # Plain nixpkgs.lib.genAttrs, not flake-utils' eachDefaultSystem: the
-      # latter derives the system list from a hardcoded default set, which is
-      # exactly the "declared but unverified" situation above.
+      # x86_64-linux is what CI gates; aarch64-darwin is the development
+      # machine. Every per-system output -- packages, checks, apps AND devShells
+      # -- comes from this one list, so leaving aarch64-darwin out takes `nix
+      # build` and `nix develop` off the development machine as well. That trade
+      # was made on 2026-08-01 and reverted on 2026-08-02; aarch64-darwin carries
+      # no CI gate, which PACKAGE_STANDARD.md's "systems" section accepts
+      # explicitly. aarch64-linux and x86_64-darwin are nobody's verification and
+      # are not declared.
       systems = [
         "x86_64-linux"
+        "aarch64-darwin"
       ];
       forAllSystems = nixpkgs.lib.genAttrs systems;
 
