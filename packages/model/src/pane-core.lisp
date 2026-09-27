@@ -4,6 +4,12 @@
   1
   "The timestamp bucket used to coalesce pane notification events.")
 
+(defvar *waiting-state-dispatch* #'funcall
+  "Dispatch waiting-state mutations to the owning thread.
+
+The standalone model keeps the default synchronous behavior.  The runtime
+binds this to its main-thread callback queue while reader threads are active.")
+
 (defstruct pane
   "One terminal pane: a PTY fd + virtual screen + position within its window."
   (id       0   :type fixnum)
@@ -81,7 +87,10 @@
 
 (defun %mark-agent-waiting (pane message &optional (now (get-universal-time)))
   (when (and (%agent-pane-p pane) (pane-worktree pane))
-    (worktree-mark-waiting (pane-worktree pane) message now)))
+    (let ((worktree (pane-worktree pane)))
+      (funcall *waiting-state-dispatch*
+               (lambda ()
+                 (worktree-mark-waiting worktree message now))))))
 
 (defun worktree-resume (worktree pane)
   (when (and worktree pane
@@ -306,7 +315,10 @@
           ;; stays for the detail panel.
           (pane-notification-attention-p pane) nil)
     (when (and (%agent-pane-p pane) (pane-worktree pane))
-      (worktree-clear-waiting (pane-worktree pane)))
+      (let ((worktree (pane-worktree pane)))
+        (funcall *waiting-state-dispatch*
+                 (lambda ()
+                   (worktree-clear-waiting worktree)))))
     (pane-clear-unread-output pane))
   pane)
 
