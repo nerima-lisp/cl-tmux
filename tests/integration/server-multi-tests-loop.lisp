@@ -211,6 +211,55 @@
           (expect (= 2 calls))))))
 
 (describe "server-multi-agent-waiting-notifications"
+  (it "continues-waiting-host-notifications-after-one-client-write-fails"
+      (multiple-value-bind (session worktree agent)
+          (%make-waiting-agent-fixture)
+        (declare (ignore agent))
+        (let* ((conn-a (%make-test-conn))
+               (conn-b (%make-test-conn))
+               (notified-streams nil)
+               (nerimux::*clients* (list conn-a conn-b))
+               (nerimux/ports:*notify-host*
+                 (lambda (stream title body)
+                   (declare (ignore title body))
+                   (push stream notified-streams)
+                   (when (eq stream (nerimux::client-conn-stream conn-a))
+                     (error 'stream-error :stream stream)))))
+          (nerimux/workspace-model:worktree-mark-waiting
+           worktree "approval required" 100)
+          (expect (finishes (nerimux::%notify-agent-waiting-hosts session)))
+          (expect (= 2 (length notified-streams)))
+          (expect (member (nerimux::client-conn-stream conn-b)
+                          notified-streams :test #'eq))
+          (expect
+           (nerimux/workspace-model:worktree-waiting-host-notified-p worktree)))))
+
+  (it "broadcast-continues-after-one-client-frame-write-fails"
+      (with-fake-session (session)
+        (let* ((conn-a (%make-test-conn))
+               (conn-b (%make-test-conn))
+               (bad-stream (make-string-output-stream))
+               (good-stream (make-string-output-stream))
+               (sent-streams nil)
+               (nerimux::*clients* (list conn-a conn-b))
+               (nerimux::*dirty* t))
+          (setf (nerimux::client-conn-stream conn-a) bad-stream
+                (nerimux::client-conn-stream conn-b) good-stream)
+          (with-stubbed-fdefinition
+              ((nerimux::%render-client-frame
+                 (lambda (session conn)
+                   (declare (ignore session conn))
+                   :frame))
+               (nerimux/transport:send-frame
+                 (lambda (stream frame)
+                   (declare (ignore frame))
+                   (push stream sent-streams)
+                   (when (eq stream bad-stream)
+                     (error 'stream-error :stream stream)))))
+            (expect (finishes (nerimux::%broadcast-frame session))))
+          (expect (member good-stream sent-streams :test #'eq))
+          (expect (null (member conn-a nerimux::*clients* :test #'eq)))))))
+
   (it "sends one host notification to every unfocused client"
       (multiple-value-bind (session worktree agent)
           (%make-waiting-agent-fixture)
