@@ -102,11 +102,14 @@
                (return (truename candidate))
              (file-error ()
                (let ((parent
-                       (make-pathname
-                        :directory (butlast (pathname-directory candidate))
-                        :name nil
-                        :type nil
-                        :defaults candidate)))
+                       (if (pathname-name candidate)
+                           (make-pathname :name nil :type nil
+                                          :defaults candidate)
+                           (make-pathname
+                            :directory (butlast (pathname-directory candidate))
+                            :name nil
+                            :type nil
+                            :defaults candidate))))
                  (when (equal parent candidate)
                    (return nil))
                  (setf candidate parent))))))
