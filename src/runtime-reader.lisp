@@ -14,8 +14,7 @@
   (let ((reason (cl-tty-kit:pty-operation-failed-reason condition)))
     (and (eq :fd-read
              (cl-tty-kit:pty-operation-failed-operation condition))
-         (typep reason 'sb-posix:syscall-error)
-         (= sb-unix:eio (sb-posix:syscall-errno reason))))
+         (search "errno 5)" (princ-to-string reason))))
   #-linux
   (declare (ignore condition))
   #-linux

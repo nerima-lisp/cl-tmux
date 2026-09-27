@@ -172,8 +172,9 @@
                 (error 'cl-tty-kit:pty-operation-failed
                        :operation :fd-read
                        :pty nil
-                       :reason (make-condition 'sb-posix:syscall-error
-                                               :errno sb-unix:eio)))))
+                       :reason (make-condition 'simple-error
+                                               :format-control
+                                               "unix-read on fd 7 failed (errno 5).")))))
           (expect (eq #'nerimux::reader-eof-state
                       (nerimux::reader-reading-state pane)))))))
 
@@ -190,8 +191,9 @@
                 (error 'cl-tty-kit:pty-operation-failed
                        :operation :fd-read
                        :pty nil
-                       :reason (make-condition 'sb-posix:syscall-error
-                                               :errno 22)))))
+                       :reason (make-condition 'simple-error
+                                               :format-control
+                                               "unix-read on fd 7 failed (errno 22).")))))
           (signals cl-tty-kit:pty-operation-failed
             (nerimux::reader-reading-state pane))))))
 
