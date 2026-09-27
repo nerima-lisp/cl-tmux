@@ -1,5 +1,20 @@
 (in-package #:nerimux/vcs)
 
+(defparameter *worktree-operation-timeout-seconds*
+  vcs-kit::+default-vcs-timeout+
+  "Maximum time allowed for a Git worktree write operation.")
+
+(defparameter *worktree-operation-environment-update*
+  '(("GIT_TERMINAL_PROMPT" . "0")
+    ("GIT_ASKPASS" . "true")
+    ("SSH_ASKPASS" . "true")
+    ("GIT_SSH_COMMAND" . "ssh -oBatchMode=yes"))
+  "Environment updates that keep Git worktree writes non-interactive.")
+
+(defun %worktree-operation-execution-options ()
+  (list :timeout *worktree-operation-timeout-seconds*
+        :environment-update *worktree-operation-environment-update*))
+
 (defstruct worktree-prune-snapshot identity content changed-files)
 
 (defun %prune-file-identity (path directory-p &optional allow-missing)
@@ -326,7 +341,11 @@ REPOSITORY's default branch tip (R7.3) when not given."
                   (when force
                     (list "--force"))
                   (list "-b" branch-name "--" worktree-path resolved-start-point))))
-    (apply #'vcs-kit:vcs-worktree backend-repository arguments)
+    (apply #'vcs-kit:vcs-worktree
+           backend-repository
+           (append arguments
+                   (list :execution-options
+                         (%worktree-operation-execution-options))))
     (list-repository-worktrees repository)
     (refresh-repository-status repository)
     (%created-worktree-by-path repository worktree-path)))
@@ -463,7 +482,11 @@ false DRY-RUN once a user has explicitly confirmed the operation."
                                       worktree-path
                                       resolved-start-point
                                       force)))
-    (apply #'vcs-kit:vcs-worktree (%repository-backend repository) arguments)
+    (apply #'vcs-kit:vcs-worktree
+           (%repository-backend repository)
+           (append arguments
+                   (list :execution-options
+                         (%worktree-operation-execution-options))))
     worktree-path))
 
 (defun %apply-created-worktree (repository operation-result)
@@ -478,7 +501,9 @@ false DRY-RUN once a user has explicitly confirmed the operation."
     (apply #'vcs-kit:vcs-worktree
            (%repository-backend repository)
            (append (apply #'%worktree-command-arguments operation options)
-                   (list (nerimux/workspace-model:worktree-path worktree))))
+                   (list (nerimux/workspace-model:worktree-path worktree)
+                         :execution-options
+                         (%worktree-operation-execution-options))))
     repository))
 
 (defun %delete-worktree-command (worktree force)
@@ -526,9 +551,11 @@ false DRY-RUN once a user has explicitly confirmed the operation."
   (let ((result
          (apply #'vcs-kit:vcs-worktree
                 (%repository-backend repository)
-                (%worktree-command-arguments "prune"
-                                             (when dry-run
-                                               "--dry-run")
-                                             (when verbose
-                                               "--verbose")))))
+                (append (%worktree-command-arguments "prune"
+                                                     (when dry-run
+                                                       "--dry-run")
+                                                     (when verbose
+                                                       "--verbose"))
+                        (list :execution-options
+                              (%worktree-operation-execution-options))))))
     (list repository result)))
