@@ -152,6 +152,7 @@
          (path    (socket-path name)))
     (setf *bound-socket-path* path)
     (server-add-session session)
+    (install-server-termination-handlers session)
     (handler-case (delete-file path)
       (file-error () nil))
     (let* ((listener (make-listener path))
