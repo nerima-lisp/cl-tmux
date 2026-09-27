@@ -135,14 +135,23 @@
     (let ((socket-path (socket-path session-name))
           (log-path    (%runtime-log-path session-name)))
       (when (%stale-socket-p socket-path)
+        (%diagnostic-log log-kit:+level-warn+
+                         "removing stale server socket"
+                         (list :socket-path socket-path))
         (handler-case
             (delete-file socket-path)
           (file-error ()
             (error "could not remove stale socket at ~A" socket-path))))
       (unless (probe-file socket-path)
+        (%diagnostic-log log-kit:+level-info+
+                         "starting server"
+                         (list :session-name session-name))
         (format *error-output* "~&nerimux: starting server...~%")
         (force-output *error-output*)
         (%launch-server-and-poll-when-live socket-path exe args log-path))
       (unless (probe-file socket-path)
+        (%diagnostic-log log-kit:+level-error+
+                         "server failed to start"
+                         (list :socket-path socket-path))
         (error "server failed to start (timed out waiting for socket at ~A)"
                socket-path)))))

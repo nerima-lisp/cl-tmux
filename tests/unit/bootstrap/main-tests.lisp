@@ -81,10 +81,10 @@
       (expect (equal "myserver" (first (cdr (first *main-calls*)))))))
 
 
-  (it "startup-modes-contains-server-and-attach"
+  (it "startup-modes-contains-server-attach-and-doctor"
     (expect (assoc "server" nerimux::*startup-modes* :test #'equal))
     (expect (assoc "attach" nerimux::*startup-modes* :test #'equal))
-    (dolist (name '("server" "attach"))
+    (dolist (name '("server" "attach" "doctor"))
       (let ((entry (alist-value name nerimux::*startup-modes* :test #'equal)))
         (expect (consp entry))
         (expect (symbolp (first entry))))))
@@ -96,6 +96,7 @@
     (expect (nerimux::%startup-mode-raw-args-p "-h") :to-be-truthy)
     (expect (nerimux::%startup-mode-raw-args-p "--help") :to-be-truthy)
     (expect (nerimux::%startup-mode-raw-args-p "attach") :to-be-truthy)
+    (expect (nerimux::%startup-mode-raw-args-p "doctor") :to-be-truthy)
     (expect (nerimux::%startup-mode-raw-args-p "server") :to-be-falsy)
     (expect (nerimux::%startup-mode-raw-args-p "bogus") :to-be-falsy))
 
@@ -119,6 +120,7 @@
   (it "startup-modes-handler-table"
     (dolist (c '(("server"    nerimux::run-server        "server → run-server")
                  ("attach"    nerimux::run-attach-simple  "attach → run-attach-simple")
+                 ("doctor"    nerimux::run-doctor         "doctor → run-doctor")
                  ("-V"        nerimux::run-version        "-V → run-version")
                  ("--version" nerimux::run-version        "--version → run-version")
                  ("-h"        nerimux::run-usage          "-h → run-usage")
