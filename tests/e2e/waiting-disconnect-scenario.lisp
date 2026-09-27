@@ -80,4 +80,4 @@
                                           exit-code timed-out stderr))))))
                (nerimux/pty:pty-close observer-fd observer-pid)))
         (when (plusp client-fd)
-          (nerimux/pty:pty-close client-fd client-pid))))))
+          (nerimux/pty:pty-close client-fd client-pid)))))

@@ -168,4 +168,4 @@
         (close-socket listener)
         (handler-case (delete-file path)
           (file-error () nil))
-        (%close-session-ptys session))))
+        (%close-session-ptys session)))))

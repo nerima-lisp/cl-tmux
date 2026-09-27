@@ -258,7 +258,7 @@
                      (error 'stream-error :stream stream)))))
             (expect (finishes (nerimux::%broadcast-frame session))))
           (expect (member good-stream sent-streams :test #'eq))
-          (expect (null (member conn-a nerimux::*clients* :test #'eq)))))))
+          (expect (null (member conn-a nerimux::*clients* :test #'eq))))))
 
   (it "sends one host notification to every unfocused client"
       (multiple-value-bind (session worktree agent)
