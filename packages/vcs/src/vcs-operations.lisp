@@ -78,8 +78,11 @@
                           :name "vcs repository scan queue"))
              (progress-lock (cl-concurrent-kit:make-lock
                              :name "vcs repository scan progress"))
+             (error-lock (cl-concurrent-kit:make-lock
+                          :name "vcs repository scan error"))
              (queue (copy-list entries))
              (processed 0)
+             (scan-error nil)
              (threads nil))
         (labels ((next-entry ()
                    (cl-concurrent-kit:with-lock-held (queue-lock)
@@ -88,6 +91,12 @@
                    (handler-case
                        (multiple-value-bind (candidate repository)
                            (%repository-from-entry entry)
+                         (handler-case
+                             (list-repository-worktrees repository)
+                           (error ()
+                             (setf (nerimux/workspace-model:repository-missing-p
+                                    repository)
+                                   t)))
                          (cl-concurrent-kit:with-lock-held (organizations-lock)
                            (let* ((key
                                     (nerimux/workspace-model:organization-id
@@ -97,27 +106,19 @@
                                         (setf (gethash key organizations)
                                               candidate))))
                              (nerimux/workspace-model:organization-add-repository
-                              organization repository)))
-                         (handler-case
-                             (list-repository-worktrees repository)
-                           (error ()
-                             (setf (nerimux/workspace-model:repository-missing-p
-                                    repository)
-                                   t))))
-                     (error ()
-                       ;; A malformed individual entry must not strand the rest
-                       ;; of the scan or prevent its progress notification.
-                       nil)))
+                              organization repository))))
+                     (error (condition)
+                       (cl-concurrent-kit:with-lock-held (error-lock)
+                         (unless scan-error
+                           (setf scan-error condition))))))
                  (scan-worker ()
                    (loop for entry = (next-entry)
                          while entry
                          do (process-entry entry)
-                            (let ((count
-                                    (cl-concurrent-kit:with-lock-held
-                                        (progress-lock)
-                                      (incf processed))))
+                            (cl-concurrent-kit:with-lock-held (progress-lock)
+                              (incf processed)
                               (when on-progress
-                                (funcall on-progress count))))))
+                                (funcall on-progress processed))))))
           (dotimes (index (min +repository-scan-worker-limit+
                                (length entries)))
             (push (cl-concurrent-kit:make-thread
@@ -126,14 +127,16 @@
                   threads))
           (dolist (thread threads)
             (cl-concurrent-kit:join-thread thread)))
-        (let ((result
-                (sort (loop for organization being the hash-values of organizations
-                            collect organization)
-                      #'string<
-                      :key #'nerimux/workspace-model:organization-id)))
-          (when on-complete
-            (funcall on-complete result))
-          result))
+        (if scan-error
+            (error scan-error)
+            (let ((result
+                    (sort (loop for organization being the hash-values of organizations
+                                collect organization)
+                          #'string<
+                          :key #'nerimux/workspace-model:organization-id)))
+              (when on-complete
+                (funcall on-complete result))
+              result)))
     (error (condition)
       (if on-error
           (progn

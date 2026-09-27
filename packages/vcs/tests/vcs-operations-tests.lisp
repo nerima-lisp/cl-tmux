@@ -416,7 +416,33 @@
                    (expect (nerimux/workspace-model:repository-missing-p failing))
                    (expect
                     (equal '(1 2 3)
-                           (sort (copy-list progress) #'<)))))))
+           (sort (copy-list progress) #'<)))))))
+          (it "reports an individual repository construction failure"
+              (let ((condition-seen nil)
+                    (complete-called nil)
+                    (entry
+                     (vcs-kit:make-ghq-repository-entry
+                      :specification "workspace-owner/broken"
+                      :path "/scan/broken")))
+                (with-stubbed-fdefinition
+                 ((vcs-kit:ghq-list-repositories
+                   (lambda (&key query)
+                     (declare (ignore query))
+                     (list entry)))
+                  (nerimux/vcs::%repository-from-entry
+                   (lambda (ignored-entry)
+                     (declare (ignore ignored-entry))
+                     (error "synthetic repository construction failure"))))
+                 (expect
+                  (null
+                   (nerimux/vcs:scan-repositories
+                    :on-complete (lambda (organizations)
+                                   (declare (ignore organizations))
+                                   (setf complete-called t))
+                    :on-error (lambda (condition)
+                                (setf condition-seen condition)))))
+                 (expect (typep condition-seen 'error))
+                 (expect (not complete-called)))))
           (it "reports a top-level repository scan failure"
               (let ((condition-seen nil))
                 (with-stubbed-fdefinition
