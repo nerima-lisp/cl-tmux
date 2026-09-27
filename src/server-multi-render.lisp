@@ -133,10 +133,11 @@
       (let ((pane (worktree-agent-pane worktree)))
         (unless (%client-focuses-pane-p pane)
           (dolist (conn (copy-list *clients*))
-            (nerimux/ports:notify-host
-             (client-conn-stream conn)
-             "nerimux"
-             (%agent-waiting-message worktree)))))
+            (with-loop-safe-error (nil :on-error (%drop-client conn))
+              (nerimux/ports:notify-host
+               (client-conn-stream conn)
+               "nerimux"
+               (%agent-waiting-message worktree))))))
       (worktree-mark-waiting-host-notified worktree))))
 
 (defvar *client-revealed-selection*
