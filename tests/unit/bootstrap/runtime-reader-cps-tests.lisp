@@ -159,6 +159,42 @@
         (expect (= 1 bells))
         (expect (= 2 dirty)))))
 
+  (it "reader-reading-state-maps-linux-pty-read-eio-to-eof"
+    (unless (member :linux *features*)
+      (skip "Linux-only PTY master read behavior"))
+    (let ((pane (make-pane :id 1 :fd 7 :pid -1 :screen (make-screen 10 3))))
+      (let ((nerimux::*reader-scratch-buffer*
+              (make-array 16 :element-type '(unsigned-byte 8))))
+        (with-stubbed-fdefinition
+            ((nerimux/pty:pty-read-blocking-into
+              (lambda (fd buffer)
+                (declare (ignore fd buffer))
+                (error 'cl-tty-kit:pty-operation-failed
+                       :operation :fd-read
+                       :pty nil
+                       :reason (make-condition 'sb-posix:syscall-error
+                                               :errno sb-unix:eio)))))
+          (expect (eq #'nerimux::reader-eof-state
+                      (nerimux::reader-reading-state pane)))))))
+
+  (it "reader-reading-state-rethrows-non-eio-pty-read-failures"
+    (unless (member :linux *features*)
+      (skip "Linux-only PTY master read behavior"))
+    (let ((pane (make-pane :id 1 :fd 7 :pid -1 :screen (make-screen 10 3))))
+      (let ((nerimux::*reader-scratch-buffer*
+              (make-array 16 :element-type '(unsigned-byte 8))))
+        (with-stubbed-fdefinition
+            ((nerimux/pty:pty-read-blocking-into
+              (lambda (fd buffer)
+                (declare (ignore fd buffer))
+                (error 'cl-tty-kit:pty-operation-failed
+                       :operation :fd-read
+                       :pty nil
+                       :reason (make-condition 'sb-posix:syscall-error
+                                               :errno 22)))))
+          (signals cl-tty-kit:pty-operation-failed
+            (nerimux::reader-reading-state pane))))))
+
   (it "reader-reading-state-contains-peer-io-failure"
     (let ((pane (make-pane :id 1 :fd 7 :pid -1 :screen (make-screen 10 3)))
           (payloads (list #(65) nil))
