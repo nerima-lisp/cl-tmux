@@ -25,8 +25,13 @@
   (sb-ext:exit :code 0))
 
 (defun %doctor-executable (name)
-  (let ((executable (uiop:find-executable name)))
-    (and executable (namestring executable))))
+  (let ((path (or (sb-ext:posix-getenv "PATH") "")))
+    (loop for directory in (uiop:split-string path :separator ":")
+          for candidate = (merge-pathnames
+                           (format nil "~A" name)
+                           (uiop:ensure-directory-pathname directory))
+          when (probe-file candidate)
+            return (namestring candidate))))
 
 (defun %doctor-socket-status (name)
   (handler-case

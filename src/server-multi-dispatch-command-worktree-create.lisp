@@ -95,11 +95,18 @@
 
 (defun %existing-path-prefix-truename (path)
   "Resolve the longest existing prefix of PATH, including symlinks."
-  (loop with candidate = (uiop:parse-native-namestring path)
+  (loop with candidate = (if (pathnamep path)
+                             path
+                             (uiop:parse-native-namestring path))
         do (handler-case
                (return (truename candidate))
              (file-error ()
-               (let ((parent (uiop:pathname-parent-directory-pathname candidate)))
+               (let ((parent
+                       (make-pathname
+                        :directory (butlast (pathname-directory candidate))
+                        :name nil
+                        :type nil
+                        :defaults candidate)))
                  (when (equal parent candidate)
                    (return nil))
                  (setf candidate parent))))))
