@@ -18,7 +18,9 @@
               :repository repository
               :path secondary-path
               :branch "feature/ui"))
-           (commands nil))
+           (commands nil)
+           (execution-options
+             (nerimux/vcs::%worktree-operation-execution-options)))
       (nerimux/workspace-model:repository-add-worktree repository main-worktree)
       (nerimux/workspace-model:repository-add-worktree repository secondary-worktree)
       (with-stubbed-fdefinition
@@ -47,12 +49,18 @@
                      :verbose t)))
         (expect
          (equal
-          (list (list "remove" secondary-path)
-                (list "remove" "--force" secondary-path)
-                (list "lock" "--reason" "reason" secondary-path)
-                (list "lock" secondary-path)
-                (list "unlock" secondary-path)
-                (list "prune" "--verbose"))
+          (list (list "remove" secondary-path
+                      :execution-options execution-options)
+                (list "remove" "--force" secondary-path
+                      :execution-options execution-options)
+                (list "lock" "--reason" "reason" secondary-path
+                      :execution-options execution-options)
+                (list "lock" secondary-path
+                      :execution-options execution-options)
+                (list "unlock" secondary-path
+                      :execution-options execution-options)
+                (list "prune" "--verbose"
+                      :execution-options execution-options))
           (nreverse commands)))
         (let ((condition-seen nil))
           (handler-case
@@ -60,6 +68,46 @@
             (error (condition)
               (setf condition-seen condition)))
           (expect (typep condition-seen 'error))))))
+
+  (it "bounds fake git worktree writes and disables terminal prompts"
+    (let* ((directory (namestring (host-kit:temporary-directory)))
+           (script (merge-pathnames "nerimux-fake-git-timeout.sh"
+                                    (host-kit:temporary-directory)))
+           (environment-file (merge-pathnames "nerimux-fake-git-environment"
+                                              (host-kit:temporary-directory)))
+           (repository
+             (nerimux/workspace-model:make-repository
+              :specification "workspace-owner/project"
+              :local-path directory))
+           (worktree
+             (nerimux/workspace-model:make-worktree
+              :repository repository
+              :path (concatenate 'string directory "secondary")
+              :branch "feature/ui"))
+           (backend nil)
+           (condition-seen nil))
+      (with-open-file (stream script :direction :output :if-exists :supersede)
+        (format stream "#!/bin/sh~%printf '%s' \"${GIT_TERMINAL_PROMPT-unset}\" > '~A'~%sleep 5~%"
+                (namestring environment-file)))
+      (uiop:run-program (list "chmod" "+x" (namestring script)))
+      (setf backend
+            (vcs-kit:make-vcs-repository
+             directory
+             :executable (namestring script)
+             :default-timeout 30d0))
+      (let ((nerimux/vcs::*worktree-operation-timeout-seconds* 0.1d0))
+        (with-stubbed-fdefinition
+            ((nerimux/vcs::%repository-backend
+               (lambda (current)
+                 (declare (ignore current))
+                 backend)))
+          (handler-case
+              (nerimux/vcs::%delete-worktree-command worktree nil)
+            (error (condition)
+              (setf condition-seen condition)))))
+      (expect (typep condition-seen 'vcs-kit:vcs-command-timeout-error))
+      (with-open-file (stream environment-file :direction :input)
+        (expect (string= "0" (read-line stream))))))
 
   (it "rejects invalid worktree and repository inputs before invoking VCS"
     (let* ((repository-path (%vcs-operations-existing-path))
@@ -159,7 +207,9 @@
              (nerimux/workspace-model:make-worktree
               :repository repository :path secondary-path :branch "feature/dead"))
            (pane (make-pane :id 43 :fd 0))
-           (commands nil))
+           (commands nil)
+           (execution-options
+             (nerimux/vcs::%worktree-operation-execution-options)))
       (nerimux/workspace-model:repository-add-worktree repository main-worktree)
       (nerimux/workspace-model:repository-add-worktree repository worktree)
       (nerimux/pane:worktree-add-pane worktree pane)
@@ -184,10 +234,14 @@
           (dolist (force '(nil t))
             (expect (funcall delete-command worktree force))))
         (expect
-         (equal (list (list "remove" secondary-path)
-                      (list "remove" "--force" secondary-path)
-                      (list "remove" secondary-path)
-                      (list "remove" "--force" secondary-path))
+         (equal (list (list "remove" secondary-path
+                             :execution-options execution-options)
+                      (list "remove" "--force" secondary-path
+                            :execution-options execution-options)
+                      (list "remove" secondary-path
+                            :execution-options execution-options)
+                      (list "remove" "--force" secondary-path
+                            :execution-options execution-options))
                 (nreverse commands)))))))
 (describe "vcs live-pane-delete independent agent history"
   (it "live-pane-delete protects an agent pane outside panes until its fd closes"
@@ -207,7 +261,9 @@
               :repository repository :path secondary-path :branch "feature/history"
               :agent-pane agent-pane))
            (commands nil)
-           (refreshes 0))
+           (refreshes 0)
+           (execution-options
+             (nerimux/vcs::%worktree-operation-execution-options)))
       (nerimux/workspace-model:repository-add-worktree repository main-worktree)
       (nerimux/workspace-model:repository-add-worktree repository worktree)
       (expect (null (nerimux/workspace-model:worktree-panes worktree)))
@@ -245,8 +301,10 @@
                   (progn
                     (expect (funcall delete-command worktree force))
                     (expect (equal (list (if force
-                                            (list "remove" "--force" secondary-path)
-                                            (list "remove" secondary-path)))
+                                            (list "remove" "--force" secondary-path
+                                                  :execution-options execution-options)
+                                            (list "remove" secondary-path
+                                                  :execution-options execution-options)))
                                    commands))))
               (expect (null (nerimux/workspace-model:worktree-panes worktree)))
               (expect (eq agent-pane

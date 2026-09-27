@@ -419,9 +419,13 @@
                (lambda (backend &rest arguments)
                  (declare (ignore backend))
                  (push (copy-list arguments) commands)
-                 (let ((path (nth (- (length arguments) 2) arguments))
-                       (branch (nth (- (length arguments) 4) arguments))
-                       (head (car (last arguments))))
+                 (let* ((options-position (position :execution-options arguments))
+                        (command-arguments (subseq arguments 0 options-position))
+                        (path (nth (- (length command-arguments) 2)
+                                   command-arguments))
+                        (branch (nth (- (length command-arguments) 4)
+                                     command-arguments))
+                        (head (car (last command-arguments))))
                    (setf raw-worktrees
                          (list (%vcs-operations-fake-worktree
                                 path
@@ -439,7 +443,10 @@
             (expect (string= first-path
                              (nerimux/workspace-model:worktree-path first-worktree)))
             (expect (equal
-                     (list "add" "-b" "feature/first" "--" first-path "origin/main")
+                     (append (list "add" "-b" "feature/first" "--"
+                                   first-path "origin/main")
+                             (list :execution-options
+                                   (nerimux/vcs::%worktree-operation-execution-options)))
                      (first commands))))
           (let* ((second-path (concatenate 'string repository-path "second"))
                  (second-worktree
@@ -452,8 +459,10 @@
             (expect (string= second-path
                              (nerimux/workspace-model:worktree-path second-worktree)))
             (expect (equal
-                     (list "add" "--force" "-b" "feature/second" "--"
-                           second-path "release")
+                     (append (list "add" "--force" "-b" "feature/second" "--"
+                                   second-path "release")
+                             (list :execution-options
+                                   (nerimux/vcs::%worktree-operation-execution-options)))
                      (first commands))))
           (let ((condition-seen nil))
             (handler-case
