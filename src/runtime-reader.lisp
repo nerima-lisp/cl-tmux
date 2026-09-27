@@ -61,7 +61,12 @@
     (make-thread
      (lambda ()
        (let ((*reader-process-generation* generation))
-         (%pane-reader-loop pane)))
+         (handler-case
+             (%pane-reader-loop pane)
+           (error (condition)
+             (nerimux/pane:pane-mark-process-exit
+              pane
+              :reason (format nil "reader thread failed: ~A" condition))))))
      :name (format nil "pty-reader-~D" (pane-id pane)))))
 
 (defun stop-reader-threads (threads)
