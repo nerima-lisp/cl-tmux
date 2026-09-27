@@ -48,6 +48,7 @@
                 #:pane-live-p
                 #:pane-process-exited-p
                 #:pane-non-zero-exit-p
+                #:pane-notification
                 #:respawn-pane
                 #:pane-window
                 #:pane-marked

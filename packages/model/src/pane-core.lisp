@@ -204,7 +204,7 @@
                         #\Return #\Newline)
                 :encoding :utf-8))))
 
-(defun pane-mark-process-exit (pane &key status signal)
+(defun pane-mark-process-exit (pane &key status signal reason)
   (when pane
     (let* ((now (get-universal-time))
            (launch-failure (%pane-launch-failure-text pane status now)))
@@ -217,7 +217,10 @@
             (pane-last-output-time pane) now)
       (if launch-failure
           (%pane-report-launch-failure pane launch-failure)
-          (%mark-agent-waiting pane "process exited" now))))
+          (progn
+            (when reason
+              (pane-notify pane reason))
+            (%mark-agent-waiting pane "process exited" now)))))
   pane)
 
 (defun pane-mark-startup-failure (pane)
