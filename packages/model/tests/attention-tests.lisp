@@ -268,6 +268,20 @@
                  (string= "approval needed"
                           (nerimux/workspace-model:worktree-waiting-message
                            worktree)))))
+          (it "dispatches waiting mutations through the configured callback"
+              (let* ((worktree
+                       (nerimux/workspace-model:make-worktree :id "queued-waiting"))
+                     (pane
+                       (nerimux/pane:make-pane :id 5 :agent-kind :codex))
+                     (callbacks nil))
+                (nerimux/pane:worktree-add-pane worktree pane)
+                (let ((nerimux/pane::*waiting-state-dispatch*
+                        (lambda (callback) (push callback callbacks))))
+                  (nerimux/pane:pane-mark-bell pane))
+                (expect (null (nerimux/workspace-model:worktree-waiting-p worktree)))
+                (expect (= 1 (length callbacks)))
+                (funcall (first callbacks))
+                (expect (nerimux/workspace-model:worktree-waiting-p worktree))))
           (it "does not mark ordinary terminal panes waiting"
               (let* ((worktree
                        (nerimux/workspace-model:make-worktree :id "terminal"))

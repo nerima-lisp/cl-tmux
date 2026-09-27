@@ -147,7 +147,9 @@
         *runtime-state-signature* nil
         *runtime-restored-panes* nil
         *runtime-restored-worktrees* nil)
-  (let* ((session (or (%runtime-session-from-state name)
+  (let* ((nerimux/pane::*waiting-state-dispatch*
+           #'%enqueue-main-thread-callback)
+         (session (or (%runtime-session-from-state name)
                       (%create-workspace-session)))
          (path    (socket-path name)))
     (setf *bound-socket-path* path)
@@ -156,13 +158,13 @@
       (file-error () nil))
     (let* ((listener (make-listener path))
            (reader-threads (%start-session-reader-threads session)))
-        (install-sigwinch-handler)
-        (unwind-protect
-            (%run-multi-server-loop listener session)
-          (%persist-runtime-state session :force t)
-          (setf *runtime-persistence-enabled-p* nil)
-          (stop-reader-threads reader-threads)
-          (close-socket listener)
-          (handler-case (delete-file path)
-            (file-error () nil))
-          (%close-session-ptys session)))))
+      (install-sigwinch-handler)
+      (unwind-protect
+          (%run-multi-server-loop listener session)
+        (%persist-runtime-state session :force t)
+        (setf *runtime-persistence-enabled-p* nil)
+        (stop-reader-threads reader-threads)
+        (close-socket listener)
+        (handler-case (delete-file path)
+          (file-error () nil))
+        (%close-session-ptys session))))
