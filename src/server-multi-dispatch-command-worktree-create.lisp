@@ -93,19 +93,43 @@
         (%on-error condition))))))
   t)
 
+(defun %existing-path-prefix-truename (path)
+  "Resolve the longest existing prefix of PATH, including symlinks."
+  (loop with candidate = (uiop:parse-native-namestring path)
+        do (handler-case
+               (return (truename candidate))
+             (file-error ()
+               (let ((parent (uiop:pathname-parent-directory-pathname candidate)))
+                 (when (equal parent candidate)
+                   (return nil))
+                 (setf candidate parent))))))
+
+(defun %path-under-directory-p (path directory)
+  (let ((path (string-right-trim "/" (namestring path)))
+        (directory (string-right-trim "/" (namestring directory))))
+    (or (string= path directory)
+        (and (> (length path) (length directory))
+             (char= (char path (length directory)) #\/)
+             (string= directory path :end2 (length directory))))))
+
 (defun %worktree-path-escapes-repository-p (repository path)
-  "True when the explicit --path value PATH could place a worktree outside
-   REPOSITORY's own tree (CWE-22): a `..` component walks out from any base
-   directory, and an absolute path is only accepted once it already sits
-   under the directory %WORKTREE-PARENT-DIRECTORY would have chosen for it."
+  "True when PATH's resolved existing prefix is outside its worktree parent."
   (or (member ".." (uiop:split-string path :separator '(#\/)) :test #'string=)
-      (and (plusp (length path))
-           (char= (char path 0) #\/)
-           (let ((parent (string-right-trim
-                          "/"
-                          (nerimux/vcs:worktree-parent-directory repository))))
-             (not (and (>= (length path) (length parent))
-                       (string= parent path :end2 (length parent))))))))
+      (let* ((pathname (uiop:parse-native-namestring path))
+             (pathname (if (eq :absolute (first (pathname-directory pathname)))
+                           pathname
+                           (merge-pathnames
+                            pathname
+                            (uiop:ensure-directory-pathname
+                             (nerimux/workspace-model:repository-local-path
+                              repository)))))
+             (candidate (%existing-path-prefix-truename pathname))
+            (parent (ignore-errors
+                      (truename
+                       (uiop:parse-native-namestring
+                        (nerimux/vcs:worktree-parent-directory repository))))))
+        (not (and candidate parent
+                  (%path-under-directory-p candidate parent))))))
 
 (defun %client-create-worktree (conn target args)
   (if (not (%client-boolean-option-p args '("--confirm" "confirm")))
