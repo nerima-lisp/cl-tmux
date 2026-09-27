@@ -59,6 +59,10 @@
                  (funcall on-repository-error repository condition)))))))
        :on-error (guard-observer on-error)))))
 
+(defconstant +repository-scan-worker-limit+
+  8
+  "Maximum number of repositories scanned concurrently.")
+
 (defun scan-repositories (&key query on-complete on-error on-progress)
   "Build the organization/repository hierarchy from ghq-list-repositories.
    ON-PROGRESS (FR-004b), when given, is called once per ghq entry with the
@@ -66,23 +70,62 @@
    thread's other end can show \"N found\" while a large ghq root is still
    being walked, instead of only a bare scanning indicator."
   (handler-case
-      (let ((organizations (make-hash-table :test #'equal))
-            (processed 0))
-        (dolist (entry (vcs-kit:ghq-list-repositories :query query))
-          (multiple-value-bind (candidate repository)
-              (%repository-from-entry entry)
-            (let* ((key (nerimux/workspace-model:organization-id candidate))
-                   (organization
-                     (or (gethash key organizations)
-                         (setf (gethash key organizations) candidate))))
-              (nerimux/workspace-model:organization-add-repository
-               organization repository)
-              (handler-case
-                  (list-repository-worktrees repository)
-                (error ()
-                  (setf (nerimux/workspace-model:repository-missing-p repository) t)))))
-          (incf processed)
-          (when on-progress (funcall on-progress processed)))
+      (let* ((entries (vcs-kit:ghq-list-repositories :query query))
+             (organizations (make-hash-table :test #'equal))
+             (organizations-lock (cl-concurrent-kit:make-lock
+                                  :name "vcs repository scan organizations"))
+             (queue-lock (cl-concurrent-kit:make-lock
+                          :name "vcs repository scan queue"))
+             (progress-lock (cl-concurrent-kit:make-lock
+                             :name "vcs repository scan progress"))
+             (queue (copy-list entries))
+             (processed 0)
+             (threads nil))
+        (labels ((next-entry ()
+                   (cl-concurrent-kit:with-lock-held (queue-lock)
+                     (pop queue)))
+                 (process-entry (entry)
+                   (handler-case
+                       (multiple-value-bind (candidate repository)
+                           (%repository-from-entry entry)
+                         (cl-concurrent-kit:with-lock-held (organizations-lock)
+                           (let* ((key
+                                    (nerimux/workspace-model:organization-id
+                                     candidate))
+                                  (organization
+                                    (or (gethash key organizations)
+                                        (setf (gethash key organizations)
+                                              candidate))))
+                             (nerimux/workspace-model:organization-add-repository
+                              organization repository)))
+                         (handler-case
+                             (list-repository-worktrees repository)
+                           (error ()
+                             (setf (nerimux/workspace-model:repository-missing-p
+                                    repository)
+                                   t))))
+                     (error ()
+                       ;; A malformed individual entry must not strand the rest
+                       ;; of the scan or prevent its progress notification.
+                       nil)))
+                 (scan-worker ()
+                   (loop for entry = (next-entry)
+                         while entry
+                         do (process-entry entry)
+                            (let ((count
+                                    (cl-concurrent-kit:with-lock-held
+                                        (progress-lock)
+                                      (incf processed))))
+                              (when on-progress
+                                (funcall on-progress count))))))
+          (dotimes (index (min +repository-scan-worker-limit+
+                               (length entries)))
+            (push (cl-concurrent-kit:make-thread
+                   #'scan-worker
+                   :name (format nil "nerimux-vcs-scan-~D" index))
+                  threads))
+          (dolist (thread threads)
+            (cl-concurrent-kit:join-thread thread)))
         (let ((result
                 (sort (loop for organization being the hash-values of organizations
                             collect organization)
