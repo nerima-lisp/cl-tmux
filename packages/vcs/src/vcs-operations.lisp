@@ -87,6 +87,10 @@
         (labels ((next-entry ()
                    (cl-concurrent-kit:with-lock-held (queue-lock)
                      (pop queue)))
+                 (record-scan-error (condition)
+                   (cl-concurrent-kit:with-lock-held (error-lock)
+                     (unless scan-error
+                       (setf scan-error condition))))
                  (process-entry (entry)
                    (handler-case
                        (multiple-value-bind (candidate repository)
@@ -108,17 +112,20 @@
                              (nerimux/workspace-model:organization-add-repository
                               organization repository))))
                      (error (condition)
-                       (cl-concurrent-kit:with-lock-held (error-lock)
-                         (unless scan-error
-                           (setf scan-error condition))))))
+                       (record-scan-error condition))))
                  (scan-worker ()
-                   (loop for entry = (next-entry)
-                         while entry
-                         do (process-entry entry)
-                            (cl-concurrent-kit:with-lock-held (progress-lock)
-                              (incf processed)
-                              (when on-progress
-                                (funcall on-progress processed))))))
+                   (handler-case
+                       (loop for entry = (next-entry)
+                             while entry
+                             do (process-entry entry)
+                                (let ((count
+                                        (cl-concurrent-kit:with-lock-held
+                                            (progress-lock)
+                                          (incf processed))))
+                                  (when on-progress
+                                    (funcall on-progress count))))
+                     (error (condition)
+                       (record-scan-error condition)))))
           (dotimes (index (min +repository-scan-worker-limit+
                                (length entries)))
             (push (cl-concurrent-kit:make-thread
@@ -126,7 +133,10 @@
                    :name (format nil "nerimux-vcs-scan-~D" index))
                   threads))
           (dolist (thread threads)
-            (cl-concurrent-kit:join-thread thread)))
+            (handler-case
+                (cl-concurrent-kit:join-thread thread)
+              (error (condition)
+                (record-scan-error condition)))))
         (if scan-error
             (error scan-error)
             (let ((result

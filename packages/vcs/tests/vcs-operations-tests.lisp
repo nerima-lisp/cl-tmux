@@ -443,6 +443,35 @@
                                 (setf condition-seen condition)))))
                  (expect (typep condition-seen 'error))
                  (expect (not complete-called)))))
+          (it "reports progress callback failures after all workers stop"
+              (let ((condition-seen nil)
+                    (complete-called nil)
+                    (entries
+                     (list
+                      (vcs-kit:make-ghq-repository-entry
+                       :specification "workspace-owner/one" :path "/scan/one")
+                      (vcs-kit:make-ghq-repository-entry
+                       :specification "workspace-owner/two" :path "/scan/two"))))
+                (with-stubbed-fdefinition
+                 ((vcs-kit:ghq-list-repositories
+                   (lambda (&key query)
+                     (declare (ignore query))
+                     entries))
+                  (nerimux/vcs:list-repository-worktrees
+                   (lambda (repository) repository)))
+                 (expect
+                  (null
+                   (nerimux/vcs:scan-repositories
+                    :on-progress (lambda (count)
+                                   (declare (ignore count))
+                                   (error "synthetic progress failure"))
+                    :on-complete (lambda (organizations)
+                                   (declare (ignore organizations))
+                                   (setf complete-called t))
+                    :on-error (lambda (condition)
+                                (setf condition-seen condition)))))
+                 (expect (typep condition-seen 'error))
+                 (expect (not complete-called)))))
           (it "reports a top-level repository scan failure"
               (let ((condition-seen nil))
                 (with-stubbed-fdefinition
