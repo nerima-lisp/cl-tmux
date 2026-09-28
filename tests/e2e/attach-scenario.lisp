@@ -58,6 +58,8 @@
          (bare (merge-pathnames "repository.git/" root))
          (worktree (merge-pathnames "worktree/" root))
          (readme (merge-pathnames "README" seed)))
+    (when (probe-file root)
+      (uiop:delete-directory-tree root :validate t))
     (ensure-directories-exist root)
     (%run-git "init" "-q" (namestring seed))
     (with-open-file (stream readme :direction :output :if-exists :supersede

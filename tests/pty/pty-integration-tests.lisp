@@ -129,7 +129,11 @@
                                  (pane-notification pane))))
             (setf nerimux::*running* nil)
             (when thread
-              (sb-thread:join-thread thread :timeout 2))
+              (loop repeat 200
+                    until (not (sb-thread:thread-alive-p thread))
+                    do (sleep 0.01))
+              (expect (not (sb-thread:thread-alive-p thread)))
+              (sb-thread:join-thread thread))
             (pty-close fd pid))))))
 
 
