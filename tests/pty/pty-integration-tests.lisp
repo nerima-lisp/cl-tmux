@@ -117,13 +117,18 @@
           (nerimux::*running* t))
       (unwind-protect
            (progn
-             (with-stubbed-fdefinition
-                 ((nerimux::%pane-reader-loop
-                   (lambda (ignored)
-                     (declare (ignore ignored))
-                     (error "synthetic reader failure"))))
-               (setf thread (nerimux::start-reader-thread pane))
-               (sb-thread:join-thread thread))
+             (let ((original-reader-loop
+                     (fdefinition 'nerimux::%pane-reader-loop)))
+               (unwind-protect
+                    (progn
+                      (setf (fdefinition 'nerimux::%pane-reader-loop)
+                            #'(lambda (ignored)
+                                (declare (ignore ignored))
+                                (error "synthetic reader failure")))
+                      (setf thread (nerimux::start-reader-thread pane))
+                      (sb-thread:join-thread thread))
+                 (setf (fdefinition 'nerimux::%pane-reader-loop)
+                       original-reader-loop)))
              (expect (pane-process-exited-p pane))
              (expect (search "reader thread failed"
                              (pane-notification pane))))
