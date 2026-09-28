@@ -363,6 +363,115 @@
                    (expect (= 1 (length organizations)))
                    (expect
                     (nerimux/workspace-model:repository-missing-p repository))))))
+          (it "keeps scanning the full repository set after an individual read error"
+              (let* ((entries
+                       (list
+                        (vcs-kit:make-ghq-repository-entry
+                         :specification "workspace-owner/one" :path "/scan/one")
+                        (vcs-kit:make-ghq-repository-entry
+                         :specification "workspace-owner/failing" :path "/scan/failing")
+                        (vcs-kit:make-ghq-repository-entry
+                         :specification "workspace-owner/two" :path "/scan/two")))
+                     (progress-lock (cl-concurrent-kit:make-lock
+                                     :name "vcs scan progress test"))
+                     (progress nil))
+                (with-stubbed-fdefinition
+                 ((vcs-kit:ghq-list-repositories
+                   (lambda (&key query)
+                     (declare (ignore query))
+                     entries))
+                  (nerimux/vcs:list-repository-worktrees
+                   (lambda (repository)
+                     (when (string= "/scan/failing"
+                                    (nerimux/workspace-model:repository-local-path
+                                     repository))
+                       (error "synthetic repository read failure"))
+                     repository)))
+                 (let* ((organizations
+                          (nerimux/vcs:scan-repositories
+                           :on-progress
+                           (lambda (count)
+                             (cl-concurrent-kit:with-lock-held (progress-lock)
+                               (push count progress)))))
+                        (repositories
+                          (loop for organization in organizations
+                                append
+                                (nerimux/workspace-model:organization-repositories
+                                 organization)))
+                        (failing
+                          (find "/scan/failing" repositories
+                                :key #'nerimux/workspace-model:repository-local-path
+                                :test #'string=)))
+                   (expect (= 3 (length repositories)))
+                   (expect
+                    (equal '("workspace-owner/failing"
+                             "workspace-owner/one"
+                             "workspace-owner/two")
+                           (sort
+                            (mapcar
+                             #'nerimux/workspace-model:repository-specification
+                             repositories)
+                            #'string<)))
+                   (expect failing)
+                   (expect (nerimux/workspace-model:repository-missing-p failing))
+                   (expect
+                    (equal '(1 2 3)
+           (sort (copy-list progress) #'<)))))))
+          (it "reports an individual repository construction failure"
+              (let ((condition-seen nil)
+                    (complete-called nil)
+                    (entry
+                     (vcs-kit:make-ghq-repository-entry
+                      :specification "workspace-owner/broken"
+                      :path "/scan/broken")))
+                (with-stubbed-fdefinition
+                 ((vcs-kit:ghq-list-repositories
+                   (lambda (&key query)
+                     (declare (ignore query))
+                     (list entry)))
+                  (nerimux/vcs::%repository-from-entry
+                   (lambda (ignored-entry)
+                     (declare (ignore ignored-entry))
+                     (error "synthetic repository construction failure"))))
+                 (expect
+                  (null
+                   (nerimux/vcs:scan-repositories
+                    :on-complete (lambda (organizations)
+                                   (declare (ignore organizations))
+                                   (setf complete-called t))
+                    :on-error (lambda (condition)
+                                (setf condition-seen condition)))))
+                 (expect (typep condition-seen 'error))
+                 (expect (not complete-called)))))
+          (it "reports progress callback failures after all workers stop"
+              (let ((condition-seen nil)
+                    (complete-called nil)
+                    (entries
+                     (list
+                      (vcs-kit:make-ghq-repository-entry
+                       :specification "workspace-owner/one" :path "/scan/one")
+                      (vcs-kit:make-ghq-repository-entry
+                       :specification "workspace-owner/two" :path "/scan/two"))))
+                (with-stubbed-fdefinition
+                 ((vcs-kit:ghq-list-repositories
+                   (lambda (&key query)
+                     (declare (ignore query))
+                     entries))
+                  (nerimux/vcs:list-repository-worktrees
+                   (lambda (repository) repository)))
+                 (expect
+                  (null
+                   (nerimux/vcs:scan-repositories
+                    :on-progress (lambda (count)
+                                   (declare (ignore count))
+                                   (error "synthetic progress failure"))
+                    :on-complete (lambda (organizations)
+                                   (declare (ignore organizations))
+                                   (setf complete-called t))
+                    :on-error (lambda (condition)
+                                (setf condition-seen condition)))))
+                 (expect (typep condition-seen 'error))
+                 (expect (not complete-called)))))
           (it "reports a top-level repository scan failure"
               (let ((condition-seen nil))
                 (with-stubbed-fdefinition
