@@ -129,6 +129,7 @@
                                  (pane-notification pane))))
             (setf nerimux::*running* nil)
             (when thread
+              (setf nerimux::*running* nil)
               (loop repeat 200
                     until (not (sb-thread:thread-alive-p thread))
                     do (sleep 0.01))

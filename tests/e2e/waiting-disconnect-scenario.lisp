@@ -8,11 +8,7 @@
       (write-line "#!/bin/sh" stream)
       (write-line "printf 'E2E_WAITING\\a\\n'" stream)
       (write-line "sleep 30" stream))
-    (multiple-value-bind (exit-code stdout stderr timed-out)
-        (run-program-bounded "chmod" (list "u+x" (namestring path)))
-      (unless (and (eql exit-code 0) (not timed-out))
-        (error "fake codex chmod failed: exit=~S timeout=~S stdout=~S stderr=~S"
-               exit-code timed-out stdout stderr)))
+    (sb-posix:chmod (namestring path) #o700)
     (namestring bin-dir)))
 
 (defun %run-waiting-disconnect-scenario (binary)
