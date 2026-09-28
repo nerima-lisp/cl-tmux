@@ -50,7 +50,7 @@ length, split ratios, and pane limits, is a compiled-in constant.
 ```nix
 # flake.nix
 inputs.nerimux = {
-  url = "github:nerima-lisp/nerimux/v0.3.0";
+  url = "github:nerima-lisp/nerimux/v0.4.0";
   inputs.nixpkgs.follows = "nixpkgs";
 };
 ```
