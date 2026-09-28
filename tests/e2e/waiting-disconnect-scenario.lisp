@@ -24,9 +24,6 @@
                     (format nil "~A~A~A" fake-bin path-separator old-path)
                     1)
     (setf environment (sb-ext:posix-environ))
-    (if (plusp (length old-path))
-        (sb-posix:setenv "PATH" old-path 1)
-        (sb-posix:unsetenv "PATH"))
     (multiple-value-bind (client-fd client-pid)
         (nerimux/pty:forkpty-with-shell
          24 80
@@ -76,4 +73,7 @@
                                           exit-code timed-out stderr))))))
                (nerimux/pty:pty-close observer-fd observer-pid)))
         (when (plusp client-fd)
-          (nerimux/pty:pty-close client-fd client-pid)))))
+          (nerimux/pty:pty-close client-fd client-pid))
+        (if (plusp (length old-path))
+            (sb-posix:setenv "PATH" old-path 1)
+            (sb-posix:unsetenv "PATH")))))
