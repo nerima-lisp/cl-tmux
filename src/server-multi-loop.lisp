@@ -80,6 +80,9 @@
    listener + session, mutating *clients*) so the dispatch/teardown logic is
    unit-testable without driving a full process loop."
   (%drain-main-thread-callbacks)
+  (when *server-termination-requested-p*
+    (setf *running* nil)
+    (return-from %multi-serve-iteration :quit))
   (%workspace-job-tick)
   (%persist-runtime-state session)
   (%broadcast-frame session)

@@ -30,7 +30,11 @@
           for candidate = (merge-pathnames
                            (format nil "~A" name)
                            (uiop:ensure-directory-pathname directory))
-          when (probe-file candidate)
+          when (and (probe-file candidate)
+                    (handler-case
+                        (plusp (logand (sb-posix:stat-mode (sb-posix:stat candidate))
+                                       #o111))
+                      (file-error () nil)))
             return (namestring candidate))))
 
 (defun %doctor-socket-status (name)

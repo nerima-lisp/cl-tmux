@@ -3,6 +3,10 @@
 (defvar *clients*
   nil)
 
+(defvar *server-termination-requested-p*
+  nil
+  "Whether an OS termination signal requested shutdown on the main loop.")
+
 (defvar *main-thread-callback-lock*
   (cl-concurrent-kit:make-lock :name "nerimux-main-thread-callbacks"))
 
