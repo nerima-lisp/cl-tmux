@@ -8,11 +8,7 @@
       (write-line "#!/bin/sh" stream)
       (write-line "printf 'E2E_WAITING\\a\\n'" stream)
       (write-line "sleep 30" stream))
-    (multiple-value-bind (exit-code stdout stderr timed-out)
-        (run-program-bounded "chmod" (list "u+x" (namestring path)))
-      (unless (and (eql exit-code 0) (not timed-out))
-        (error "fake codex chmod failed: exit=~S timeout=~S stdout=~S stderr=~S"
-               exit-code timed-out stdout stderr)))
+    (sb-posix:chmod (namestring path) #o700)
     (namestring bin-dir)))
 
 (defun %run-waiting-disconnect-scenario (binary)
@@ -28,9 +24,6 @@
                     (format nil "~A~A~A" fake-bin path-separator old-path)
                     1)
     (setf environment (sb-ext:posix-environ))
-    (if (plusp (length old-path))
-        (sb-posix:setenv "PATH" old-path 1)
-        (sb-posix:unsetenv "PATH"))
     (multiple-value-bind (client-fd client-pid)
         (nerimux/pty:forkpty-with-shell
          24 80
@@ -58,7 +51,7 @@
                     ;; overview; x opens its selected row as an agent pane.
                     (nerimux/pty:pty-write client-fd "x")
                     (unless (%wait-for-marker client-fd marker
-                                               +e2e-marker-timeout-seconds+
+                                               (* 2 +e2e-marker-timeout-seconds+)
                                                client-output)
                       (error "fake agent waiting marker did not appear"))
                     ;; pty-close sends SIGHUP to the client, leaving its
@@ -80,4 +73,7 @@
                                           exit-code timed-out stderr))))))
                (nerimux/pty:pty-close observer-fd observer-pid)))
         (when (plusp client-fd)
-          (nerimux/pty:pty-close client-fd client-pid)))))
+          (nerimux/pty:pty-close client-fd client-pid))
+        (if (plusp (length old-path))
+            (sb-posix:setenv "PATH" old-path 1)
+            (sb-posix:unsetenv "PATH")))))

@@ -9,6 +9,17 @@
 (defun %reader-idle-wait ()
   (sleep (/ +pty-poll-timeout-us+ 1000000)))
 
+(defun %linux-pty-read-eof-p (condition)
+  #+linux
+  (let ((reason (cl-tty-kit:pty-operation-failed-reason condition)))
+    (and (eq :fd-read
+             (cl-tty-kit:pty-operation-failed-operation condition))
+         (search "errno 5)" (princ-to-string reason))))
+  #-linux
+  (declare (ignore condition))
+  #-linux
+  nil)
+
 (defun reader-idle-state (pane)
   (let ((next
           (cl-concurrent-kit:with-lock-held ((nerimux/pane:pane-process-lock pane))
@@ -24,7 +35,13 @@
 (defun reader-reading-state (pane)
   (cl-concurrent-kit:with-lock-held ((nerimux/pane:pane-process-lock pane))
     (unless (%pane-retired-p pane)
-      (let ((bytes (pty-read-blocking-into (pane-fd pane) *reader-scratch-buffer*)))
+      (let ((bytes
+              (handler-case
+                  (pty-read-blocking-into (pane-fd pane) *reader-scratch-buffer*)
+                (cl-tty-kit:pty-operation-failed (condition)
+                  (if (%linux-pty-read-eof-p condition)
+                      nil
+                      (error condition))))))
         (if (null bytes)
             #'reader-eof-state
             (progn

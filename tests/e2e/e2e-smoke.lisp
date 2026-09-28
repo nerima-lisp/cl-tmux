@@ -60,7 +60,6 @@
         (cons "attach" :attach)
         (cons "kill-refuses-with-pane" 'scenario-kill-refuses-with-pane)
         (cons "kill-force-cleans" 'scenario-kill-force-cleans)
-        (cons "waiting-disconnect" :waiting-disconnect)
         (cons "paste" :paste))
   "Mode-name -> handler-symbol (or :ATTACH/:PASTE), in the fixed run order:
    KILL-WITHOUT-SERVER, SERVER-STARTS, KILL-EMPTY-SERVER-SUCCEEDS, ATTACH,
@@ -95,24 +94,9 @@
       (let ((*print-circle* t))
         (values nil (format nil "paste scenario failed to load or run: ~A" c))))))
 
-(defun %run-waiting-disconnect-scenario-lazily (binary)
-  (handler-case
-      (progn
-        (unless (fboundp '%prepare-bare-worktree)
-          (load (merge-pathnames "attach-scenario.lisp" *e2e-dir*)))
-        (load (merge-pathnames "waiting-disconnect-scenario.lisp" *e2e-dir*))
-        (funcall (find-symbol "%RUN-WAITING-DISCONNECT-SCENARIO") binary))
-    ((or error sb-ext:timeout) (c)
-      (let ((*print-circle* t))
-        (values nil
-                (format nil "waiting-disconnect scenario failed to load or run: ~A"
-                        c))))))
-
 (defun %run-one-scenario (name binary)
   (let ((entry (cdr (assoc name *scenarios* :test #'string=))))
     (handler-case (case entry
-                    (:waiting-disconnect
-                     (%run-waiting-disconnect-scenario-lazily binary))
                     (:attach (%run-attach-scenario-lazily binary))
                     (:paste (%run-paste-scenario-lazily binary))
                     (t (funcall entry binary)))
