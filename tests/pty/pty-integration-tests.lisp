@@ -110,6 +110,28 @@
         (expect (eq kind :signaled))
         (expect (null code)))))
 
+  (it "reader-thread-marks-pane-exited-with-the-read-error"
+    (with-pty-available
+      (multiple-value-bind (fd pid) (forkpty-with-shell 24 80)
+        (let ((pane (make-pane :id 1 :fd fd :pid pid
+                               :screen (make-screen 80 24)))
+              (thread nil)
+              (nerimux::*running* t))
+          (unwind-protect
+               (progn
+                 (setf thread (nerimux::start-reader-thread pane))
+                 (sb-posix:close fd)
+                 (loop repeat 100
+                       until (pane-process-exited-p pane)
+                       do (sleep 0.01))
+                 (expect (pane-process-exited-p pane))
+                 (expect (search "reader thread failed"
+                                 (pane-notification pane))))
+            (setf nerimux::*running* nil)
+            (when thread
+              (sb-thread:join-thread thread :timeout 2))
+            (pty-close fd pid))))))
+
 
   (it "set-pty-size-applies-non-square-size-without-transposition"
     (with-pty-available

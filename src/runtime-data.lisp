@@ -19,6 +19,10 @@ The timeout type is explicit because SBCL signals it outside the ERROR hierarchy
   t
   "Whether the main event loop should continue processing input.")
 
+(defvar *server-termination-requested-p*
+  nil
+  "Whether an OS termination signal requested shutdown on the main loop.")
+
 (defvar *resize-pending*
   nil
   "Whether a SIGWINCH resize is waiting to be applied.")

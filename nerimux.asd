@@ -47,6 +47,7 @@
   :source-control (:git "https://github.com/nerima-lisp/nerimux.git")
   :depends-on (:cl-date-kit      ; exact elapsed-time values for deadline APIs
                :cl-concurrent-kit
+               :cl-log-kit
                :cl-regex-kit
                :cl-cli
                :cl-parser-kit

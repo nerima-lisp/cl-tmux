@@ -24,6 +24,70 @@
   (format t "nerimux ~A~%" (nerimux/version:version-string))
   (sb-ext:exit :code 0))
 
+(defun %doctor-executable (name)
+  (let ((path (or (sb-ext:posix-getenv "PATH") "")))
+    (loop for directory in (uiop:split-string path :separator ":")
+          for candidate = (merge-pathnames
+                           (format nil "~A" name)
+                           (uiop:ensure-directory-pathname directory))
+          when (and (probe-file candidate)
+                    (handler-case
+                        (plusp (logand (sb-posix:stat-mode (sb-posix:stat candidate))
+                                       #o111))
+                      (file-error () nil)))
+            return (namestring candidate))))
+
+(defun %doctor-socket-status (name)
+  (handler-case
+      (let ((path (socket-path name)))
+        (if (probe-file path)
+            (handler-case
+                (let ((socket (nerimux/net:connect-to path)))
+                  (nerimux/net:close-socket socket)
+                  (values :running path))
+              (sb-bsd-sockets:socket-error () (values :stale path))
+              (file-error () (values :unknown path))
+              (stream-error () (values :unknown path)))
+            (values :stopped path)))
+    (error (condition)
+      (values :unavailable (princ-to-string condition)))))
+
+(defun %doctor-report (session-name)
+  (multiple-value-bind (socket-status socket-detail)
+      (%doctor-socket-status session-name)
+    (let* ((git (%doctor-executable "git"))
+           (ghq (%doctor-executable "ghq"))
+           (shell (or (sb-ext:posix-getenv "SHELL") "/bin/sh"))
+           (shell-ok (probe-file shell))
+           (healthy (and git shell-ok)))
+      (values
+       (with-output-to-string (output)
+         (format output "nerimux doctor~%")
+         (format output "version: ~A~%" (nerimux/version:version-string))
+         (format output "socket: ~A (~A)~%" socket-status socket-detail)
+         (format output "git: ~A~@[ (~A)~]~%" (if git "ok" "missing") git)
+         (format output "ghq: ~A~@[ (~A)~]~%" (if ghq "ok" "missing") ghq)
+         (format output "shell: ~A (~A)~%" (if shell-ok "ok" "missing") shell)
+         (format output "runtime-state: ~A~%" (%runtime-state-path session-name))
+         (format output "configuration: compiled-in defaults (no config file)~%"))
+       healthy
+       (list :socket socket-status :git git :ghq ghq :shell shell
+             :shell-ok shell-ok)))))
+
+(defun run-doctor (raw-args)
+  "Print read-only runtime and prerequisite diagnostics for session 0."
+  (declare (ignore raw-args))
+  (multiple-value-bind (report healthy checks) (%doctor-report "0")
+    (format t "~A" report)
+    (%diagnostic-log (if healthy log-kit:+level-info+ log-kit:+level-warn+)
+                     "doctor checks complete"
+                     (list :socket (string-downcase (symbol-name (getf checks :socket)))
+                           :git (or (getf checks :git) "missing")
+                           :ghq (or (getf checks :ghq) "missing")
+                           :shell (getf checks :shell)
+                           :shell-ok (getf checks :shell-ok)))
+    (sb-ext:exit :code (if healthy 0 1))))
+
 (defun %kill-force-p (rest)
   "True when REST -- kill's own argv tail, e.g. (\"--force\") -- asks for
    --force.  kill is a :raw-args-p startup mode (see *startup-modes* below)
@@ -89,6 +153,7 @@
                ~2Tattach [selector]~26Topen the workspace UI (auto-starts a server)~%~
                ~2Tserver [name]~26Trun a headless server owning session NAME~%~
                ~2Tkill [--force]~26Tstop the running server (refuses if panes are open)~%~
+               ~2Tdoctor~26Tcheck version, socket, and runtime prerequisites~%~
                ~2T-V | --version~26Tprint the version and exit~%~
                ~2T-h | --help~26Tprint this summary and exit~%~
                ~%~

@@ -72,3 +72,19 @@
                              (declare (ignore ignored))
                              (setf *resize-pending* t
                                    *dirty* t))))
+
+(defun %server-termination-signal-handler (&rest ignored)
+  "Request shutdown without running teardown from interrupt context."
+  (declare (ignore ignored))
+  (setf *server-termination-requested-p* t))
+
+(defun install-server-termination-handlers (session)
+  "Arm SIGTERM, SIGINT, and SIGHUP to stop SESSION cleanly."
+  (declare (ignore session))
+  (setf *server-termination-requested-p* nil)
+  (dolist (signal (list sb-unix:sigterm sb-unix:sigint sb-unix:sighup))
+    (sb-sys:enable-interrupt
+     signal
+     (lambda (&rest ignored)
+       (declare (ignore ignored))
+       (%server-termination-signal-handler)))))

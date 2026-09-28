@@ -101,6 +101,25 @@
       (expect (eql 0 exit-code))
       (expect (eql 0 (search "usage: nerimux" output)))))
 
+  (it "doctor-report-includes-version-socket-and-prerequisites"
+    (with-stubbed-fdefinition
+        ((nerimux::socket-path (lambda (name)
+                                 (declare (ignore name))
+                                 "/tmp/nerimux-doctor-test.sock"))
+         (nerimux::%doctor-executable (lambda (name)
+                                        (declare (ignore name))
+                                        "/usr/bin/test")))
+      (multiple-value-bind (report healthy checks)
+          (nerimux::%doctor-report "0")
+        (expect healthy :to-be-truthy)
+        (expect (getf checks :git) :to-be-truthy)
+        (expect (search "version:" report) :to-be-truthy)
+        (expect (search "socket:" report) :to-be-truthy)
+        (expect (search "git:" report) :to-be-truthy)
+        (expect (search "ghq:" report) :to-be-truthy)
+        (expect (search "shell:" report) :to-be-truthy)
+        (expect (search "runtime-state:" report) :to-be-truthy))))
+
   (it "dispatch-version-and-help-flags"
     (dolist (c '(("-V" :version) ("--version" :version)
                  ("-h" :usage)   ("--help" :usage)))

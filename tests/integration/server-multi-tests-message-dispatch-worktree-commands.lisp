@@ -455,6 +455,64 @@
           (setf (fdefinition 'nerimux/vcs:vcs-package-available-p) available
                 (fdefinition 'nerimux/vcs:create-worktree-async) create)))))
 
+  (it "wt-create-command-rejects-a-path-that-escapes-through-a-symlinked-parent"
+    (let* ((root (format nil "/tmp/nerimux-worktree-create-symlink-~D" (sb-posix:getpid)))
+           (parent (format nil "~A/parent/" root))
+           (outside (format nil "~A/outside/" root))
+           (link (format nil "~Alink" parent))
+           (candidate (format nil "~A/new-worktree" link))
+           (accepted-candidate (format nil "~A/new-worktree" parent))
+           (organization
+             (nerimux/workspace-model:make-organization
+              :id "org-symlink" :host "github.com" :name "team-symlink"))
+           (repository
+             (nerimux/workspace-model:make-repository
+              :id "repo-symlink" :organization organization
+              :specification "github.com/team-symlink/repo-symlink"))
+           (conn (%make-test-conn))
+           (nerimux::*clients* (list conn))
+           (available (fdefinition 'nerimux/vcs:vcs-package-available-p))
+           (parent-directory (fdefinition 'nerimux/vcs:worktree-parent-directory))
+           (create (fdefinition 'nerimux/vcs:create-worktree-async))
+           (call nil))
+      (unwind-protect
+           (progn
+             (ensure-directories-exist parent)
+             (ensure-directories-exist outside)
+             (sb-posix:symlink outside link)
+             (nerimux/workspace-model:organization-add-repository organization repository)
+             (with-stubbed-fdefinition
+                 ((nerimux/vcs:vcs-package-available-p (lambda () t))
+                  (nerimux/vcs:worktree-parent-directory
+                   (lambda (received-repository)
+                     (declare (ignore received-repository))
+                     parent))
+                  (nerimux/vcs:create-worktree-async
+                   (lambda (&rest arguments)
+                     (setf call arguments)
+                     t)))
+               (nerimux::%set-client-selected-tree-object conn repository)
+               (expect (nerimux::%handle-client-ui-command
+                        nil conn :wt-create nil
+                        (list "--branch" "feature/symlink" "--path" candidate
+                              "--confirm")))
+               (expect (null call))
+               (expect (search "path must stay under the repository"
+                               (first (nerimux::client-conn-message-log conn))))
+               (setf call nil)
+               (expect (nerimux::%handle-client-ui-command
+                        nil conn :wt-create nil
+                        (list "--branch" "feature/missing" "--path"
+                              accepted-candidate "--confirm")))
+               (expect call)))
+        (setf (fdefinition 'nerimux/vcs:vcs-package-available-p) available
+              (fdefinition 'nerimux/vcs:worktree-parent-directory) parent-directory
+              (fdefinition 'nerimux/vcs:create-worktree-async) create)
+        (ignore-errors (sb-posix:unlink link))
+        (ignore-errors (sb-posix:rmdir outside))
+        (ignore-errors (sb-posix:rmdir (format nil "~A/parent" root)))
+        (ignore-errors (sb-posix:rmdir root)))))
+
   (it "wt-create-command-strips-control-characters-from-the-branch-notification"
     ;; S4: %client-create-worktree-now interpolates the typed branch into
     ;; the "creating worktree ~A" notification, so an SGR sequence in the
