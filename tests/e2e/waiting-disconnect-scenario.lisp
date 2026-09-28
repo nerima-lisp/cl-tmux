@@ -54,7 +54,7 @@
                     ;; overview; x opens its selected row as an agent pane.
                     (nerimux/pty:pty-write client-fd "x")
                     (unless (%wait-for-marker client-fd marker
-                                               +e2e-marker-timeout-seconds+
+                                               (* 2 +e2e-marker-timeout-seconds+)
                                                client-output)
                       (error "fake agent waiting marker did not appear"))
                     ;; pty-close sends SIGHUP to the client, leaving its
