@@ -25,8 +25,8 @@
   :bug-tracker "https://github.com/nerima-lisp/nerimux/issues"
   :source-control (:git "https://github.com/nerima-lisp/nerimux.git")
   ;; Test pipes use the same cl-tty-kit write path as production PTYs.
-  :depends-on ("nerimux-ports" :cl-tty-kit (:version "cl-weave" "1.3.0"))
-  :pathname "tests"
+  :depends-on ("nerimux-ports" :cl-tty-kit (:version "cl-weave" "1.4.0"))
+  :pathname "t"
   :serial t
   :components ((:file "package")
                (:file "helpers-posix-environment")

@@ -10,7 +10,7 @@
   :bug-tracker "https://github.com/nerima-lisp/nerimux/issues"
   :source-control (:git "https://github.com/nerima-lisp/nerimux.git")
   :depends-on ("nerimux-ports" "nerimux-terminal" "nerimux-text"
-               :cl-codec-kit :cl-concurrent-kit :cl-tty-kit)
+               (:version "cl-codec-kit" "0.6.0") :cl-concurrent-kit :cl-tty-kit)
   :pathname "src"
   ;; These files are mutually recursive and must load as one system.
   :serial t
@@ -48,8 +48,8 @@
   :bug-tracker "https://github.com/nerima-lisp/nerimux/issues"
   :source-control (:git "https://github.com/nerima-lisp/nerimux.git")
   :depends-on ("nerimux-model" "nerimux-ports/test" "nerimux-terminal/test"
-               :cl-codec-kit (:version "cl-weave" "1.3.0"))
-  :pathname "tests"
+               (:version "cl-codec-kit" "0.6.0") (:version "cl-weave" "1.4.0"))
+  :pathname "t"
   :serial t
   :components ((:file "package")
                (:file "helpers-pane-fixtures")

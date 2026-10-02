@@ -13,13 +13,13 @@ my $root = shift // '.';
 chdir $root or die "cannot chdir $root: $!";
 
 my @files;
-for my $dir ('tests', 'packages') {
+for my $dir ('t', 'packages') {
     next unless -d $dir;
     open(my $find, '-|', 'find', $dir, '-name', '*.lisp') or die $!;
     while (my $l = <$find>) { chomp $l; push @files, $l }
     close $find;
 }
-@files = grep { !m{/pty/} && !m{/e2e/} } @files;
+@files = grep { !m{/(?:t/)?pty/} && !m{/(?:t/)?e2e/} } @files;
 unless (@files) { print "NO TEST FILES SCANNED\n"; exit 2 }
 
 my @problems;

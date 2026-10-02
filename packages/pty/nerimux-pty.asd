@@ -10,8 +10,8 @@
   :bug-tracker "https://github.com/nerima-lisp/nerimux/issues"
   :source-control (:git "https://github.com/nerima-lisp/nerimux.git")
   :depends-on ("nerimux-ports"
-               :cl-tty-kit :cl-process-kit :cl-codec-kit
-               :cl-concurrent-kit :cl-date-kit)
+               :cl-tty-kit (:version "cl-process-kit" "3.4.0") (:version "cl-codec-kit" "0.6.0")
+               :cl-concurrent-kit (:version "cl-date-kit" "1.1.1"))
   :pathname "src"
   :serial t
   :components ((:file "package")
@@ -33,8 +33,8 @@
   :homepage "https://github.com/nerima-lisp/nerimux"
   :bug-tracker "https://github.com/nerima-lisp/nerimux/issues"
   :source-control (:git "https://github.com/nerima-lisp/nerimux.git")
-  :depends-on ("nerimux-pty" "nerimux-ports/test" (:version "cl-weave" "1.3.0"))
-  :pathname "tests"
+  :depends-on ("nerimux-pty" "nerimux-ports/test" (:version "cl-weave" "1.4.0"))
+  :pathname "t"
   :serial t
   :components ((:file "package")
                (:file "pty-ffi-tests")

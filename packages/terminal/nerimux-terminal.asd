@@ -10,7 +10,8 @@
   :bug-tracker "https://github.com/nerima-lisp/nerimux/issues"
   :source-control (:git "https://github.com/nerima-lisp/nerimux.git")
   :depends-on ("nerimux-text" "nerimux-version"
-               :cl-codec-kit :cl-host-kit :cl-concurrent-kit :cl-tty-kit :cl-regex-kit)
+               (:version "cl-codec-kit" "0.6.0") :cl-host-kit :cl-concurrent-kit :cl-tty-kit
+               (:version "cl-regex-kit" "2.2.0"))
   :pathname "src"
   ;; Load order is significant: definitions precede the files that compose them.
   :serial t
@@ -73,8 +74,8 @@
   :homepage "https://github.com/nerima-lisp/nerimux"
   :bug-tracker "https://github.com/nerima-lisp/nerimux/issues"
   :source-control (:git "https://github.com/nerima-lisp/nerimux.git")
-  :depends-on ("nerimux-terminal" :cl-host-kit (:version "cl-weave" "1.3.0"))
-  :pathname "tests"
+  :depends-on ("nerimux-terminal" :cl-host-kit (:version "cl-weave" "1.4.0"))
+  :pathname "t"
   :serial t
   :components ((:file "package")
                (:file "helpers-terminal-builders")
