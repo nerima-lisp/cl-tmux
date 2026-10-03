@@ -11,7 +11,7 @@
   :source-control (:git "https://github.com/nerima-lisp/nerimux.git")
   :depends-on ("nerimux-model" "nerimux-terminal" "nerimux-picker"
                :cl-tui-kit/core :cl-tui-kit/ansi :cl-tui-kit/layout :cl-tui-kit/widgets
-               :cl-tty-kit :cl-regex-kit :cl-concurrent-kit)
+               :cl-tty-kit (:version "cl-regex-kit" "2.2.0") :cl-concurrent-kit)
   :pathname "src"
   ;; Load order is significant: definitions precede the renderers that compose them.
   :serial t
@@ -69,8 +69,8 @@
   :bug-tracker "https://github.com/nerima-lisp/nerimux/issues"
   :source-control (:git "https://github.com/nerima-lisp/nerimux.git")
   :depends-on ("nerimux-renderer" "nerimux-model/test" "nerimux-terminal/test"
-               "nerimux-picker/test" (:version "cl-weave" "1.3.0"))
-  :pathname "tests"
+               "nerimux-picker/test" (:version "cl-weave" "1.4.0"))
+  :pathname "t"
   :serial t
   :components ((:file "package")
                (:file "helpers-renderer-fixtures")

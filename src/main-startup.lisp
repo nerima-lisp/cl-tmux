@@ -21,18 +21,27 @@
   "Parse ARGV (the application argv, without the argv0 slot) against *cli-app*
    (main-startup-flags.lisp).  Returns the parser invocation, or NIL and
    prints a usage error to *error-output* when ARGV is malformed."
-  (handler-case (cl-cli:parse-argv *cli-app* (cons "nerimux" argv))
+  (let ((parser-argv
+          (if (and (equal (first argv) "kill")
+                   (member "--force" (rest argv) :test #'string=))
+              (remove "--force" argv :test #'string=)
+              argv)))
+    (handler-case (cl-cli:parse-argv *cli-app* (cons "nerimux" parser-argv))
     (cl-cli:cli-usage-error (c)
       (format *error-output* "~&nerimux: ~A~%" c)
       (write-string (%usage-string) *error-output*)
-      nil)))
+      nil))))
 
-(defun %apply-global-cli-invocation (invocation)
+(defun %apply-global-cli-invocation (invocation argv)
   "Return INVOCATION's remaining :mode-args rest positional, the mode word
    plus its own args.  INVOCATION carries no other global options; -V and -h
    are the only global flags and are handled by
    %dispatch-global-cli-flag-actions."
-  (cl-cli:positional-value invocation :mode-args))
+  (let ((mode-args (cl-cli:positional-value invocation :mode-args)))
+    (if (and (equal (first mode-args) "kill")
+             (member "--force" (rest argv) :test #'string=))
+        (append mode-args (list "--force"))
+        mode-args)))
 
 (defun %dispatch-global-cli-flag-actions (invocation)
   "Run the flag-driven entry points that today double as *startup-modes* mode
@@ -66,7 +75,7 @@
         (invocation (%parse-global-cli-argv (%application-argv))))
     (if (null invocation)
         (sb-ext:exit :code 1)
-        (let ((mode-args (%apply-global-cli-invocation invocation)))
+        (let ((mode-args (%apply-global-cli-invocation invocation (%application-argv))))
           (unless (%dispatch-global-cli-flag-actions invocation)
             (let* ((mode  (first mode-args))
                    (rest  (rest mode-args))

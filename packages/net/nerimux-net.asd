@@ -9,7 +9,7 @@
   :homepage "https://github.com/nerima-lisp/nerimux"
   :bug-tracker "https://github.com/nerima-lisp/nerimux/issues"
   :source-control (:git "https://github.com/nerima-lisp/nerimux.git")
-  :depends-on (:cl-codec-kit)
+  :depends-on ((:version "cl-codec-kit" "0.6.0"))
   :pathname "src"
   :serial t
   :components ((:file "package")
@@ -28,8 +28,8 @@
   :homepage "https://github.com/nerima-lisp/nerimux"
   :bug-tracker "https://github.com/nerima-lisp/nerimux/issues"
   :source-control (:git "https://github.com/nerima-lisp/nerimux.git")
-  :depends-on ("nerimux-net" :cl-host-kit (:version "cl-weave" "1.3.0"))
-  :pathname "tests"
+  :depends-on ("nerimux-net" :cl-host-kit (:version "cl-weave" "1.4.0"))
+  :pathname "t"
   :serial t
   :components ((:file "package")
                (:file "helpers-fdefinition")

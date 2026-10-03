@@ -37,9 +37,9 @@
   :bug-tracker "https://github.com/nerima-lisp/nerimux/issues"
   :source-control (:git "https://github.com/nerima-lisp/nerimux.git")
   :depends-on ("nerimux-vcs" "nerimux-ports/test"
-               :cl-host-kit :cl-process-kit
-               (:version "cl-weave" "1.3.0"))
-  :pathname "tests"
+               :cl-host-kit (:version "cl-process-kit" "3.4.0")
+               (:version "cl-weave" "1.4.0"))
+  :pathname "t"
   :serial t
   :components ((:file "package")
                (:file "vcs-value-tests")

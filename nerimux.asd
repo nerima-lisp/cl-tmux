@@ -45,15 +45,15 @@
   :homepage "https://github.com/nerima-lisp/nerimux"
   :bug-tracker "https://github.com/nerima-lisp/nerimux/issues"
   :source-control (:git "https://github.com/nerima-lisp/nerimux.git")
-  :depends-on (:cl-date-kit      ; exact elapsed-time values for deadline APIs
+  :depends-on ((:version "cl-date-kit" "1.1.1") ; exact elapsed-time values for deadline APIs
                :cl-concurrent-kit
                :cl-log-kit
-               :cl-regex-kit
-               :cl-cli
+               (:version "cl-regex-kit" "2.2.0")
+               (:version "cl-cli" "1.4.0")
                :cl-parser-kit
                :cl-tty-kit
-               :cl-process-kit
-               :cl-codec-kit
+               (:version "cl-process-kit" "3.4.0")
+               (:version "cl-codec-kit" "0.6.0")
                :cl-host-kit
                :cl-tui-kit/ansi
                :cl-tui-kit/layout
@@ -148,7 +148,7 @@
   :homepage "https://github.com/nerima-lisp/nerimux"
   :bug-tracker "https://github.com/nerima-lisp/nerimux/issues"
   :source-control (:git "https://github.com/nerima-lisp/nerimux.git")
-  :depends-on ("nerimux" (:version "cl-weave" "1.3.0")
+  :depends-on ("nerimux" (:version "cl-weave" "1.4.0")
                "nerimux-text/test"
                "nerimux-ports/test"
                "nerimux-pty/test"
@@ -175,8 +175,8 @@
   :homepage "https://github.com/nerima-lisp/nerimux"
   :bug-tracker "https://github.com/nerima-lisp/nerimux/issues"
   :source-control (:git "https://github.com/nerima-lisp/nerimux.git")
-  :depends-on ("nerimux" (:version "cl-weave" "1.3.0"))
-  :pathname "tests/pty"
+  :depends-on ("nerimux" (:version "cl-weave" "1.4.0"))
+  :pathname "t/pty"
   :serial t
   :components ((:file "package") (:file "helpers")
                                  (:file "pty-unit-tests")

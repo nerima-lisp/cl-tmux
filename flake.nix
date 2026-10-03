@@ -10,24 +10,24 @@
     # alter this repository's inputs without a lock-file update.
     # Share nixpkgs with the sibling flake to avoid duplicate inputs.
     cl-weave = {
-      url = "github:nerima-lisp/cl-weave/v1.3.0";
+      url = "github:nerima-lisp/cl-weave/v1.4.0";
       inputs.nixpkgs.follows = "nixpkgs";
       # cl-weave's transitive development tool follows the project release.
-      inputs.paredit-cli.url = "github:nerima-lisp/paredit-cli/v1.6.2";
+      inputs.paredit-cli.url = "github:nerima-lisp/paredit-cli/v1.6.3";
     };
     paredit-cli = {
-      url = "github:nerima-lisp/paredit-cli/v1.6.2";
+      url = "github:nerima-lisp/paredit-cli/v1.6.3";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
     # Consume sibling packages as source checkouts and register them with ASDF.
     # A non-flake input has no nested nixpkgs to follow.
     cl-cli = {
-      url = "github:nerima-lisp/cl-cli/v1.3.0";
+      url = "github:nerima-lisp/cl-cli/v1.4.0";
       flake = false;
     };
     cl-date-kit = {
-      url = "github:nerima-lisp/cl-date-kit/v1.0.0";
+      url = "github:nerima-lisp/cl-date-kit/v1.1.1";
       flake = false;
     };
     cl-parser-kit = {
@@ -39,7 +39,7 @@
       flake = false;
     };
     cl-process-kit = {
-      url = "github:nerima-lisp/cl-process-kit/v3.2.0";
+      url = "github:nerima-lisp/cl-process-kit/v3.4.0";
       flake = false;
     };
     cl-log-kit = {
@@ -57,11 +57,11 @@
       flake = false;
     };
     cl-regex-kit = {
-      url = "github:nerima-lisp/cl-regex-kit/v2.0.0";
+      url = "github:nerima-lisp/cl-regex-kit/v2.2.0";
       flake = false;
     };
     cl-codec-kit = {
-      url = "github:nerima-lisp/cl-codec-kit/v0.5.0";
+      url = "github:nerima-lisp/cl-codec-kit/v0.6.0";
       flake = false;
     };
     cl-host-kit = {
@@ -404,6 +404,7 @@
                   pkgs.git
                 ];
                 NERIMUX_SIBLING_REGISTRY = siblingRegistry system;
+                NERIMUX_COVERAGE_REPORT_ONLY = "1";
               }
               ''
                 export HOME="$TMPDIR/home"
@@ -449,6 +450,8 @@
         {
           # Sandbox checks omit real-PTY cases because /dev/ptmx is unavailable.
           default = mkTestCheck system "nerimux-tests" "nerimux/test";
+
+          coverage-report = self.packages.${system}.coverage-report;
 
           formatting = treefmtEval.${system}.config.build.check self;
 
@@ -542,7 +545,7 @@
               trap 'rm -rf "$home"' EXIT
               export HOME="$home"
               cd ${self}
-              sbcl --dynamic-space-size 4096 --script tests/e2e/e2e-smoke.lisp \
+              sbcl --dynamic-space-size 4096 --script t/e2e/e2e-smoke.lisp \
                 "${self.packages.${system}.nerimux}/bin/nerimux" "$@"
             '';
           };

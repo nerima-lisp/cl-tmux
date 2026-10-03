@@ -1,10 +1,10 @@
 (defparameter *benchmark-repo-root*
   (truename (pathname (second sb-ext:*posix-argv*))))
 
-(load (merge-pathnames "tests/e2e/helpers.lisp" *benchmark-repo-root*))
+(load (merge-pathnames "t/e2e/helpers.lisp" *benchmark-repo-root*))
 
 (defparameter *e2e-repo-root* *benchmark-repo-root*)
-(load (merge-pathnames "tests/e2e/attach-scenario.lisp" *benchmark-repo-root*))
+(load (merge-pathnames "t/e2e/attach-scenario.lisp" *benchmark-repo-root*))
 
 (use-package :nerimux/pty)
 

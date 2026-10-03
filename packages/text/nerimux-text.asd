@@ -24,8 +24,8 @@
   :homepage "https://github.com/nerima-lisp/nerimux"
   :bug-tracker "https://github.com/nerima-lisp/nerimux/issues"
   :source-control (:git "https://github.com/nerima-lisp/nerimux.git")
-  :depends-on ("nerimux-text" (:version "cl-weave" "1.3.0"))
-  :pathname "tests"
+  :depends-on ("nerimux-text" (:version "cl-weave" "1.4.0"))
+  :pathname "t"
   :serial t
   :components ((:file "package")
                (:file "text-parse-tests"))

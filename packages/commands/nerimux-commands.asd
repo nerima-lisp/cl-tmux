@@ -10,7 +10,7 @@
   :bug-tracker "https://github.com/nerima-lisp/nerimux/issues"
   :source-control (:git "https://github.com/nerima-lisp/nerimux.git")
   :depends-on ("nerimux-model" "nerimux-terminal" "nerimux-ports"
-               :cl-parser-kit :cl-regex-kit)
+               :cl-parser-kit (:version "cl-regex-kit" "2.2.0"))
   :pathname "src"
   :serial t
   :components ((:file "package")
@@ -34,8 +34,9 @@
   :bug-tracker "https://github.com/nerima-lisp/nerimux/issues"
   :source-control (:git "https://github.com/nerima-lisp/nerimux.git")
   :depends-on ("nerimux-commands" "nerimux-model/test" "nerimux-terminal/test"
-               :cl-concurrent-kit :cl-date-kit (:version "cl-weave" "1.3.0"))
-  :pathname "tests"
+               :cl-concurrent-kit (:version "cl-date-kit" "1.1.1")
+               (:version "cl-weave" "1.4.0"))
+  :pathname "t"
   :serial t
   :components ((:file "package")
                (:file "helpers-copy-mode-fixtures")

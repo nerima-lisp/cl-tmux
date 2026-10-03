@@ -4,8 +4,53 @@
 
 (asdf:load-system "sb-cover")
 
+(defparameter *nerimux-project-root*
+  (truename
+   (merge-pathnames #P"../" (uiop:pathname-directory-pathname *load-truename*))))
+
+(defparameter *nerimux-source-root*
+  (truename (merge-pathnames #P"src/" *nerimux-project-root*)))
+
+(defparameter *nerimux-coverage-source-roots*
+  (cons *nerimux-source-root*
+        (sort
+         (directory (merge-pathnames #P"packages/*/src/"
+                                     *nerimux-project-root*))
+         #'string<
+         :key #'namestring)))
+
+(push *nerimux-project-root* asdf:*central-registry*)
+
+(dolist
+    (dir
+     (uiop:split-string (or (uiop:getenv "NERIMUX_SIBLING_REGISTRY") "")
+                        :separator
+                        ":"))
+  (unless (string= dir "")
+    (push (truename (uiop:ensure-directory-pathname dir))
+          asdf:*central-registry*)))
+
+(asdf:load-system "cl-weave")
+
+(cl-weave:reset-coverage)
+
 (defconstant +coverage-test-timeout-ms+
-  2700000)
+  ;; A coverage run is bounded by the caller, but a stuck individual test must
+  ;; not consume that whole budget.  This is deliberately shorter than the
+  ;; 45-minute process limit used by the flake job.
+  300000)
+
+(defun %coverage-test-timeout-ms ()
+  (let* ((value (uiop:getenv "NERIMUX_COVERAGE_TEST_TIMEOUT_MS"))
+         (timeout (if (and value (plusp (length value)))
+                      (parse-integer value :junk-allowed nil)
+                      +coverage-test-timeout-ms+)))
+    (unless (and (integerp timeout) (plusp timeout)
+                 (<= timeout +coverage-test-timeout-ms+))
+      (error "NERIMUX_COVERAGE_TEST_TIMEOUT_MS must be in 1..~D, got ~S."
+             +coverage-test-timeout-ms+
+             value))
+    timeout))
 
 (defun %coverage-test-name-filter ()
   (let ((filter (uiop:getenv "CL_WEAVE_TEST_FILTER")))
@@ -91,25 +136,16 @@
     "src/server-multi-data.lisp"
     "src/server-dispatch-macros.lisp"
     "packages/terminal/src/csi-replies-definitions.lisp"
-    "packages/terminal/src/csi-compose.lisp"
-    "packages/terminal/src/csi-device-rules.lisp"
-    "packages/terminal/src/csi-extended-rules.lisp"
-    "packages/terminal/src/csi.lisp"
-    "packages/terminal/src/csi-dispatch.lisp"
     "packages/terminal/src/char-write-definitions.lisp"
-    "packages/terminal/src/cell.lisp"
     "packages/terminal/src/modes-ansi-sm-rm-definitions.lisp"
     "packages/terminal/src/modes-charset-definitions.lisp"
     "packages/terminal/src/modes-dec-pm-definitions.lisp"
     "packages/terminal/src/screen-data.lisp"
     "packages/model/src/window-definitions.lisp"
-    "packages/model/src/layout-visitor.lisp"
-    "packages/terminal/src/parser-core.lisp"
     "packages/ports/src/posix-port.lisp"
     "packages/pty/src/pty-ffi.lisp"
     "packages/renderer/src/renderer-format-definitions.lisp"
-    "packages/renderer/src/renderer-style-data.lisp"
-    "packages/renderer/src/renderer-style.lisp"))
+    "packages/renderer/src/renderer-style-data.lisp"))
 
 #+sbcl
 (sb-ext:restrict-compiler-policy 'sb-cover:store-coverage-data 3)
@@ -123,28 +159,17 @@
   (unwind-protect (call-next-method)
     (proclaim '(optimize (sb-cover:store-coverage-data 0)))))
 
-(defparameter *nerimux-project-root*
-  (truename
-   (merge-pathnames #P"../" (uiop:pathname-directory-pathname *load-truename*))))
+(defun %coverage-events (events)
+  (cl-weave::normalize-run-results events))
 
-(defparameter *nerimux-source-root*
-  (truename (merge-pathnames #P"src/" *nerimux-project-root*)))
+(defun %coverage-assertion-count (events)
+  (loop for event in (%coverage-events events)
+        sum (count :assertion
+                   (cl-weave::test-event-journal event)
+                   :key #'cl-weave:journal-frame-kind)))
 
-(push *nerimux-project-root* asdf:*central-registry*)
-
-(dolist 
-    (dir
-     (uiop:split-string (or (uiop:getenv "NERIMUX_SIBLING_REGISTRY") "")
-                        :separator
-                        ":"))
-  (unless (string= dir "")
-    (push (truename (uiop:ensure-directory-pathname dir))
-          asdf:*central-registry*)))
-
-(asdf:load-system "sb-cover")
-(asdf:load-system "cl-weave")
-
-(cl-weave:reset-coverage)
+(defun %coverage-test-plan-count (plan)
+  (count :run plan :key #'cl-weave:test-plan-entry-status))
 
 (asdf:clear-system "nerimux")
 
@@ -166,6 +191,8 @@
                                 '*coverage-excluded-source-files*
                                 relative-path))))
                  *coverage-excluded-source-files*))
+       (source-roots *nerimux-coverage-source-roots*)
+       (test-timeout-ms (%coverage-test-timeout-ms))
        (report-dir (uiop:ensure-directory-pathname
                     (or (first (uiop:command-line-arguments))
                         "coverage-report/")))
@@ -173,28 +200,48 @@
        (enforce-thresholds-p
          (not (string= "1" (or (uiop:getenv "NERIMUX_COVERAGE_REPORT_ONLY") "")))))
   (asdf:load-system "nerimux/test")
-    (unless (let ((*print-circle* t))
-            (cl-weave:run-all :reporter :spec :max-workers 1
-                              :pass-with-no-tests nil
-                              :name-filter (%coverage-test-name-filter)
-                              :timeout-ms +coverage-test-timeout-ms+
-                              :coverage nil))
-    (error "nerimux test suite failed under coverage instrumentation"))
+  (let* ((name-filter (%coverage-test-name-filter))
+         (plan (cl-weave:collect-test-plan
+                (cl-weave:root-suite)
+                :name-filter name-filter
+                :timeout-ms test-timeout-ms))
+         (selected-count (%coverage-test-plan-count plan)))
+    (unless (plusp selected-count)
+      (error "coverage run selected no runnable tests (filter ~S)." name-filter))
+    (format t "Coverage tests selected: ~D (timeout ~D ms).~%"
+            selected-count test-timeout-ms)
+    (let ((events (let ((*print-circle* t)
+                        (cl-weave:*journal-enabled* t))
+                    (cl-weave:run (cl-weave:root-suite)
+                                  :reporter :spec
+                                  :max-workers 1
+                                  :name-filter name-filter
+                                  :timeout-ms test-timeout-ms))))
+      (unless (cl-weave:results-status events)
+        (error "nerimux test suite failed under coverage instrumentation"))
+      (let ((assertion-count (%coverage-assertion-count events)))
+        (unless (plusp assertion-count)
+          (error "coverage run executed no assertions."))
+        (format t "Coverage assertions executed: ~D.~%" assertion-count))))
   (%normalize-structural-coverage)
   (cl-weave::save-coverage-report
    report-dir
-   :include-pathnames (list *nerimux-source-root*)
+   :include-pathnames source-roots
    :exclude-pathnames excluded-source-pathnames)
-  (unless (and (probe-file report-index)
-                 (with-open-file (stream report-index
+  (let ((report-bytes
+          (and (probe-file report-index)
+               (with-open-file (stream report-index
                                        :element-type '(unsigned-byte 8))
-                 (plusp (file-length stream))))
-    (error "coverage run did not produce a non-empty ~A" report-index))
+                 (file-length stream)))))
+    (unless (and report-bytes (plusp report-bytes))
+      (error "coverage run did not produce a non-empty ~A" report-index))
+    (format t "Coverage report bytes: ~D.~%" report-bytes))
   (when enforce-thresholds-p
     (%ensure-full-coverage
      (cl-weave:coverage-statistics
-      :include-pathnames (list *nerimux-source-root*)
+      :include-pathnames source-roots
       :exclude-pathnames excluded-source-pathnames)))
-  (format t "~&Coverage report: ~A~%" report-dir))
+  (format t "~&Coverage source roots: ~D; report: ~A~%"
+          (length source-roots) report-dir))
 
 (uiop:quit 0)
