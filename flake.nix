@@ -106,11 +106,8 @@
       ...
     }:
     let
-      # CI targets x86_64-linux; local development targets aarch64-darwin.
-      systems = [
-        "x86_64-linux"
-        "aarch64-darwin"
-      ];
+      # CI and local evaluation target x86_64-linux only.
+      systems = [ "x86_64-linux" ];
       forAllSystems = nixpkgs.lib.genAttrs systems;
 
       # Do not hide broken packages. Restore allowBroken only with a package that
