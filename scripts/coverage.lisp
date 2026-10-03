@@ -4,6 +4,36 @@
 
 (asdf:load-system "sb-cover")
 
+(defparameter *nerimux-project-root*
+  (truename
+   (merge-pathnames #P"../" (uiop:pathname-directory-pathname *load-truename*))))
+
+(defparameter *nerimux-source-root*
+  (truename (merge-pathnames #P"src/" *nerimux-project-root*)))
+
+(defparameter *nerimux-coverage-source-roots*
+  (cons *nerimux-source-root*
+        (sort
+         (directory (merge-pathnames #P"packages/*/src/"
+                                     *nerimux-project-root*))
+         #'string<
+         :key #'namestring)))
+
+(push *nerimux-project-root* asdf:*central-registry*)
+
+(dolist
+    (dir
+     (uiop:split-string (or (uiop:getenv "NERIMUX_SIBLING_REGISTRY") "")
+                        :separator
+                        ":"))
+  (unless (string= dir "")
+    (push (truename (uiop:ensure-directory-pathname dir))
+          asdf:*central-registry*)))
+
+(asdf:load-system "cl-weave")
+
+(cl-weave:reset-coverage)
+
 (defconstant +coverage-test-timeout-ms+
   ;; A coverage run is bounded by the caller, but a stuck individual test must
   ;; not consume that whole budget.  This is deliberately shorter than the
@@ -129,21 +159,6 @@
   (unwind-protect (call-next-method)
     (proclaim '(optimize (sb-cover:store-coverage-data 0)))))
 
-(defparameter *nerimux-project-root*
-  (truename
-   (merge-pathnames #P"../" (uiop:pathname-directory-pathname *load-truename*))))
-
-(defparameter *nerimux-source-root*
-  (truename (merge-pathnames #P"src/" *nerimux-project-root*)))
-
-(defparameter *nerimux-coverage-source-roots*
-  (cons *nerimux-source-root*
-        (sort
-         (directory (merge-pathnames #P"packages/*/src/"
-                                     *nerimux-project-root*))
-         #'string<
-         :key #'namestring)))
-
 (defun %coverage-events (events)
   (cl-weave::normalize-run-results events))
 
@@ -155,22 +170,6 @@
 
 (defun %coverage-test-plan-count (plan)
   (count :run plan :key #'cl-weave:test-plan-entry-status))
-
-(push *nerimux-project-root* asdf:*central-registry*)
-
-(dolist 
-    (dir
-     (uiop:split-string (or (uiop:getenv "NERIMUX_SIBLING_REGISTRY") "")
-                        :separator
-                        ":"))
-  (unless (string= dir "")
-    (push (truename (uiop:ensure-directory-pathname dir))
-          asdf:*central-registry*)))
-
-(asdf:load-system "sb-cover")
-(asdf:load-system "cl-weave")
-
-(cl-weave:reset-coverage)
 
 (asdf:clear-system "nerimux")
 
