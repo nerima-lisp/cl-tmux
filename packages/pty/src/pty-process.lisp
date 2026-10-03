@@ -28,6 +28,7 @@
         pty))))
 (defparameter +pty-child-wait-timeout+ (cl-date-kit:duration-of-seconds 5))
 (defconstant +pty-write-timeout-seconds+ 2)
+(defconstant +pty-termination-timeout-seconds+ 5)
 (defun pty-child-exit-status (master-fd &optional (timeout +pty-child-wait-timeout+))
   (let* ((pty (gethash master-fd *pty-processes*))
          (process (and pty (cl-tty-kit:pty-process pty))))
@@ -93,7 +94,20 @@
   (%signal-owned-process process sb-posix:sigkill)
   (let ((master (sb-ext:process-pty process)))
     (when master (close master :abort t)))
-  (sb-ext:process-wait process)
+  (let ((deadline (+ (get-internal-real-time)
+                     (* +pty-termination-timeout-seconds+
+                        internal-time-units-per-second)))
+        (pid (sb-ext:process-pid process)))
+    (loop
+      (when (or (member (sb-ext:process-status process) '(:exited :signaled))
+                (handler-case (progn (sb-posix:kill pid 0) nil)
+                  (sb-posix:syscall-error () t)))
+        (return))
+      (when (>= (get-internal-real-time) deadline)
+        (error "PTY child ~D did not exit within ~D seconds."
+               pid
+               +pty-termination-timeout-seconds+))
+      (sleep 0.01)))
   (values (sb-ext:process-exit-code process) (sb-ext:process-status process)))
 
 (defun pty-close (master-fd child-pid)

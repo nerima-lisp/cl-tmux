@@ -450,6 +450,8 @@
           # Sandbox checks omit real-PTY cases because /dev/ptmx is unavailable.
           default = mkTestCheck system "nerimux-tests" "nerimux/test";
 
+          coverage-report = self.packages.${system}.coverage-report;
+
           formatting = treefmtEval.${system}.config.build.check self;
 
           # Build documentation with mkdocs --strict so broken links fail the check.

@@ -198,6 +198,21 @@
         (ignore-errors (sb-ext:process-close process))
         (nerimux/pty::%take-pty-process master-fd))))
 
+  (it "pty-close-does-not-wait-on-the-closed-process-handle"
+    (let* ((process (sb-ext:run-program
+                     "/bin/sh" '("-c" "exec exit 0")
+                     :search t :wait nil :output nil :error nil))
+           (pty (cl-tty-kit::%make-pty :process process :stream nil))
+           (master-fd 90127)
+           (child-pid (sb-ext:process-pid process)))
+      (unwind-protect
+           (progn
+             (nerimux/pty::%remember-pty-process master-fd pty)
+             (nerimux/pty:pty-close master-fd child-pid)
+             (expect (null (gethash master-fd nerimux/pty::*pty-processes*))))
+        (ignore-errors (sb-ext:process-close process))
+        (nerimux/pty::%take-pty-process master-fd))))
+
   (it "pty-close-closes-an-unregistered-fd-without-signalling"
     (with-pipe-fds (read-fd write-fd)
       (declare (ignorable write-fd))
