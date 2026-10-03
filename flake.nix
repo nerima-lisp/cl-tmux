@@ -404,6 +404,7 @@
                   pkgs.git
                 ];
                 NERIMUX_SIBLING_REGISTRY = siblingRegistry system;
+                NERIMUX_COVERAGE_REPORT_ONLY = "1";
               }
               ''
                 export HOME="$TMPDIR/home"
